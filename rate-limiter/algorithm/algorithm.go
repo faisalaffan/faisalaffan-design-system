@@ -1,6 +1,7 @@
 package algorithm
 
-// Algorithm defines the rate limiting strategy.
+import "time"
+
 type Algorithm interface {
-	// TODO: define methods
+	Allow(key string, limit int, window time.Duration) bool
 }
