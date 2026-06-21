@@ -214,4 +214,82 @@ func validateAttestationToken(token string, secret []byte) bool {
 - **Waiting room sorted set menggantikan queue in-memory**: Redis sorted set dengan timestamp sebagai skor memberikan antrean terdistribusi yang persisten. Jika instance service mati, antrean tidak hilang. ZRANK memberi posisi pengguna secara real-time.
 - **Sliding window, bukan fixed window**: Flash sale memiliki pola ledakan permintaan yang ekstrem. Fixed window bisa menyebabkan 3x lipat traffic di perbatasan window. Sliding window memberikan batas yang halus dan akurat.
 - **Token HMAC dengan window 30 detik**: Token atestasi memiliki masa berlaku pendek untuk membatasi jendela serangan replay. Window 30 detik memberi toleransi perbedaan jam klien-server tanpa membuka celah serangan yang besar.
-- **Polling klien untuk status antrean, bukan WebSocket**: Flash sale bersifat fire-and-forget; klien tidak perlu koneksi persisten. Polling GET dengan backoff eksponensial (1s, 2s, 4s, 8s, maks 10s) lebih sederhana dan sama efektifnya.
+- **SSE push untuk status antrean**: Endpoint `GET /queue-stream` menggunakan Redis pub/sub untuk push update posisi secara real-time tanpa overhead polling. Jauh lebih hemat baterai di mobile. Polling `GET /queue-status` tetap tersedia sebagai fallback.
+
+## Mobile vs Web — Perbedaan Kunci
+
+Backend flash sale dirancang untuk melayani klien web dan mobile, tetapi mobile memerlukan pertimbangan khusus yang didokumentasikan di sini.
+
+### Device Fingerprint
+
+| Platform | Web | Mobile |
+|----------|-----|--------|
+| iOS | Browser canvas/WebGL fingerprint | `identifierForVendor` (IDFV) + **App Attest** (hardware-backed) |
+| Android | Browser canvas/WebGL fingerprint | `ANDROID_ID` + **Play Integrity API** (hardware-backed) |
+| Risiko | Bisa di-reset via incognito/proxy | Reinstall app mereset installation ID — perlu hardware attestation |
+
+**Keputusan:** Field `device_fp` di server menerima fingerprint dari klien manapun. Untuk mobile, klien WAJIB mengirim token hardware attestation (App Attest / Play Integrity) sebagai field `attestation`. Verifikasi HMAC selalu server-side — secret tidak pernah disimpan di binary klien.
+
+### Penyimpanan Token
+
+Cookie web tidak relevan untuk aplikasi native. Klien mobile WAJIB:
+- **iOS**: Simpan token di **Keychain** (bukan UserDefaults)
+- **Android**: Simpan token di **EncryptedSharedPreferences** atau **Keystore**
+- Kirim token via header `Authorization: Bearer <token>` di setiap request
+
+### Polling vs Push
+
+Polling `GET /queue-status` menguras baterai mobile dan berhenti saat aplikasi di-background. Layanan menyediakan dua alternatif:
+
+| Metode | Endpoint | Use Case |
+|--------|----------|----------|
+| HTTP Polling | `GET /queue-status` | Web fallback, debugging |
+| SSE Stream | `GET /queue-stream` | **Mobile preferred** — server push via koneksi persisten |
+| Future | Silent push notification | Bangunkan aplikasi saat posisi < 10 |
+
+Endpoint SSE menggunakan Redis pub/sub secara internal (`flash:queue:{productID}:{userID}`) sehingga update posisi didorong segera tanpa overhead polling.
+
+### Idempotensi — Wajib untuk Mobile
+
+HTTP client mobile (OkHttp, URLSession, Alamofire) sering auto-retry saat jaringan gagal. Tanpa idempotensi, satu ketukan pengguna bisa memicu beberapa panggilan `POST /checkout`.
+
+**Penegakan:** `idempotency_key` adalah field **wajib** di `CheckoutRequest`. Backend menggunakan Redis `SetNX` dengan lock TTL 30 detik dan menyimpan hasil selama 10 menit. Request duplikat dalam jendela lock menerima HTTP 409 dengan hasil yang di-cache.
+
+```json
+{
+  "product_id": "flash-indomie-2026",
+  "user_id": "user-abc",
+  "idempotency_key": "550e8400-e29b-41d4-a716-446655440000",
+  ...
+}
+```
+
+### Keandalan Jaringan — Keamanan Retry
+
+Jaringan mobile (handoff 4G/5G ↔ WiFi, tunnel, backgrounding) jauh lebih tidak stabil dibanding desktop. Pipeline dirancang untuk menangani retry dengan aman di setiap tahap:
+
+| Tahap | Keamanan Retry |
+|-------|---------------|
+| Pemeriksaan idempotensi | SetNX lock mencegah duplikat konkuren |
+| Rate limiter | Sliding window per deviceFP — retry dihitung sebagai request terpisah (by design) |
+| Reservasi stok | Lua atomik dengan TTL — reaper melepaskan yang kedaluwarsa, tidak pernah double-decrement |
+| Ruang tunggu | `ZAddNX` idempoten — bergabung dua kali mengembalikan posisi yang sama |
+
+### Deep Link untuk Navigasi Order
+
+Setelah checkout berhasil, klien mobile harus bernavigasi via:
+
+- **iOS**: Universal Links (`https://yourapp.com/order/ORD123`)
+- **Android**: App Links (`https://yourapp.com/order/ORD123`)
+- **Custom scheme fallback**: `yourapp://order/ORD123`
+
+Field `CheckoutResponse.order_id` menyediakan ID untuk konstruksi deep link di sisi klien.
+
+### Checklist Keamanan Klien
+
+1. [ ] Secret HMAC **tidak pernah** disematkan di binary mobile
+2. [ ] Certificate pinning diaktifkan untuk mencegah intersepsi token MITM
+3. [ ] Deteksi root/jailbreak untuk flash sale bernilai tinggi (defense-in-depth, bukan keamanan primer)
+4. [ ] Token disimpan di Keychain (iOS) / EncryptedSharedPreferences (Android), tidak pernah di penyimpanan biasa
+5. [ ] App Attest (iOS) / Play Integrity (Android) untuk hardware-backed device attestation
+6. [ ] Idempotency key dibuat oleh klien sebagai UUID v4 per percobaan checkout

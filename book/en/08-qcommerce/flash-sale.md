@@ -165,3 +165,81 @@ return redis.error_reply("SOLD_OUT")
 - **Sliding window rate limiting per device**: 3 attempts per 10 seconds prevents automated bots from flooding the system while allowing legitimate retries on transient failures.
 - **HMAC-SHA256 attestation**: Client-generated attestations with WebGL, canvas, and CAPTCHA challenges make automated abuse harder. The 30-second token expiry limits the replay window. The server secret key prevents forgery.
 - **Background admit goroutine**: Polls the waiting room sorted set and admits users in FIFO order. The admit rate is configurable per sale based on processing capacity, preventing resource exhaustion.
+
+## Mobile vs Web — Key Differences
+
+The flash sale backend is designed to serve both web and mobile clients, but mobile introduces specific requirements documented here.
+
+### Device Fingerprint
+
+| Platform | Web | Mobile |
+|----------|-----|--------|
+| iOS | Browser canvas/WebGL fingerprint | `identifierForVendor` (IDFV) + **App Attest** (hardware-backed) |
+| Android | Browser canvas/WebGL fingerprint | `ANDROID_ID` + **Play Integrity API** (hardware-backed) |
+| Risk | Resettable via incognito/proxy | App reinstall resets installation IDs — need hardware attestation |
+
+**Decision:** Server-side `device_fp` field accepts any client-provided fingerprint. For mobile, the client MUST send hardware attestation token (App Attest / Play Integrity) as the `attestation` field. The HMAC verification server-side never stores secrets in the client binary.
+
+### Token Storage
+
+Web cookies are irrelevant for native apps. Mobile clients MUST:
+- **iOS**: Store token in **Keychain** (not UserDefaults)
+- **Android**: Store token in **EncryptedSharedPreferences** or **Keystore**
+- Send token via `Authorization: Bearer <token>` header on every request
+
+### Polling vs Push
+
+Polling `GET /queue-status` drains mobile battery and stops when the app is backgrounded. The service provides two alternatives:
+
+| Method | Endpoint | Use Case |
+|--------|----------|----------|
+| HTTP Polling | `GET /queue-status` | Web fallback, debugging |
+| SSE Stream | `GET /queue-stream` | **Mobile preferred** — server push via persistent connection |
+| Future | Silent push notification | Wake up backgrounded app when position < 10 |
+
+The SSE endpoint uses Redis pub/sub internally (`flash:queue:{productID}:{userID}`) so position updates are pushed immediately without polling overhead.
+
+### Idempotency — Mandatory for Mobile
+
+Mobile HTTP clients (OkHttp, URLSession, Alamofire) often auto-retry on network failure. Without idempotency, a single user tap could trigger multiple `POST /checkout` calls.
+
+**Enforcement:** `idempotency_key` is a **required** field in `CheckoutRequest`. The backend uses Redis `SetNX` with a 30-second lock TTL and caches the result for 10 minutes. Duplicate requests within the lock window receive HTTP 409 with the cached result.
+
+```json
+{
+  "product_id": "flash-indomie-2026",
+  "user_id": "user-abc",
+  "idempotency_key": "550e8400-e29b-41d4-a716-446655440000",
+  ...
+}
+```
+
+### Network Reliability — Retry Safety
+
+Mobile networks (4G/5G ↔ WiFi handoff, tunnels, backgrounding) are far less stable than desktop. The pipeline is designed to handle retries gracefully at every stage:
+
+| Stage | Retry Safety |
+|-------|-------------|
+| Idempotency check | SetNX lock prevents concurrent duplicates |
+| Rate limiter | Sliding window per deviceFP — retries counted as separate requests (by design) |
+| Stock reservation | Lua atomic with TTL — reaper releases expired, never double-decrements |
+| Waiting room | `ZAddNX` idempotent — joining twice returns same position |
+
+### Deep Links for Order Navigation
+
+After successful checkout, mobile clients should navigate via:
+
+- **iOS**: Universal Links (`https://yourapp.com/order/ORD123`)
+- **Android**: App Links (`https://yourapp.com/order/ORD123`)
+- **Custom scheme fallback**: `yourapp://order/ORD123`
+
+The `CheckoutResponse.order_id` field provides the ID for deep link construction client-side.
+
+### Client Security Checklist
+
+1. [ ] HMAC secret is **never** embedded in the mobile binary
+2. [ ] Certificate pinning enabled to prevent MITM token interception
+3. [ ] Root/jailbreak detection for high-value flash sales (defense-in-depth, not primary security)
+4. [ ] Token stored in Keychain (iOS) / EncryptedSharedPreferences (Android), never plain storage
+5. [ ] App Attest (iOS) / Play Integrity (Android) for hardware-backed device attestation
+6. [ ] Idempotency key generated client-side as UUID v4 per checkout attempt
