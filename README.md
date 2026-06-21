@@ -16,7 +16,7 @@
 
 Go monorepo implementing all 12 system design problems from Alex Xu's "System Design Interview" (2nd Ed), backed by theory from Kleppmann's "Designing Data-Intensive Applications".
 
-**196 tests | 88 packages | 22 services | 2 shared packages**
+**203 tests | 92 packages | 22 services | 2 shared packages**
 
 ## Services
 
@@ -48,6 +48,8 @@ Go monorepo implementing all 12 system design problems from Alex Xu's "System De
 | 19 | **search-service** | 8107 | Multi-match ranking, trie autocomplete, composite score |
 | 20 | **tracking-service** | 8108 | WebSocket ingestion, Kalman filter, SSE push |
 | 21 | **pricing-service** | 8109 | Surge detection, price lock, elasticity tracker |
+| 22 | **forecasting-service** | 8110 | Holt-Winters engine, Bayesian cold-start, replenishment |
+
 
 ## Running
 
@@ -73,8 +75,9 @@ go run ./services/eta-service            # :8106
 go run ./services/search-service         # :8107
 go run ./services/tracking-service       # :8108
 go run ./services/pricing-service        # :8109
+go run ./services/forecasting-service    # :8110
 
-go test ./...                   # 196 tests across 88 packages
+go test ./...                   # 203 tests across 92 packages
 go build ./...                  # Build all
 go vet ./...                    # Vet all
 ```

@@ -43,3 +43,5 @@
 - [Layanan Estimasi ETA](08-qcommerce/eta-service.md)
 - [Layanan Pencarian & Katalog](08-qcommerce/search-service.md)
 - [Layanan Pelacakan Real-Time](08-qcommerce/tracking-service.md)
+- [Layanan Dynamic Pricing](08-qcommerce/pricing-service.md)
+- [Layanan Forecasting & Replenishment](08-qcommerce/forecasting-service.md)

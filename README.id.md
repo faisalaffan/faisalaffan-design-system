@@ -16,7 +16,7 @@
 
 Go monorepo mengimplementasikan semua 12 problem system design dari "System Design Interview" (2nd Ed) karya Alex Xu, didukung teori dari "Designing Data-Intensive Applications" karya Kleppmann.
 
-**196 tes | 88 package | 22 layanan | 2 paket bersama**
+**203 tes | 92 package | 22 layanan | 2 paket bersama**
 
 ## Layanan
 
@@ -48,6 +48,8 @@ Go monorepo mengimplementasikan semua 12 problem system design dari "System Desi
 | 19 | **search-service** | 8107 | Multi-match ranking, trie autocomplete, composite score |
 | 20 | **tracking-service** | 8108 | WebSocket ingestion, Kalman filter, SSE push |
 | 21 | **pricing-service** | 8109 | Surge detection, price lock, elasticity tracker |
+| 22 | **forecasting-service** | 8110 | Holt-Winters engine, Bayesian cold-start, replenishment |
+
 
 ## Menjalankan
 
@@ -73,8 +75,9 @@ go run ./services/eta-service            # :8106
 go run ./services/search-service         # :8107
 go run ./services/tracking-service       # :8108
 go run ./services/pricing-service        # :8109
+go run ./services/forecasting-service    # :8110
 
-go test ./...                   # 196 tes di 88 package
+go test ./...                   # 203 tes di 92 package
 go build ./...                  # Build semua
 go vet ./...                    # Vet semua
 ```

@@ -43,3 +43,5 @@
 - [ETA Service](08-qcommerce/eta-service.md)
 - [Search Service](08-qcommerce/search-service.md)
 - [Tracking Service](08-qcommerce/tracking-service.md)
+- [Pricing Service](08-qcommerce/pricing-service.md)
+- [Forecasting Service](08-qcommerce/forecasting-service.md)
