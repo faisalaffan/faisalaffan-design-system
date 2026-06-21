@@ -149,6 +149,14 @@ func validateAttestationToken(token string, secret []byte) bool {
 | `GET` | `/flash-sale/token` | Mendapatkan token atestasi HMAC |
 | `POST` | `/checkout` | Melakukan checkout flash sale |
 | `GET` | `/queue-status?order_id=` | Mengecek status antrean |
+| `GET` | `/queue-stream` | Push SSE untuk update posisi antrean (ramah mobile) |
+| `POST` | `/release` | Kompensasi checkout gagal — kembalikan stok |
+| `POST` | `/confirm` | Finalisasi checkout berhasil |
+| `GET` | `/token` | Terbitkan token atestasi HMAC (di-cache CDN) |
+| `POST` | `/dry-run` | Uji pipeline penuh tanpa mengurangi stok asli |
+| `GET` | `/metrics` | Snapshot counter + histogram ala Prometheus |
+| `GET` | `/health` | State circuit breaker + konektivitas Redis |
+| `POST` | `/admin/sales` | Buat atau konfigurasi event flash sale |
 
 ### POST /checkout
 
@@ -318,13 +326,13 @@ Ini tidak termasuk dalam cakupan implementasi saat ini tetapi diperlukan untuk d
 
 | Kesenjangan | Prioritas | Yang Harus Dibangun |
 |-------------|----------|---------------------|
-| **Circuit Breaker** | Kritis | Kegagalan koneksi Redis → buka circuit → halaman "sale tidak tersedia" yang anggun, bukan error 500 |
+| **Circuit Breaker** | ✅ Selesai | `pkg/kit/circuitbreaker/` — ambang 3 kegagalan, reset 10 detik, probe half-open. Endpoint health melaporkan state circuit. |
+| **Observability** | ✅ Selesai | `pkg/kit/middleware/metrics.go` — counter atomik + histogram. `GET /flash-sale/metrics`. Bucket durasi HTTP: 1/5/10/50/100/500/1000/5000ms. |
+| **Mode Dry Run** | ✅ Selesai | `POST /flash-sale/dry-run` — pipeline penuh (atestasi→rate limit→cek stok) tanpa menyentuh stok asli. Mengembalikan pass/fail per langkah + latensi. |
 | **Header Rate Limit Response** | Kritis | Header `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After` agar klien bisa back off dengan cerdas |
-| **Observability** | Tinggi | Counter Prometheus: `flash_checkout_attempts`, `flash_oversold_total`, `flash_rate_limited_total`. Histogram: `flash_checkout_duration_ms` |
 | **Distributed Tracing** | Tinggi | Span OpenTelemetry di seluruh tahap pipeline: atestasi → rate limit → stok → ruang tunggu |
 | **Dead Letter Queue** | Tinggi | Event yang gagal publish (channel penuh) harus masuk DLQ, bukan hanya di-log dan dibuang |
 | **API Dashboard Admin** | Sedang | `GET /admin/sales/:id/metrics` — stok tersisa real-time, kedalaman antrean, jumlah selesai, tingkat hit rate limit |
-| **Mode Dry Run** | Sedang | `POST /flash-sale/dry-run` — menguji pipeline penuh tanpa mengurangi stok asli. Untuk load testing dan gladi resik sale. |
 | **Redis Geo-Distributed** | Sedang | Redis multi-region dengan CRDT atau active-active untuk flash sale lintas region (Jakarta, Singapura, Bangkok) |
 | **Integrasi CAPTCHA** | Sedang | Payload atestasi saat ini tidak menyertakan skor CAPTCHA aktual. Integrasikan dengan reCAPTCHA/hCaptcha untuk sinyal deteksi bot. |
 | **UI Konfigurasi Sale** | Rendah | Simpan konfigurasi flash sale (waktu mulai, stok, jumlah bucket, harga) di database agar sale bisa dijadwalkan tanpa deploy kode |

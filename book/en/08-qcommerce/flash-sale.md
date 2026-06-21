@@ -114,6 +114,13 @@ func (s *Service) generateToken(ctx context.Context, fingerprint string) (string
 |--------|------|-------------|
 | `POST` | `/checkout` | Submit a flash sale checkout request |
 | `GET` | `/queue-status` | Get current position in the waiting room |
+| `GET` | `/queue-stream` | SSE push for queue position updates (mobile-friendly) |
+| `POST` | `/release` | Compensate failed checkout — return stock |
+| `POST` | `/confirm` | Finalize successful checkout |
+| `GET` | `/token` | Issue HMAC attestation token (CDN-cached) |
+| `POST` | `/dry-run` | Test full pipeline without deducting real stock |
+| `GET` | `/metrics` | Prometheus-style counters + histogram snapshot |
+| `GET` | `/health` | Circuit breaker state + Redis connectivity |
 | `POST` | `/admin/sales` | Create or configure a flash sale event |
 
 ### POST /checkout
@@ -268,13 +275,13 @@ These are not in scope of the current implementation but would be required for a
 
 | Gap | Priority | What To Build |
 |-----|----------|---------------|
-| **Circuit Breaker** | Critical | Redis connection failure → open circuit → graceful "sale not available" page, not 500 errors |
+| **Circuit Breaker** | ✅ Done | `pkg/kit/circuitbreaker/` — 3-failure threshold, 10s reset, half-open probe. Health endpoint reports circuit state. |
+| **Observability** | ✅ Done | `pkg/kit/middleware/metrics.go` — atomic counters + histogram. `GET /flash-sale/metrics`. HTTP duration buckets: 1/5/10/50/100/500/1000/5000ms. |
+| **Dry Run Mode** | ✅ Done | `POST /flash-sale/dry-run` — full pipeline (attestation→rate limit→stock check) without touching real stock. Returns per-step pass/fail + latency. |
 | **Rate Limit Response Headers** | Critical | `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After` headers so clients can back off intelligently |
-| **Observability** | High | Prometheus counters: `flash_checkout_attempts`, `flash_oversold_total`, `flash_rate_limited_total`. Histogram: `flash_checkout_duration_ms` |
 | **Distributed Tracing** | High | OpenTelemetry spans across attestation → rate limit → stock → waiting room pipeline stages |
 | **Dead Letter Queue** | High | Events that fail to publish (channel full) should go to DLQ, not just logged and dropped |
 | **Admin Dashboard API** | Medium | `GET /admin/sales/:id/metrics` — real-time remaining stock, queue depth, completed count, rate limit hit rate |
-| **Dry Run Mode** | Medium | `POST /flash-sale/dry-run` — tests the full pipeline without deducting real stock. For load testing and sale rehearsal. |
 | **Geo-Distributed Redis** | Medium | Multi-region Redis with CRDT or active-active for flash sales across regions (Jakarta, Singapore, Bangkok) |
 | **CAPTCHA Integration** | Medium | The attestation payload currently doesn't include actual CAPTCHA score. Integrate with reCAPTCHA/hCaptcha for bot detection signal. |
 | **Sale Configuration UI** | Low | Store flash sale config (start time, stock, bucket count, price) in a database so sales can be scheduled without code deploy |
