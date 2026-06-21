@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: System Design Book Reference
+    url: https://github.com/faisalaffan/faisalaffan-design-system#readme
+    about: Check the README for architecture overview and design decisions
