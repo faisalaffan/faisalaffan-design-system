@@ -1,16 +1,24 @@
 /* ============================================================
    faisalaffan-design-system — GitBook Custom Theme
    Gradient • Inter/Plus Jakarta Sans • Pill Sidebar
+   Light + Dark Mode • Theme Switcher
    ============================================================ */
 
 /* --- Fonts --- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* --- CSS Variables --- */
+/* ============================================================
+   LIGHT MODE (default)
+   ============================================================ */
 :root {
-  --gradient-start: #667eea;
-  --gradient-mid: #764ba2;
-  --gradient-end: #f093fb;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fc;
+  --bg-tertiary: #f1f3f9;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a5568;
+  --text-muted: #8892a4;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e0;
   --gradient-accent: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
   --gradient-subtle: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
   --gradient-warm: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -18,25 +26,65 @@
   --sidebar-active-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --sidebar-active-text: #ffffff;
   --sidebar-hover-bg: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  --text-primary: #1a1a2e;
-  --text-secondary: #4a5568;
-  --border-subtle: #e2e8f0;
+  --code-bg: rgba(102, 126, 234, 0.08);
+  --code-color: #764ba2;
   --card-shadow: 0 1px 3px rgba(102, 126, 234, 0.08), 0 4px 12px rgba(118, 75, 162, 0.04);
+  --table-stripe: rgba(102, 126, 234, 0.03);
+  --header-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --toggle-bg: #e2e8f0;
+  --toggle-dot: #667eea;
 }
 
-/* --- Global Typography --- */
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+[data-theme="dark"] {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --border-subtle: #30363d;
+  --border-strong: #484f58;
+  --gradient-accent: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #f093fb 100%);
+  --gradient-subtle: linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(192, 132, 252, 0.1) 100%);
+  --gradient-warm: linear-gradient(135deg, #f093fb 0%, #fb7185 100%);
+  --sidebar-bg: #161b22;
+  --sidebar-active-bg: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%);
+  --sidebar-active-text: #ffffff;
+  --sidebar-hover-bg: linear-gradient(135deg, rgba(167, 139, 250, 0.12) 0%, rgba(192, 132, 252, 0.12) 100%);
+  --code-bg: rgba(167, 139, 250, 0.12);
+  --code-color: #c084fc;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --table-stripe: rgba(167, 139, 250, 0.04);
+  --header-gradient: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%);
+  --toggle-bg: #30363d;
+  --toggle-dot: #c084fc;
+}
+
+/* ============================================================
+   GLOBAL
+   ============================================================ */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text-primary);
+  background: var(--bg-primary);
   line-height: 1.7;
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
+.markdown-section {
+  color: var(--text-primary);
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: var(--text-primary);
 }
 
 h1 {
@@ -62,32 +110,81 @@ h3 {
   color: #667eea;
 }
 
+[data-theme="dark"] h3 {
+  color: #a78bfa;
+}
+
 code {
   font-family: 'JetBrains Mono', 'SF Mono', monospace;
   font-size: 0.88em;
-  background: var(--gradient-subtle);
+  background: var(--code-bg);
   padding: 2px 6px;
   border-radius: 4px;
-  color: #764ba2;
+  color: var(--code-color);
 }
 
 pre {
   border-radius: 10px;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-subtle);
+  background: var(--bg-tertiary) !important;
 }
 
 pre code {
   background: transparent;
-  color: inherit;
+  color: var(--text-primary);
   padding: 0;
 }
 
-/* --- Sidebar — Filled & Pill --- */
+p, li, td, th, blockquote {
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   THEME TOGGLE BUTTON
+   ============================================================ */
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 9999;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--card-shadow);
+  color: var(--text-primary);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  border-color: #667eea;
+  box-shadow: 0 0 16px rgba(102, 126, 234, 0.25);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  box-shadow: 0 0 16px rgba(167, 139, 250, 0.35);
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
 .book-summary {
   background: var(--sidebar-bg);
   font-family: 'Inter', sans-serif;
   border-right: 1px solid var(--border-subtle);
+  transition: background 0.3s;
+}
+
+.book-summary ul.summary {
+  background: var(--sidebar-bg);
 }
 
 .book-summary ul.summary li a,
@@ -107,6 +204,10 @@ pre code {
   transform: translateX(3px);
 }
 
+[data-theme="dark"] .book-summary ul.summary li a:hover {
+  color: #a78bfa;
+}
+
 .book-summary ul.summary li.active > a {
   background: var(--sidebar-active-bg);
   color: var(--sidebar-active-text);
@@ -115,7 +216,6 @@ pre code {
   transform: translateX(3px);
 }
 
-/* Pill shape for chapter headers */
 .book-summary ul.summary li.chapter > a,
 .book-summary ul.summary li.chapter > span {
   font-weight: 700;
@@ -127,9 +227,16 @@ pre code {
   margin-top: 8px;
 }
 
-/* --- Gradient Header / Title --- */
+[data-theme="dark"] .book-summary ul.summary li.chapter > a,
+[data-theme="dark"] .book-summary ul.summary li.chapter > span {
+  color: #a78bfa;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
 .book-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--header-gradient);
 }
 
 .book-header h1 {
@@ -142,17 +249,29 @@ pre code {
   border-color: rgba(255,255,255,0.3);
 }
 
-/* --- Links --- */
+/* ============================================================
+   LINKS
+   ============================================================ */
 a {
   color: #667eea;
   transition: color 0.2s;
+}
+
+[data-theme="dark"] a {
+  color: #a78bfa;
 }
 
 a:hover {
   color: #764ba2;
 }
 
-/* --- Tables --- */
+[data-theme="dark"] a:hover {
+  color: #c084fc;
+}
+
+/* ============================================================
+   TABLES
+   ============================================================ */
 table {
   border-radius: 10px;
   overflow: hidden;
@@ -174,13 +293,17 @@ thead th {
 
 tbody td {
   padding: 10px 16px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
 }
 
-tbody tr:nth-child(even) {
-  background: rgba(102, 126, 234, 0.03);
+tbody tr:nth-child(even) td {
+  background: var(--table-stripe);
 }
 
-/* --- Blockquotes --- */
+/* ============================================================
+   BLOCKQUOTES
+   ============================================================ */
 blockquote {
   border-left: 3px solid transparent;
   border-image: var(--gradient-accent);
@@ -189,22 +312,31 @@ blockquote {
   border-radius: 0 8px 8px 0;
   padding: 12px 20px;
   margin: 1.5em 0;
+  color: var(--text-secondary);
 }
 
 blockquote p {
   margin: 0;
 }
 
-/* --- Mermaid Diagrams --- */
+/* ============================================================
+   MERMAID
+   ============================================================ */
 .mermaid {
-  background: #ffffff;
+  background: #ffffff !important;
   border-radius: 12px;
   padding: 20px;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-subtle);
 }
 
-/* --- Search Box --- */
+[data-theme="dark"] .mermaid {
+  background: #ffffff !important;
+}
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
 #book-search-input {
   border-radius: 10px;
   margin: 10px;
@@ -212,6 +344,8 @@ blockquote p {
   padding: 8px 14px;
   font-family: 'Inter', sans-serif;
   transition: all 0.25s;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 #book-search-input:focus {
@@ -220,7 +354,9 @@ blockquote p {
   outline: none;
 }
 
-/* --- Scrollbar --- */
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -234,7 +370,9 @@ blockquote p {
   border-radius: 3px;
 }
 
-/* --- Section Dividers --- */
+/* ============================================================
+   MISC
+   ============================================================ */
 .markdown-section hr {
   height: 2px;
   background: var(--gradient-accent);
@@ -243,11 +381,25 @@ blockquote p {
   margin: 2em 0;
 }
 
-/* --- Inline Gradient Accent --- */
 .markdown-section em strong,
 .markdown-section strong em {
   background: var(--gradient-accent);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.page-inner {
+  background: var(--bg-primary);
+  transition: background 0.3s;
+}
+
+.book-body {
+  background: var(--bg-primary);
+  transition: background 0.3s;
+}
+
+/* Smooth transition for all themed elements */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.15s ease;
 }
