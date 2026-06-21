@@ -1,8 +1,8 @@
 # Flash Sale
 
-High-throughput flash sale checkout engine using Redis Lua bucketed stock, a sorted set waiting room, HMAC-SHA256 attestation tokens, and sliding window rate limiting per device fingerprint.
+High-throughput flash sale checkout engine with Lua atomic stock decrement, HMAC-SHA256 attestation tokens, sliding window rate limiting per device fingerprint, and a Redis sorted set waiting room.
 
-Port **8103** | Package `flash-sale/`
+Port **8103** | Package `flash-sale/` | 5 files: `types.go`, `store.go`, `service.go`, `handler.go`, `main.go`
 
 ## Architecture
 
@@ -12,280 +12,154 @@ sequenceDiagram
     participant U as User
     participant FS as Flash Sale Service
     participant R as Redis
-    participant ES as External Services
 
-    U->>FS: Request attestation token
-    FS->>U: HMAC token (WebGL+canvas+CAPTCHA)
+    Note over U,FS: Token Issuance
+    U->>FS: GET /flash-sale/token?device_fp=X
+    FS->>FS: HMAC-SHA256(device_fp, server_secret)
+    FS-->>U: Attestation token
 
-    U->>FS: POST /checkout (with token)
-    FS->>FS: Verify token & rate limit
-    FS->>R: Lua: check stock buckets (N=10)
-    R-->>FS: Stock available
-
-    FS->>R: ZAdd to waiting room
-    Note over FS,R: User in queue
-    FS->>U: Queue status (position)
-
-    loop Admit from waiting room
-        FS->>R: ZPopMin (admit next user)
-        R-->>FS: User admitted
-    end
-
-    FS->>FS: Process order
-    FS->>R: Lua: decrement stock
-    FS->>U: Order confirmed
+    Note over FS,R: Checkout Pipeline (5 safety nets)
+    U->>FS: POST /flash-sale/checkout
+    FS->>R: 1. SetNX idempotency check
+    FS->>FS: 2. HMAC attestation verify
+    FS->>R: 3. Sliding window rate limit
+    FS->>R: 4. Lua atomic stock decrement
+    FS->>R: 5. ZAdd waiting room sorted set
+    FS-->>U: Queue position / confirmation
 ```
 
-### Stock Buckets
+## Safety Nets
 
-Flash sale stock is distributed across `N=10` Redis buckets per SKU to reduce contention. Each bucket is an independent Redis key.
+### 1. Lua Atomic Stock Decrement
 
-| Concept | Detail |
-|---------|--------|
-| Buckets | 10 per SKU (`flash:sku_101:bucket:0` — `flash:sku_101:bucket:9`) |
-| Primary bucket | `hash(device_fingerprint) % 10` |
-| Overflow | Sequential fallback to `(primary + 1) % N` |
-| Atomic check | Lua script checks all buckets starting from primary |
+A single Lua script checks stock and decrements in one Redis operation — no race window. Without this, concurrent `GET → check → DECRBY` sequences allow 300% oversell (a real 2024 incident that cancelled 12,000 orders).
+
+```lua
+-- KEYS[1] = stock key, ARGV[1] = qty
+local stock = tonumber(redis.call("GET", KEYS[1]) or "0")
+if stock >= tonumber(ARGV[1]) then
+    redis.call("DECRBY", KEYS[1], ARGV[1])
+    return {1, stock - tonumber(ARGV[1])}
+end
+return {0, "sold_out"}
+```
+
+### 2. Sliding Window Rate Limit per Device
+
+Keyed by `device_fp` (not IP). Each device gets 20 checkout attempts per 10-second sliding window. Proxy rotation with 1000 residential IPs cannot bypass this — the limit follows the device identity, not the network address.
 
 ```go
-func (s *Service) selectBucket(sku, fingerprint string) int {
-    h := fnv.New32a()
-    h.Write([]byte(sku + ":" + fingerprint))
-    return int(h.Sum32()) % s.bucketCount
-}
-```
-
-### Waiting Room
-
-When stock is available but demand exceeds throughput, users enter a sorted set waiting room. The score is their entry timestamp. A background goroutine admits users via `ZPopMin`.
-
-```redis
-ZADD flash:sale:123:queue <timestamp> <user_id>
-ZPOPMIN flash:sale:123:queue <batch_size>
-```
-
-## Rate Limiting
-
-Sliding window rate limiter keyed by device fingerprint. Each device gets 3 checkout attempts per 10-second window.
-
-```go
-func (s *Service) isRateLimited(ctx context.Context, fingerprint string) bool {
-    key := fmt.Sprintf("rl:flash:%s", fingerprint)
+func (s *Store) IsRateLimited(deviceFP string) bool {
+    key := "rl:flash:" + deviceFP
     now := time.Now().Unix()
-
-    // Remove entries outside window
     s.rdb.ZRemRangeByScore(ctx, key, "0", strconv.FormatInt(now-10, 10))
-
-    // Count entries in window
     count, _ := s.rdb.ZCard(ctx, key).Result()
-    if count >= 3 {
+    if count >= 20 {
         return true
     }
-
-    // Add current attempt
-    s.rdb.ZAdd(ctx, key, redis.Z{Score: float64(now), Member: strconv.FormatInt(now, 10)})
+    s.rdb.ZAdd(ctx, key, redis.Z{Score: float64(now), Member: now})
     s.rdb.Expire(ctx, key, 10*time.Second)
     return false
 }
 ```
 
-## Attestation Tokens
+### 3. HMAC Attestation (Local Verify)
 
-Before checkout, the client requests an HMAC-SHA256 attestation token. The token embeds WebGL fingerprint, canvas fingerprint, and a CAPTCHA result. The service verifies the token on each checkout request.
+Server signs the device fingerprint with a secret that never leaves the server. Each checkout request verifies the signature locally. ±30s clock skew tolerance. No client binary can leak the secret — decompiling the APK or IPA yields nothing.
 
 ```go
-func (s *Service) generateToken(ctx context.Context, fingerprint string) (string, error) {
-    payload := map[string]interface{}{
-        "fp":  fingerprint,
-        "exp": time.Now().Add(30 * time.Second).Unix(),
-        "nonce": randSeq(16),
-    }
-    payloadBytes, _ := json.Marshal(payload)
-    mac := hmac.New(sha256.New, []byte(s.secretKey))
-    mac.Write(payloadBytes)
+func generateToken(deviceFP string, secret []byte) (string, error) {
+    window := fmt.Sprintf("%s:%d", deviceFP, time.Now().Unix()/30)
+    mac := hmac.New(sha256.New, secret)
+    mac.Write([]byte(window))
     sig := hex.EncodeToString(mac.Sum(nil))
-    return base64.RawURLEncoding.EncodeToString(payloadBytes) + "." + sig, nil
+    return base64.RawURLEncoding.EncodeToString([]byte(window)) + "." + sig, nil
 }
+```
+
+### 4. Sorted Set Waiting Room
+
+Users enter a Redis sorted set with their entry timestamp as the score. The queue survives service restarts. `ZRank` returns real-time position. A background goroutine admits users via `ZPopMin` in strict FIFO order.
+
+```redis
+ZADD flash:sale:{sale_id}:queue <timestamp> <user_id>
+ZRANK flash:sale:{sale_id}:queue <user_id>
+ZPOPMIN flash:sale:{sale_id}:queue <batch_size>
+```
+
+### 5. Idempotency Guard
+
+Every checkout requires an `idempotency_key`. Redis `SetNX` provides an atomic lock with 30s TTL and caches the result for 10 minutes. Duplicate requests receive HTTP 409 with the cached result. Critical for mobile SDKs (OkHttp, URLSession) that auto-retry on network failure.
+
+```go
+ok, _ := s.rdb.SetNX(ctx, "idemp:"+key, result, 30*time.Second).Result()
 ```
 
 ## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/checkout` | Submit a flash sale checkout request |
-| `GET` | `/queue-status` | Get current position in the waiting room |
-| `GET` | `/queue-stream` | SSE push for queue position updates (mobile-friendly) |
-| `POST` | `/release` | Compensate failed checkout — return stock |
-| `POST` | `/confirm` | Finalize successful checkout |
-| `GET` | `/token` | Issue HMAC attestation token (CDN-cached) |
-| `POST` | `/dry-run` | Test full pipeline without deducting real stock |
-| `GET` | `/metrics` | Prometheus-style counters + histogram snapshot |
-| `GET` | `/health` | Circuit breaker state + Redis connectivity |
-| `POST` | `/admin/sales` | Create or configure a flash sale event |
+| POST | `/flash-sale/checkout` | Full pipeline: idempotency → attestation → rate limit → stock → queue |
+| POST | `/flash-sale/release` | Compensate failed checkout, return stock atomically |
+| GET | `/flash-sale/queue-status` | Poll queue position via ZRank |
+| GET | `/flash-sale/token` | Issue HMAC-SHA256 attestation token |
 
-### POST /checkout
+### POST /flash-sale/checkout
 
 ```json
 // Request
-{"sale_id": "sale_42", "sku": "sku_101", "qty": 1, "attestation": "eyJmcCI6Inh5eiJ9.abc123def"}
-
-// Response 200 (admitted)
-{"data": {"order_id": "ord_flash_99", "status": "confirmed"}}
-
-// Response 202 (queued)
-{"data": {"status": "queued", "position": 42, "estimated_wait_seconds": 12}}
-```
-
-### GET /queue-status?user_id=usr_42&sale_id=sale_42
-
-```json
-// Response 200
-{"data": {"position": 15, "total_in_queue": 200, "estimated_wait_seconds": 8}}
-```
-
-## Key Algorithms
-
-### Bucketed Stock Reservation (Lua)
-
-```lua
--- KEYS[N] = bucket keys for one SKU
--- ARGV[1] = primary index
--- ARGV[2] = qty
-local n = #KEYS
-local start = tonumber(ARGV[1]) + 1
-for i = 0, n - 1 do
-    local idx = ((start + i - 1) % n) + 1
-    local stock = tonumber(redis.call("GET", KEYS[idx]) or "0")
-    if stock >= tonumber(ARGV[2]) then
-        redis.call("DECRBY", KEYS[idx], ARGV[2])
-        return { KEYS[idx], stock - tonumber(ARGV[2]) }
-    end
-end
-return redis.error_reply("SOLD_OUT")
-```
-
-## Technical Decisions
-
-- **10 stock buckets per SKU**: Reduces Redis key contention by an order of magnitude. With a single key, every concurrent checkout serialises on one Lua script. With 10 buckets, 10 concurrent checkouts can proceed in parallel as long as they hash to different buckets.
-- **Fingerprint-based bucket assignment**: Ensures the same device always hits the same bucket, making retries predictable. Sequential fallback on overflow prevents deterministic rejection.
-- **Sorted set waiting room**: Redis sorted sets provide O(log N) insertion and O(log N) removal. `ZPopMin` admits the earliest-waiting users efficiently. The room acts as a shock absorber between client demand and processing capacity.
-- **Sliding window rate limiting per device**: 3 attempts per 10 seconds prevents automated bots from flooding the system while allowing legitimate retries on transient failures.
-- **HMAC-SHA256 attestation**: Client-generated attestations with WebGL, canvas, and CAPTCHA challenges make automated abuse harder. The 30-second token expiry limits the replay window. The server secret key prevents forgery.
-- **Background admit goroutine**: Polls the waiting room sorted set and admits users in FIFO order. The admit rate is configurable per sale based on processing capacity, preventing resource exhaustion.
-
-## Mobile vs Web — Key Differences
-
-The flash sale backend is designed to serve both web and mobile clients, but mobile introduces specific requirements documented here.
-
-### Device Fingerprint
-
-| Platform | Web | Mobile |
-|----------|-----|--------|
-| iOS | Browser canvas/WebGL fingerprint | `identifierForVendor` (IDFV) + **App Attest** (hardware-backed) |
-| Android | Browser canvas/WebGL fingerprint | `ANDROID_ID` + **Play Integrity API** (hardware-backed) |
-| Risk | Resettable via incognito/proxy | App reinstall resets installation IDs — need hardware attestation |
-
-**Decision:** Server-side `device_fp` field accepts any client-provided fingerprint. For mobile, the client MUST send hardware attestation token (App Attest / Play Integrity) as the `attestation` field. The HMAC verification server-side never stores secrets in the client binary.
-
-### Token Storage
-
-Web cookies are irrelevant for native apps. Mobile clients MUST:
-- **iOS**: Store token in **Keychain** (not UserDefaults)
-- **Android**: Store token in **EncryptedSharedPreferences** or **Keystore**
-- Send token via `Authorization: Bearer <token>` header on every request
-
-### Polling vs Push
-
-Polling `GET /queue-status` drains mobile battery and stops when the app is backgrounded. The service provides two alternatives:
-
-| Method | Endpoint | Use Case |
-|--------|----------|----------|
-| HTTP Polling | `GET /queue-status` | Web fallback, debugging |
-| SSE Stream | `GET /queue-stream` | **Mobile preferred** — server push via persistent connection |
-| Future | Silent push notification | Wake up backgrounded app when position < 10 |
-
-The SSE endpoint uses Redis pub/sub internally (`flash:queue:{productID}:{userID}`) so position updates are pushed immediately without polling overhead.
-
-### Idempotency — Mandatory for Mobile
-
-Mobile HTTP clients (OkHttp, URLSession, Alamofire) often auto-retry on network failure. Without idempotency, a single user tap could trigger multiple `POST /checkout` calls.
-
-**Enforcement:** `idempotency_key` is a **required** field in `CheckoutRequest`. The backend uses Redis `SetNX` with a 30-second lock TTL and caches the result for 10 minutes. Duplicate requests within the lock window receive HTTP 409 with the cached result.
-
-```json
 {
   "product_id": "flash-indomie-2026",
   "user_id": "user-abc",
-  "idempotency_key": "550e8400-e29b-41d4-a716-446655440000",
-  ...
+  "qty": 1,
+  "attestation": "ZXlKcGNDSTZJbmgx...",
+  "idempotency_key": "550e8400-e29b-41d4-a716-446655440000"
 }
+
+// 200 — confirmed
+{"data": {"order_id": "ord_flash_99", "status": "confirmed"}}
+
+// 202 — queued
+{"data": {"status": "queued", "position": 42, "estimated_wait_seconds": 12}}
+
+// 429 — rate limited
+{"error": "too_many_requests", "retry_after_ms": 800}
+
+// 409 — duplicate (same idempotency_key)
+{"error": "duplicate_request", "data": {"order_id": "ord_flash_99", "status": "confirmed"}}
 ```
 
-### Network Reliability — Retry Safety
+### GET /flash-sale/queue-status?product_id=flash-indomie-2026&user_id=user-abc
 
-Mobile networks (4G/5G ↔ WiFi handoff, tunnels, backgrounding) are far less stable than desktop. The pipeline is designed to handle retries gracefully at every stage:
-
-| Stage | Retry Safety |
-|-------|-------------|
-| Idempotency check | SetNX lock prevents concurrent duplicates |
-| Rate limiter | Sliding window per deviceFP — retries counted as separate requests (by design) |
-| Stock reservation | Lua atomic with TTL — reaper releases expired, never double-decrements |
-| Waiting room | `ZAddNX` idempotent — joining twice returns same position |
-
-### Deep Links for Order Navigation
-
-After successful checkout, mobile clients should navigate via:
-
-- **iOS**: Universal Links (`https://yourapp.com/order/ORD123`)
-- **Android**: App Links (`https://yourapp.com/order/ORD123`)
-- **Custom scheme fallback**: `yourapp://order/ORD123`
-
-The `CheckoutResponse.order_id` field provides the ID for deep link construction client-side.
-
-### Client Security Checklist
-
-1. [ ] HMAC secret is **never** embedded in the mobile binary
-2. [ ] Certificate pinning enabled to prevent MITM token interception
-3. [ ] Root/jailbreak detection for high-value flash sales (defense-in-depth, not primary security)
-4. [ ] Token stored in Keychain (iOS) / EncryptedSharedPreferences (Android), never plain storage
-5. [ ] App Attest (iOS) / Play Integrity (Android) for hardware-backed device attestation
-6. [ ] Idempotency key generated client-side as UUID v4 per checkout attempt
+```json
+{"data": {"position": 15, "total_in_queue": 200, "estimated_wait_seconds": 8}}
+```
 
 ## Scenario Tests — Design Validation
 
-Each scenario test proves a design decision by demonstrating the consequence of NOT having it.
-
 | # | Scenario | Problem Solved | Without This Design |
 |---|----------|---------------|---------------------|
-| 1 | **Happy Path** — Budi checkout Indomie sukses | Reservation ID ensures stock is tracked per-checkout. Order ID for downstream processing. | No reservation → stock can't be released if checkout fails mid-flow. Stock silently lost. |
-| 2 | **Double-Tap** — User panik, double-click checkout | Idempotency key (`SetNX` lock + cached result) prevents duplicate orders from network retry | OkHttp/URLSession auto-retry creates 2 orders. User charged twice. Stock deducted twice. |
-| 3 | **50,000× Spike** — 200 users fight for 100 stock | Lua atomic script: check + decrement in one Redis operation | Race condition: GET → check → DECRBY. Between GET and DECRBY, another request also sees stock. Result: **300% oversell** (real 2024 incident — 12,000 cancelled orders). |
-| 4 | **Bot Attack** — Fake token + 30 spam requests | HMAC attestation (invalid → 401) + device-FP rate limit (burst=20 → 429) | Bots scrape all stock in < 1 second. IP-based limits bypassed via proxy rotation (1000 residential proxies). Real users see "sold out". |
-| 5 | **Stock Exhausted** — User 101 enters waiting room | Redis sorted set queue persists across restarts. `ZRank` gives real-time position. | In-memory Go channel/slice queue: lost on deploy/restart. Users randomly reconnect with no position. "Sold out" page → user leaves. |
-| 6 | **Checkout Failed** — Payment gateway timeout 15s | Compensating transaction: `POST /release` returns stock atomically. Idempotent release. | Reserved stock never returned. 100 reserved → 80 sold = 20 units "ghost stock" (reserved forever). Reaper releases after 5 min TTL but that's too slow for high-demand sale. |
-| 7 | **Token Expired** — 31 seconds past expiry | Clock skew tolerance ±30s. HMAC signature verified server-side. | 0s tolerance: users with 5s clock drift always rejected. >60s tolerance: replay attack window too wide. Bots reuse old tokens. |
-| 8 | **Token Issuance** — `GET /flash-sale/token` | HMAC secret lives only on server. Client requests token, server signs it. | Secret in APK/IPA binary → decompiled → extracted → bots generate valid tokens. Entire attestation system bypassed. |
-| 9 | **Device Spam** — 25 requests from same device | Sliding window per `device_fp` (FNV hash). Burst = limit × 2 = 20. | IP-based limit: bot farm with 1000 proxies gets 5000 requests. Device-based limit: exactly `burst` per device, regardless of IP count. |
-| 10 | **Mobile Flaky** — 4G→WiFi handoff, OkHttp retries POST | Same idempotency key on retry → 409 Conflict + cached result | OkHttp retries POST silently. Server sees 2 identical requests → 2 orders. User opens app: "Why am I charged twice?" |
-| 11 | **Stock Fragmentation** — Primary bucket empty, others have stock | Sequential bucket fallback: `(primary + i) % N`. Different devices hash to different buckets. | No fallback: user hashes to empty bucket → "sold out" even though other buckets have 9 units each. False negative rate = 10% per bucket. |
+| 1 | Happy path checkout | Full pipeline validates every step atomically | Stock lost on mid-flow failure, no recovery path |
+| 2 | Double-tap from panic | Idempotency key SetNX prevents duplicate orders | Auto-retry creates 2 orders, charges user twice |
+| 3 | 200 users fight for 100 stock | Lua atomic check+decrement eliminates race window | Race → 300% oversell (real incident: 12K cancellations) |
+| 4 | Bot with fake token + 30 spam | HMAC attestation (401) + rate limit burst=20 (429) | Bots drain stock in <1s via 1000-proxy rotation |
+| 5 | 101st user enters waiting room | Sorted set persists across restarts, ZRank for position | In-memory queue lost on deploy; users reconnect aimlessly |
+| 6 | Payment gateway timeout 15s | POST /release returns stock atomically, idempotent | Reserved stock never returned → permanent ghost stock |
+| 7 | Token 31s past expiry | ±30s clock skew tolerance, server-side HMAC verify | 0s tolerance rejects users with 5s clock drift always |
+| 8 | Token issuance endpoint | HMAC secret lives only on server, never in binary | Secret in APK/IPA → decompiled → bots forge valid tokens |
+| 9 | 25 requests from same device | Sliding window per device_fp, burst=20 | IP-based limit bypassed by 1000 proxies → 5000 requests |
+| 10 | Mobile handoff (4G→WiFi), OkHttp retry | Same idempotency key → 409 + cached result | Server sees 2 identical POSTs → 2 orders, 2 charges |
+| 11 | Late admission during queue drain | ZAddNX prevents re-add, ZPopMin admits strictly FIFO | User re-joins with manipulated score to skip the queue |
 
-## What's Still Missing — Production Readiness Gaps
+## Technical Decisions
 
-These are not in scope of the current implementation but would be required for a real production deployment:
-
-| Gap | Priority | What To Build |
-|-----|----------|---------------|
-| **Circuit Breaker** | ✅ Done | `pkg/kit/circuitbreaker/` — 3-failure threshold, 10s reset, half-open probe. Health endpoint reports circuit state. |
-| **Observability** | ✅ Done | `pkg/kit/middleware/metrics.go` — atomic counters + histogram. `GET /flash-sale/metrics`. HTTP duration buckets: 1/5/10/50/100/500/1000/5000ms. |
-| **Dry Run Mode** | ✅ Done | `POST /flash-sale/dry-run` — full pipeline (attestation→rate limit→stock check) without touching real stock. Returns per-step pass/fail + latency. |
-| **Rate Limit Response Headers** | Critical | `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After` headers so clients can back off intelligently |
-| **Distributed Tracing** | High | OpenTelemetry spans across attestation → rate limit → stock → waiting room pipeline stages |
-| **Dead Letter Queue** | High | Events that fail to publish (channel full) should go to DLQ, not just logged and dropped |
-| **Admin Dashboard API** | Medium | `GET /admin/sales/:id/metrics` — real-time remaining stock, queue depth, completed count, rate limit hit rate |
-| **Geo-Distributed Redis** | Medium | Multi-region Redis with CRDT or active-active for flash sales across regions (Jakarta, Singapore, Bangkok) |
-| **CAPTCHA Integration** | Medium | The attestation payload currently doesn't include actual CAPTCHA score. Integrate with reCAPTCHA/hCaptcha for bot detection signal. |
-| **Sale Configuration UI** | Low | Store flash sale config (start time, stock, bucket count, price) in a database so sales can be scheduled without code deploy |
-| **Post-Sale Analytics** | Low | P99 latency, conversion rate (checkout attempts → completed), bot detection rate, stockout time |
+| Decision | Rationale |
+|----------|-----------|
+| Lua atomic stock decrement | Single Redis op eliminates check-decrement race. Prevents oversell without distributed locks or consensus. |
+| Device fingerprint rate limit | Binds limit to device, not IP. 1000-proxy bot farms cannot bypass because the limit follows device identity. |
+| HMAC attestation (local verify) | Server-only secret cannot leak from client binary. ±30s tolerance handles real-world clock drift without widening replay window. |
+| Redis sorted set waiting room | Persistent queue survives restarts. ZRank provides O(log N) real-time position. Scales to millions of users. |
+| SetNX idempotency guard | Atomic lock+cache prevents duplicates from mobile auto-retry. 30s lock covers checkout; cached result avoids re-processing. |
 
 ## Source Code
 
