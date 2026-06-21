@@ -10,6 +10,10 @@ func TestAppError_Error(t *testing.T) {
 	if e.Code != 500 {
 		t.Errorf("expected code 500, got %d", e.Code)
 	}
+	want := "[500] something broke: db down"
+	if got := e.Error(); got != want {
+		t.Errorf("expected %q, got %q", want, got)
+	}
 	if e.Unwrap().Error() != "db down" {
 		t.Errorf("expected wrapped error 'db down', got %v", e.Unwrap())
 	}
@@ -19,5 +23,12 @@ func TestAppError_ErrorNoWrap(t *testing.T) {
 	e := NewAppError(400, "bad input", nil)
 	if e.Unwrap() != nil {
 		t.Error("expected nil wrapped error")
+	}
+	want := "[400] bad input"
+	if got := e.Error(); got != want {
+		t.Errorf("expected %q, got %q", want, got)
+	}
+	if e.Code != 400 {
+		t.Errorf("expected code 400, got %d", e.Code)
 	}
 }

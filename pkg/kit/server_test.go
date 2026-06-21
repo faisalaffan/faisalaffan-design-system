@@ -1,9 +1,9 @@
 package kit
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -20,8 +20,13 @@ func TestNewServer_HealthEndpoint(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", w.Code)
 	}
-	if !strings.Contains(w.Body.String(), `"status"`) {
-		t.Errorf("expected status in response: %s", w.Body.String())
+
+	var resp Response
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to parse response: %v", err)
+	}
+	if resp.Data == nil {
+		t.Error("expected data in response")
 	}
 }
 
