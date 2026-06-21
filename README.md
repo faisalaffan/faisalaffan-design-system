@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/01_LOGO.png" alt="faisalaffan-design-system logo" width="400"/>
+  <img src="assets/01_LOGO.png" alt="faisalaffan-design-system logo" width="200"/>
 </p>
 
 ---
