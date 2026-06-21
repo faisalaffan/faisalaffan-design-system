@@ -31,3 +31,15 @@
 ## 07 Appendix
 - [Design Decisions](07-appendix/design-decisions.md)
 - [References](07-appendix/references.md)
+
+## 08 Q-Commerce
+- [Overview](08-qcommerce/README.md)
+- [Inventory Service](08-qcommerce/inventory-service.md)
+- [Geo Service](08-qcommerce/geo-service.md)
+- [Flash Sale](08-qcommerce/flash-sale.md)
+- [Checkout Service](08-qcommerce/checkout-service.md)
+- [Promo Engine](08-qcommerce/promo-engine.md)
+- [Dispatch Service](08-qcommerce/dispatch-service.md)
+- [ETA Service](08-qcommerce/eta-service.md)
+- [Search Service](08-qcommerce/search-service.md)
+- [Tracking Service](08-qcommerce/tracking-service.md)

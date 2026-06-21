@@ -31,3 +31,15 @@
 ## 07 Lampiran
 - [Keputusan Teknis](07-appendix/design-decisions.md)
 - [Referensi](07-appendix/references.md)
+
+## 08 Q-Commerce
+- [Ikhtisar](08-qcommerce/README.md)
+- [Layanan Inventaris](08-qcommerce/inventory-service.md)
+- [Layanan Geo-Serviceability](08-qcommerce/geo-service.md)
+- [Layanan Flash Sale](08-qcommerce/flash-sale.md)
+- [Layanan Checkout](08-qcommerce/checkout-service.md)
+- [Mesin Promo](08-qcommerce/promo-engine.md)
+- [Layanan Dispatch Order](08-qcommerce/dispatch-service.md)
+- [Layanan Estimasi ETA](08-qcommerce/eta-service.md)
+- [Layanan Pencarian & Katalog](08-qcommerce/search-service.md)
+- [Layanan Pelacakan Real-Time](08-qcommerce/tracking-service.md)
