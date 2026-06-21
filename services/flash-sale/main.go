@@ -42,7 +42,13 @@ func main() {
 	}
 
 	svc := service.New(repo, hmacSecret)
-	h := handler.New(svc)
+
+	// Start background jobs: reaper, waiting room cleanup, admission consumer
+	bgCtx, bgCancel := context.WithCancel(context.Background())
+	defer bgCancel()
+	svc.StartBackgroundJobs(bgCtx, "") // empty productID = scan all
+
+	h := handler.New(svc, repo)
 
 	srv := kit.NewServer(cfg)
 	h.Register(&srv.RouterGroup)

@@ -26,12 +26,16 @@ func (m *mockService) Checkout(ctx context.Context, req model.CheckoutRequest) (
 func (m *mockService) QueueStatus(ctx context.Context, productID, userID string) (*model.QueueStatusResponse, error) {
 	return m.queueStatusFn(ctx, productID, userID)
 }
+func (m *mockService) ReleaseReservation(ctx context.Context, reservationID string) error { return nil }
+func (m *mockService) ConfirmReservation(ctx context.Context, reservationID string) error { return nil }
 
 func setupTest(mock *mockService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	g := gin.New()
-	h := New(mock)
+	h := New(mock, nil) // repo=nil for mock tests
 	g.POST("/flash-sale/checkout", h.Checkout)
+	g.POST("/flash-sale/release", h.Release)
+	g.POST("/flash-sale/confirm", h.Confirm)
 	g.GET("/flash-sale/queue-status", h.QueueStatus)
 	return g
 }
@@ -59,7 +63,7 @@ func TestCheckout_Success(t *testing.T) {
 
 	w := postJSON(t, g, "/flash-sale/checkout", model.CheckoutRequest{
 		ProductID: "prod-1", UserID: "user-1", DeviceFP: "fp-abc",
-		Attestation: "tok", ExpiresAt: 2000000000, Quantity: 1,
+		Attestation: "tok", ExpiresAt: 2000000000, Quantity: 1, IdempotencyKey: "idem-test-1",
 	})
 
 	if w.Code != http.StatusOK {
@@ -106,7 +110,7 @@ func TestCheckout_RateLimited(t *testing.T) {
 
 	w := postJSON(t, g, "/flash-sale/checkout", model.CheckoutRequest{
 		ProductID: "prod-1", UserID: "user-1", DeviceFP: "fp-abc",
-		Attestation: "tok", ExpiresAt: 2000000000, Quantity: 1,
+		Attestation: "tok", ExpiresAt: 2000000000, Quantity: 1, IdempotencyKey: "idem-test-1",
 	})
 
 	if w.Code != http.StatusTooManyRequests {
@@ -124,7 +128,7 @@ func TestCheckout_Queued(t *testing.T) {
 
 	w := postJSON(t, g, "/flash-sale/checkout", model.CheckoutRequest{
 		ProductID: "prod-1", UserID: "user-1", DeviceFP: "fp-abc",
-		Attestation: "tok", ExpiresAt: 2000000000, Quantity: 1,
+		Attestation: "tok", ExpiresAt: 2000000000, Quantity: 1, IdempotencyKey: "idem-test-1",
 	})
 
 	if w.Code != http.StatusOK {
