@@ -1,29 +1,29 @@
-# References
+# Referensi
 
-The following resources informed the design and implementation of this project.
+Sumber daya berikut menginformasikan desain dan implementasi proyek ini.
 
-## Books
+## Buku
 
-1. **Alex Xu** — *System Design Interview: An Insider's Guide* (2nd Edition), 2021. Chapters 4-15 provide the problem statements and high-level designs that this project implements as working Go services.
+1. **Alex Xu** -- *System Design Interview: An Insider's Guide* (Edisi 2), 2021. Bab 4-15 menyediakan pernyataan masalah dan desain tingkat tinggi yang diimplementasikan proyek ini sebagai layanan Go yang berfungsi.
 
-2. **Martin Kleppmann** — *Designing Data-Intensive Applications: The Big Ideas Behind Reliable, Scalable, and Maintainable Systems*. O'Reilly Media, 2017. Background theory on consistency models, partitioning, replication, and distributed systems trade-offs that underlie the design decisions in each service.
+2. **Martin Kleppmann** -- *Designing Data-Intensive Applications: The Big Ideas Behind Reliable, Scalable, and Maintainable Systems*. O'Reilly Media, 2017. Teori latar belakang tentang model konsistensi, partisi, replikasi, dan trade-off sistem terdistribusi yang mendasari keputusan desain di setiap layanan.
 
-## Official Documentation
+## Dokumentasi Resmi
 
-3. **Go Standard Library** — <https://pkg.go.dev/std>. Used extensively across all services: `net/http`, `sync`, `encoding/json`, `container/heap` (for top-K in search-autocomplete), `crypto/sha256` (for deduplication in web-crawler), and `hash/crc32` (for consistent hashing).
+3. **Go Standard Library** -- <https://pkg.go.dev/std>. Digunakan secara ekstensif di semua layanan: `net/http`, `sync`, `encoding/json`, `container/heap` (untuk top-K di search-autocomplete), `crypto/sha256` (untuk deduplikasi di web-crawler), dan `hash/crc32` (untuk consistent hashing).
 
-## Frameworks and Libraries
+## Framework dan Pustaka
 
-4. **Gin Gonic** — <https://github.com/gin-gonic/gin>. HTTP framework used by all services. Provides routing, middleware chaining, request binding, and JSON rendering.
+4. **Gin Gonic** -- <https://github.com/gin-gonic/gin>. Framework HTTP yang digunakan oleh semua layanan. Menyediakan routing, middleware chaining, request binding, dan rendering JSON.
 
-5. **gorilla/websocket** — <https://github.com/gorilla/websocket>. WebSocket implementation used by the chat system for persistent bidirectional connections.
+5. **gorilla/websocket** -- <https://github.com/gorilla/websocket>. Implementasi WebSocket yang digunakan oleh chat system untuk koneksi dua arah yang persisten.
 
-6. **golang.org/x/net/html** — Official Go extended library for HTML parsing, used by the web crawler for link extraction during BFS traversal.
+6. **golang.org/x/net/html** -- Pustaka ekstensi Go resmi untuk parsing HTML, digunakan oleh web crawler untuk ekstraksi tautan selama traversal BFS.
 
-## Patterns and Algorithms
+## Pola dan Algoritma
 
-7. **Snowflake ID** — Twitter's distributed unique ID generation algorithm. Described in the Snowflake blog post (2010) and widely referenced across system design literature.
+7. **Snowflake ID** -- Algoritma pembuatan ID unik terdistribusi Twitter. Dijelaskan dalam posting blog Snowflake (2010) dan banyak dirujuk di seluruh literatur desain sistem.
 
-8. **Consistent Hashing** — Originally described by David Karger et al. (1997) for use in distributed caching. Extended with virtual nodes in the Amazon Dynamo paper (2007).
+8. **Consistent Hashing** -- Awalnya dijelaskan oleh David Karger dkk. (1997) untuk digunakan dalam caching terdistribusi. Diperluas dengan virtual node dalam makalah Amazon Dynamo (2007).
 
-9. **Sliding Window Algorithm** — Rate limiting approach described in the system design literature as an improvement over fixed-window counters, providing smoother request rate enforcement.
+9. **Sliding Window Algorithm** -- Pendekatan rate limiting yang dijelaskan dalam literatur desain sistem sebagai peningkatan dari penghitung fixed-window, menyediakan penegakan tingkat permintaan yang lebih halus.

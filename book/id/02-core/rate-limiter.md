@@ -1,8 +1,8 @@
 # Rate Limiter
 
-Pluggable algorithm interface with three implementations (sliding window, token bucket, fixed window) and an optional storage interface backed by an in-memory store. Exposed as a Gin middleware via `pkg/kit/middleware`.
+Antarmuka algoritma yang dapat dipasang dengan tiga implementasi (sliding window, token bucket, fixed window) dan antarmuka penyimpanan opsional yang didukung oleh penyimpanan in-memory. Diekspos sebagai middleware Gin melalui `pkg/kit/middleware`.
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -47,11 +47,11 @@ type Algorithm interface {
 }
 ```
 
-All algorithms track state per-key (typically the client IP). `Allow` returns `true` if the request is within the limit and `false` if rate-limited.
+Semua algoritma melacak status per-kunci (biasanya IP klien). `Allow` mengembalikan `true` jika permintaan dalam batas dan `false` jika rate-limited.
 
 ### Sliding Window (default)
 
-Tracks a slice of nanosecond timestamps per key. Old entries outside the window are pruned on each call. Provides the most accurate window boundaries.
+Melacak irisan timestamp nanodetik per kunci. Entri lama di luar jendela dipangkas pada setiap panggilan. Memberikan batas jendela yang paling akurat.
 
 ```go
 func (sw *SlidingWindow) Allow(key string, limit int, window time.Duration) bool {
@@ -82,7 +82,7 @@ func (sw *SlidingWindow) Allow(key string, limit int, window time.Duration) bool
 
 ### Token Bucket
 
-Each key has a token pool that refills continuously at `rate = limit / window.Seconds()`. Bursts up to `limit` are allowed.
+Setiap kunci memiliki kumpulan token yang diisi ulang secara terus-menerus pada `rate = limit / window.Seconds()`. Lonjakan hingga `limit` diizinkan.
 
 ```go
 func (tb *TokenBucket) Allow(key string, limit int, window time.Duration) bool {
@@ -109,7 +109,7 @@ func (tb *TokenBucket) Allow(key string, limit int, window time.Duration) bool {
 
 ### Fixed Window
 
-Aligns windows to wall-clock boundaries (e.g., 0:00--1:00, 1:00--2:00). Simpler but allows double traffic at boundaries.
+Menyelaraskan jendela ke batas wall-clock (mis., 0:00--1:00, 1:00--2:00). Lebih sederhana tetapi memungkinkan lalu lintas ganda di batas.
 
 ```go
 func (fw *FixedWindow) Allow(key string, limit int, window time.Duration) bool {
@@ -132,7 +132,7 @@ func (fw *FixedWindow) Allow(key string, limit int, window time.Duration) bool {
 
 ## Storage Interface
 
-Optional persistence layer for external rate-limit state (e.g., Redis).
+Lapisan persistensi opsional untuk status rate-limit eksternal (mis., Redis).
 
 ```go
 type Store interface {
@@ -142,11 +142,11 @@ type Store interface {
 }
 ```
 
-The default `MemoryStore` uses TTL-based expiration per entry.
+`MemoryStore` default menggunakan kedaluwarsa berbasis TTL per entri.
 
 ## Gin Middleware
 
-Bridged through `pkg/kit/middleware` as `RateLimitPerSecond`:
+Dijembatani melalui `pkg/kit/middleware` sebagai `RateLimitPerSecond`:
 
 ```go
 srv.GET("/limited", kitmw.RateLimitPerSecond(algo, 5), func(c *gin.Context) {
@@ -154,20 +154,20 @@ srv.GET("/limited", kitmw.RateLimitPerSecond(algo, 5), func(c *gin.Context) {
 })
 ```
 
-Key extracted from `c.ClientIP()`. Returns 429 Too Many Requests when exceeded.
+Kunci diekstrak dari `c.ClientIP()`. Mengembalikan 429 Too Many Requests ketika terlampaui.
 
 ## Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |---|---|---|
-| `GET` | `/limited` | Rate-limited route (default: 5 req/s) |
-| `GET` | `/unlimited` | No rate limit applied |
-| `POST` | `/admin/reset` | Reset rate limit for a specific IP |
+| `GET` | `/limited` | Rute dengan rate limit (default: 5 req/s) |
+| `GET` | `/unlimited` | Tidak ada rate limit |
+| `POST` | `/admin/reset` | Mengatur ulang rate limit untuk IP tertentu |
 
-## Technical Decisions
+## Keputusan Teknis
 
-- **Sliding window as default**: Best accuracy for rate limiting. Fixed window has boundary bias; token bucket allows short bursts. Sliding window provides the most predictable behavior for most use cases.
-- **Nanosecond precision**: `time.Now().UnixNano()` avoids collision artifacts that millisecond precision can cause under high concurrency within a single second.
-- **Per-key maps with mutexes**: In-process maps keep the implementation self-contained with zero external dependencies. Contention is negligible for typical per-IP granularity (one goroutine per request).
-- **Algorithm interface as the seam**: New algorithms (e.g., sliding window counter from Redis) can be added by implementing `Allow(key, limit, window)`. No middleware or handler code changes.
-- **Storage interface for production use**: The algorithm state is ephemeral. Production deployments swap `MemoryStore` for Redis using the `Store` interface, making rate limits survive restarts and scale across instances.
+- **Sliding window sebagai default**: Akurasi terbaik untuk rate limiting. Fixed window memiliki bias batas; token bucket memungkinkan lonjakan pendek. Sliding window memberikan perilaku paling dapat diprediksi untuk sebagian besar kasus penggunaan.
+- **Presisi nanodetik**: `time.Now().UnixNano()` menghindari artefak collision yang dapat disebabkan oleh presisi milidetik di bawah konkurensi tinggi dalam satu detik.
+- **Map per-kunci dengan mutex**: Map dalam proses menjaga implementasi tetap mandiri dengan nol dependensi eksternal. Kontensi dapat diabaikan untuk granularitas per-IP yang tipikal (satu goroutine per permintaan).
+- **Algorithm interface sebagai titik sambung**: Algoritma baru (mis., sliding window counter dari Redis) dapat ditambahkan dengan mengimplementasikan `Allow(key, limit, window)`. Tidak ada perubahan pada kode middleware atau handler.
+- **Storage interface untuk penggunaan produksi**: Status algoritma bersifat sementara. Deployment produksi mengganti `MemoryStore` dengan Redis menggunakan interface `Store`, membuat rate limit bertahan dari restart dan berskala lintas instance.

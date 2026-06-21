@@ -1,12 +1,12 @@
 # Web Crawler
 
-BFS-based web crawler using goroutine workers for concurrent page fetching. Implements politeness delay, URL deduplication, and HTML link extraction via `golang.org/x/net/html`.
+Web crawler berbasis BFS menggunakan worker goroutine untuk pengambilan halaman konkuren. Mengimplementasikan politeness delay, deduplikasi URL, dan ekstraksi tautan HTML melalui `golang.org/x/net/html`.
 
-Port **8088** | Package `web-crawler/`
+Port **8088** | Paket `web-crawler/`
 
 ---
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -41,7 +41,7 @@ flowchart TD
 
 ### Crawl Loop
 
-The crawler uses a BFS approach: a buffered channel serves as the URL frontier, visited URLs are tracked in a thread-safe set, and multiple worker goroutines consume from the frontier in parallel.
+Crawler menggunakan pendekatan BFS: channel buffer berfungsi sebagai URL frontier, URL yang sudah dikunjungi dilacak dalam set thread-safe, dan beberapa goroutine worker mengonsumsi dari frontier secara paralel.
 
 ```go
 func (c *Crawler) run(id string) {
@@ -91,7 +91,7 @@ func (c *Crawler) run(id string) {
 }
 ```
 
-### URL Fetch with Politeness
+### URL Fetch dengan Politeness
 
 ```go
 func (c *Crawler) fetch(rawURL string) *PageResult {
@@ -120,7 +120,7 @@ func (c *Crawler) fetch(rawURL string) *PageResult {
 }
 ```
 
-### HTML Link Extraction
+### Ekstraksi Tautan HTML
 
 ```go
 func extractLinks(base *url.URL, htmlStr string) []string {
@@ -159,10 +159,10 @@ func extractLinks(base *url.URL, htmlStr string) []string {
 
 ## API Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |--------|------|-------------|
-| `POST` | `/crawl` | Start a new crawl job (body: `url`, `max_pages`) |
-| `GET` | `/crawl/:id` | Get crawl job result with all crawled pages |
+| `POST` | `/crawl` | Memulai pekerjaan crawl baru (body: `url`, `max_pages`) |
+| `GET` | `/crawl/:id` | Mendapatkan hasil pekerjaan crawl dengan semua halaman yang sudah di-crawl |
 
 ### POST /crawl
 
@@ -208,33 +208,33 @@ Response:
 
 ---
 
-## Technical Decisions
+## Keputusan Teknis
 
-### BFS via Channel Frontier
+### BFS melalui Channel Frontier
 
-The URL frontier is a buffered Go channel acting as a BFS queue. Worker goroutines consume from it and enqueue newly discovered links, respecting the `maxPages` cap.
+URL frontier adalah channel Go buffer yang bertindak sebagai antrean BFS. Goroutine worker mengonsumsinya dan mengantrekan tautan yang baru ditemukan, menghormati batas `maxPages`.
 
 ### Politeness Delay
 
-A configurable `time.Sleep(c.delay)` before each HTTP GET prevents overwhelming target servers. Default is 1 second, configurable via the `CRAWL_DELAY_MS` environment variable.
+`time.Sleep(c.delay)` yang dapat dikonfigurasi sebelum setiap HTTP GET mencegah membanjiri server target. Default adalah 1 detik, dapat dikonfigurasi melalui variabel lingkungan `CRAWL_DELAY_MS`.
 
-### URL Deduplication
+### Deduplikasi URL
 
-A `visitedURLs` struct wraps a `map[string]struct{}` with a mutex. `tryVisit()` atomically checks and marks a URL, returning `false` if already visited -- this prevents both duplicate fetches and infinite loops.
+Struct `visitedURLs` membungkus `map[string]struct{}` dengan mutex. `tryVisit()` secara atomik memeriksa dan menandai URL, mengembalikan `false` jika sudah dikunjungi -- ini mencegah pengambilan duplikat dan loop tak terbatas.
 
 ### Worker Pool
 
-Three goroutines consume from the frontier channel concurrently. The `sync.WaitGroup` ensures all workers finish before the job is marked complete. After a 2-second drain period, the queue is closed to signal workers to stop.
+Tiga goroutine mengonsumsi dari channel frontier secara konkuren. `sync.WaitGroup` memastikan semua pekerja selesai sebelum pekerjaan ditandai selesai. Setelah periode drain 2 detik, antrean ditutup untuk memberi sinyal pekerja berhenti.
 
-### Response Body Limit
+### Batas Body Response
 
-`io.LimitReader(resp.Body, 1<<20)` caps each response at 1 MB to prevent unbounded memory usage on large pages.
+`io.LimitReader(resp.Body, 1<<20)` membatasi setiap respons pada 1 MB untuk mencegah penggunaan memori tak terbatas pada halaman besar.
 
 ---
 
-## Key Files
+## File Kunci
 
-| File | Purpose |
+| File | Tujuan |
 |------|---------|
-| `crawler/crawler.go` | Crawler engine: BFS loop, HTTP fetch, HTML parsing |
-| `handler/handler.go` | HTTP handlers for starting and querying crawl jobs |
+| `crawler/crawler.go` | Engine crawler: loop BFS, HTTP fetch, parsing HTML |
+| `handler/handler.go` | HTTP handlers untuk memulai dan menanyakan pekerjaan crawl |

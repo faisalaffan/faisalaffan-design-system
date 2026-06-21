@@ -1,12 +1,12 @@
 # News Feed
 
-Fan-out on write timeline system. When a user creates a post, it is immediately pushed into the timelines of all their followers.
+Sistem timeline fan-out on write. Ketika pengguna membuat postingan, postingan tersebut segera didorong ke timeline semua pengikutnya.
 
-Port **8087** | Package `news-feed/`
+Port **8087** | Paket `news-feed/`
 
 ---
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -37,7 +37,7 @@ flowchart LR
 
 ### Fan-Out on Write
 
-When a user creates a post, the system iterates over all users, checks who follows the poster, and prepends the post to each follower's timeline. The poster's own timeline also receives the post.
+Ketika pengguna membuat postingan, sistem mengiterasi semua pengguna, memeriksa siapa yang mengikuti poster, dan menambahkan postingan ke awal timeline setiap pengikut. Timeline poster sendiri juga menerima postingan tersebut.
 
 ```go
 func (s *MemoryStore) CreatePost(userID, content string) *Post {
@@ -71,13 +71,13 @@ func (s *MemoryStore) CreatePost(userID, content string) *Post {
 
 ## API Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |--------|------|-------------|
-| `POST` | `/users` | Create a user (body: `{"id": "alice"}`) |
-| `POST` | `/posts` | Create a post (body: `{"user_id": "...", "content": "..."}`) |
-| `POST` | `/follow` | Follow a user (body: `{"follower_id": "...", "followee_id": "..."}`) |
-| `GET` | `/timeline?user=X&offset=0&limit=20` | Get paginated timeline for a user |
-| `GET` | `/users/:id/posts` | Get all posts by a specific user |
+| `POST` | `/users` | Membuat pengguna (body: `{"id": "alice"}`) |
+| `POST` | `/posts` | Membuat postingan (body: `{"user_id": "...", "content": "..."}`) |
+| `POST` | `/follow` | Mengikuti pengguna (body: `{"follower_id": "...", "followee_id": "..."}`) |
+| `GET` | `/timeline?user=X&offset=0&limit=20` | Mendapatkan timeline terpaginasikan untuk pengguna |
+| `GET` | `/users/:id/posts` | Mendapatkan semua postingan oleh pengguna tertentu |
 
 ### POST /follow
 
@@ -101,29 +101,29 @@ func (s *MemoryStore) CreatePost(userID, content string) *Post {
 
 ---
 
-## Technical Decisions
+## Keputusan Teknis
 
 ### Fan-Out on Write vs. on Read
 
-| Approach | Trade-off |
+| Pendekatan | Trade-off |
 |----------|-----------|
-| **Fan-out on write** (chosen) | Fast reads, slow writes. Post is written once, then copied to N follower timelines at write time. Suitable for systems with high read-to-write ratio. |
-| Fan-out on read | Slow reads, fast writes. Post is fetched and merged from followed users at read time. Better for users with very large followings (celebrities). |
+| **Fan-out on write** (dipilih) | Baca cepat, tulis lambat. Postingan ditulis sekali, lalu disalin ke N timeline pengikut pada saat menulis. Cocok untuk sistem dengan rasio baca-terhadap-tulis yang tinggi. |
+| Fan-out on read | Baca lambat, tulis cepat. Postingan diambil dan digabungkan dari pengguna yang diikuti pada saat membaca. Lebih baik untuk pengguna dengan banyak pengikut (selebritas). |
 
-This implementation uses fan-out on write. A hybrid approach (fan-out to regular users on write, pull for celebrities on read) would be the next step for production scale.
+Implementasi ini menggunakan fan-out on write. Pendekatan hibrida (fan-out ke pengguna biasa pada saat menulis, pull untuk selebritas pada saat membaca) akan menjadi langkah selanjutnya untuk skala produksi.
 
-### Data Model
+### Model Data
 
 ```
 users:      map[string]*User              # userID → User
-posts:      map[string][]*Post             # userID → posts (author's own)
+posts:      map[string][]*Post             # userID → posts (milik penulis)
 follows:    map[string]map[string]bool     # followerID → set of followeeIDs
-timeline:   map[string][]*Post             # userID → timeline (pre-computed feed)
+timeline:   map[string][]*Post             # userID → timeline (feed pra-komputasi)
 ```
 
 ### Pagination
 
-Timeline reads support `offset` and `limit` query parameters for cursor-free offset-based pagination:
+Pembacaan timeline mendukung parameter kueri `offset` dan `limit` untuk pagination berbasis offset tanpa cursor:
 
 ```go
 func (s *MemoryStore) GetTimeline(userID string, offset, limit int) []*Post {
@@ -141,15 +141,15 @@ func (s *MemoryStore) GetTimeline(userID string, offset, limit int) []*Post {
 }
 ```
 
-### Consistency
+### Konsistensi
 
-All mutations are serialised via `sync.RWMutex`. Timeline reads use `RLock` for concurrent reads. Write locks ensure no timeline is partially updated when a post fans out.
+Semua mutasi diserialisasikan melalui `sync.RWMutex`. Pembacaan timeline menggunakan `RLock` untuk pembacaan konkuren. Kunci tulis memastikan tidak ada timeline yang diperbarui sebagian ketika sebuah postingan melakukan fan-out.
 
 ---
 
-## Key Files
+## File Kunci
 
-| File | Purpose |
+| File | Tujuan |
 |------|---------|
-| `store/store.go` | In-memory data model, fan-out logic, paginated reads |
-| `handler/handler.go` | HTTP handlers for users, posts, follow, timeline |
+| `store/store.go` | Model data in-memory, logika fan-out, pembacaan terpaginasikan |
+| `handler/handler.go` | HTTP handlers untuk pengguna, postingan, follow, timeline |

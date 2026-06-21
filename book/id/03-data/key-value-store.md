@@ -1,8 +1,8 @@
 # Key-Value Store
 
-Consistent-hashing-backed distributed key-value store. The `shard.Manager` uses `pkg/consistenthash` to map keys to nodes, with an in-memory store per shard.
+Penyimpanan key-value terdistribusi berbasis consistent hashing. `shard.Manager` menggunakan `pkg/consistenthash` untuk memetakan kunci ke node, dengan penyimpanan in-memory per shard.
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -36,15 +36,15 @@ flowchart TB
     end
 ```
 
-The shard manager receives every key operation, hashes the key via `crc32`, locates the responsible vNode on the hash ring via binary search, and delegates to the corresponding shard's in-memory store.
+Shard manager menerima setiap operasi kunci, melakukan hash kunci melalui `crc32`, menemukan vNode yang bertanggung jawab pada hash ring melalui binary search, dan mendelegasikan ke penyimpanan in-memory shard yang sesuai.
 
 ## Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |---|---|---|
-| `GET` | `/:key` | Retrieve value for a key |
-| `PUT` | `/:key` | Store a value (raw request body) |
-| `DELETE` | `/:key` | Delete a key |
+| `GET` | `/:key` | Mengambil nilai untuk sebuah kunci |
+| `PUT` | `/:key` | Menyimpan nilai (raw request body) |
+| `DELETE` | `/:key` | Menghapus sebuah kunci |
 
 ### PUT /my-key
 
@@ -99,17 +99,17 @@ func (m *Manager) getShard(key string) storage.Store {
 }
 ```
 
-Every `Get`, `Put`, and `Delete` call resolves the key to a shard through `getShard`. Adding or removing a node only remaps keys proportional to the node's share of the ring (K/N keys for N nodes) -- the minimal re-mapping property of consistent hashing.
+Setiap panggilan `Get`, `Put`, dan `Delete` menyelesaikan kunci ke shard melalui `getShard`. Menambah atau menghapus node hanya memetakan ulang kunci secara proporsional dengan bagian node dari ring (kunci K/N untuk N node) -- properti pemetaan ulang minimal dari consistent hashing.
 
-### Node Configuration
+### Konfigurasi Node
 
-Nodes are configured via the `KV_NODES` environment variable as a comma-separated list:
+Node dikonfigurasi melalui variabel lingkungan `KV_NODES` sebagai daftar yang dipisahkan koma:
 
 ```bash
 KV_NODES=node-a,node-b,node-c go run ./services/key-value-store
 ```
 
-When the variable is empty, a single `default` node is used.
+Ketika variabel kosong, satu node `default` digunakan.
 
 ## Storage Interface
 
@@ -121,12 +121,12 @@ type Store interface {
 }
 ```
 
-The default `MemoryStore` uses `sync.RWMutex` with a `map[string]string`. Reads acquire a read lock (concurrent), writes acquire a write lock (exclusive).
+`MemoryStore` default menggunakan `sync.RWMutex` dengan `map[string]string`. Operasi baca memperoleh read lock (konkuren), operasi tulis memperoleh write lock (eksklusif).
 
-## Technical Decisions
+## Keputusan Teknis
 
-- **Consistent hashing over modulo N**: Modulo N requires rehashing every key when a node is added or removed. Consistent hashing only moves K/N keys. This is critical for production where node membership changes regularly (rolling deploys, autoscaling).
-- **150 vNodes per node**: Matches the `pkg/consistenthash` default. 150 provides uniform distribution across the ring while keeping the sorted key slice small (~150 * 10 = 1,500 entries) for fast binary search.
-- **Raw body PUT**: The request body is stored as-is without JSON parsing. This makes the store agnostic to data format -- it can hold JSON, plain text, serialized protobuf, or any byte string.
-- **No TTL / expiration**: The initial implementation is a plain key-value map. TTL can be added at the storage layer without changing the shard manager or handler.
-- **Shard-local memory stores**: Each shard is an isolated `sync.RWMutex`-guarded map. There is no cross-shard communication, replication, or consensus. Production deployments would replace `MemoryStore` with a persistent storage engine (RocksDB, SQLite) or a replicated store (Redis Cluster, etcd).
+- **Consistent hashing dibanding modulo N**: Modulo N membutuhkan hashing ulang setiap kunci ketika node ditambah atau dihapus. Consistent hashing hanya memindahkan kunci K/N. Ini penting untuk produksi di mana keanggotaan node berubah secara teratur (rolling deploy, autoscaling).
+- **150 vNodes per node**: Sesuai dengan default `pkg/consistenthash`. 150 memberikan distribusi seragam di seluruh ring sambil menjaga irisan kunci terurut tetap kecil (~150 * 10 = 1.500 entri) untuk binary search yang cepat.
+- **Raw body PUT**: Body permintaan disimpan apa adanya tanpa parsing JSON. Ini membuat penyimpanan agnostik terhadap format data -- dapat menyimpan JSON, teks biasa, protobuf serial, atau string byte apa pun.
+- **Tanpa TTL / kedaluwarsa**: Implementasi awal adalah map key-value biasa. TTL dapat ditambahkan di lapisan penyimpanan tanpa mengubah shard manager atau handler.
+- **Penyimpanan memori lokal shard**: Setiap shard adalah map yang dilindungi `sync.RWMutex` yang terisolasi. Tidak ada komunikasi lintas-shard, replikasi, atau konsensus. Deployment produksi akan mengganti `MemoryStore` dengan engine penyimpanan persisten (RocksDB, SQLite) atau penyimpanan tereplikasi (Redis Cluster, etcd).

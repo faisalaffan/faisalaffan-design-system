@@ -1,12 +1,12 @@
 # Google Drive
 
-File and folder hierarchy with immutable version history and user-level sharing permissions.
+Hierarki file dan folder dengan riwayat versi immutable dan izin berbagi tingkat pengguna.
 
-Port **8090** | Package `google-drive/`
+Port **8090** | Paket `google-drive/`
 
 ---
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -46,9 +46,9 @@ sequenceDiagram
     Handler-->>Client: {children: [...]}
 ```
 
-### Immutable Version History
+### Riwayat Versi Immutable
 
-Each file update appends a new version instead of overwriting. The full history is preserved and queryable:
+Setiap pembaruan file menambahkan versi baru alih-alih menimpa. Seluruh riwayat dipertahankan dan dapat ditanyakan:
 
 ```go
 type FileVersion struct {
@@ -81,9 +81,9 @@ func (s *MemoryStore) UpdateFile(id string, content []byte) (*File, error) {
 }
 ```
 
-### Folder Hierarchy
+### Hirarki Folder
 
-Files and folders form a tree via `parentID`. A `folderChildren` map tracks child membership for efficient listing:
+File dan folder membentuk pohon melalui `parentID`. Map `folderChildren` melacak keanggotaan anak untuk pencatatan yang efisien:
 
 ```go
 type Folder struct {
@@ -109,7 +109,7 @@ func (s *MemoryStore) GetFolderChildren(folderID string) []interface{} {
 }
 ```
 
-### Sharing Permissions
+### Izin Berbagi
 
 ```go
 func (s *MemoryStore) ShareFile(fileID, userID, permission string) error {
@@ -126,17 +126,17 @@ func (s *MemoryStore) ShareFile(fileID, userID, permission string) error {
 
 ## API Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |--------|------|-------------|
-| `POST` | `/files?name=N&owner_id=O&parent_id=P` | Create a new file (body: raw content or multipart) |
-| `GET` | `/files/:id` | Get file metadata and content size |
-| `GET` | `/files/:id/download` | Download raw file content |
-| `PUT` | `/files/:id` | Update file content (appends a new version) |
-| `DELETE` | `/files/:id` | Delete file and all versions |
-| `GET` | `/files/:id/versions` | List all versions of a file |
-| `POST` | `/files/:id/share` | Share file with a user (body: user_id, permission) |
-| `POST` | `/folders` | Create a folder (body: name, owner_id, parent_id) |
-| `GET` | `/folders/:id/children` | List files and sub-folders in a folder |
+| `POST` | `/files?name=N&owner_id=O&parent_id=P` | Membuat file baru (body: raw content atau multipart) |
+| `GET` | `/files/:id` | Mendapatkan metadata file dan ukuran konten |
+| `GET` | `/files/:id/download` | Mengunduh konten file mentah |
+| `PUT` | `/files/:id` | Memperbarui konten file (menambahkan versi baru) |
+| `DELETE` | `/files/:id` | Menghapus file dan semua versi |
+| `GET` | `/files/:id/versions` | Mendaftar semua versi file |
+| `POST` | `/files/:id/share` | Berbagi file dengan pengguna (body: user_id, permission) |
+| `POST` | `/folders` | Membuat folder (body: name, owner_id, parent_id) |
+| `GET` | `/folders/:id/children` | Mendaftar file dan sub-folder dalam folder |
 
 ### POST /files/:id/share
 
@@ -147,7 +147,7 @@ func (s *MemoryStore) ShareFile(fileID, userID, permission string) error {
 }
 ```
 
-Permission values: `"read"` or `"write"`.
+Nilai izin: `"read"` atau `"write"`.
 
 ### POST /folders
 
@@ -172,37 +172,37 @@ Permission values: `"read"` or `"write"`.
 
 ---
 
-## Technical Decisions
+## Keputusan Teknis
 
-### Immutable Version History
+### Riwayat Versi Immutable
 
-Every `PUT /files/:id` appends a new `FileVersion` rather than mutating the previous one. This means:
+Setiap `PUT /files/:id` menambahkan `FileVersion` baru daripada mengubah yang sebelumnya. Ini berarti:
 
-- **Full audit trail**: all previous content is recoverable.
-- **Time travel**: clients can fetch any historical version.
-- **Storage cost**: grows linearly with update count. Production systems would add compaction policies or retention limits.
+- **Jejak audit lengkap**: semua konten sebelumnya dapat dipulihkan.
+- **Time travel**: klien dapat mengambil versi historis mana pun.
+- **Biaya penyimpanan**: tumbuh secara linear dengan jumlah pembaruan. Sistem produksi akan menambahkan kebijakan kompaksi atau batas retensi.
 
-### File and Folder Unification
+### Unifikasi File dan Folder
 
-The handler returns both files and folders from `GetFolderChildren`. Internally they are stored in separate maps, but the API presents a unified view -- similar to how Google Drive treats folders as a special file type.
+Handler mengembalikan file dan folder dari `GetFolderChildren`. Secara internal mereka disimpan dalam map terpisah, tetapi API menyajikan tampilan terpadu -- mirip dengan cara Google Drive memperlakukan folder sebagai tipe file khusus.
 
-### Permission Model
+### Model Izin
 
-Permissions are stored as a `map[string]string` on each file (`userID -> "read"|"write"`). This is a flat access control list (ACL). Production systems layer on:
+Izin disimpan sebagai `map[string]string` pada setiap file (`userID -> "read"|"write"`). Ini adalah daftar kontrol akses (ACL) datar. Sistem produksi menambahkan:
 
-- **Inheritance**: children inherit parent folder permissions.
-- **Groups**: permissions assigned to groups rather than individual users.
-- **Owner-only delete**: only the file owner can delete.
+- **Warisan**: anak mewarisi izin folder induk.
+- **Grup**: izin ditetapkan ke grup daripada pengguna individu.
+- **Hapus khusus pemilik**: hanya pemilik file yang dapat menghapus.
 
-### Content Storage
+### Penyimpanan Konten
 
-File content and metadata are stored separately. The `fileData` map holds the versioned content while the `files` map holds the metadata. In production, content would be stored in an object store (S3, GCS) with metadata in a relational database.
+Konten file dan metadata disimpan secara terpisah. Map `fileData` menyimpan konten berversi sementara map `files` menyimpan metadata. Dalam produksi, konten akan disimpan di object store (S3, GCS) dengan metadata di basis data relasional.
 
 ---
 
-## Key Files
+## File Kunci
 
-| File | Purpose |
+| File | Tujuan |
 |------|---------|
-| `store/store.go` | File, Folder, FileVersion models; CRUD; version history; sharing |
-| `handler/handler.go` | HTTP handlers for files, folders, versions, sharing, download |
+| `store/store.go` | Model File, Folder, FileVersion; CRUD; riwayat versi; berbagi |
+| `handler/handler.go` | HTTP handlers untuk file, folder, versi, berbagi, unduh |

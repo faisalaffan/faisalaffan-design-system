@@ -1,12 +1,12 @@
 # Chat System
 
-WebSocket-based real-time chat with room management, goroutine event loop, and message history using a ring buffer.
+Chat real-time berbasis WebSocket dengan manajemen ruangan, event loop goroutine, dan riwayat pesan menggunakan ring buffer.
 
-Port **8082** | Package `chat-system/`
+Port **8082** | Paket `chat-system/`
 
 ---
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -43,7 +43,7 @@ sequenceDiagram
 
 ### Room Event Loop
 
-The `Room.run()` goroutine serialises all state mutations through three channels, eliminating concurrent-write issues without fine-grained locking in the hot path.
+Goroutine `Room.run()` melakukan serialisasi semua mutasi status melalui tiga channel, menghilangkan masalah tulis konkuren tanpa penguncian berbutir halus di jalur panas.
 
 ```go
 func (r *Room) run() {
@@ -88,13 +88,13 @@ func (r *Room) run() {
 
 ## API Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |--------|------|-------------|
-| `GET` | `/ws?room=R&user=U` | Upgrade to WebSocket in room R as user U |
-| `GET` | `/api/rooms` | List all rooms and their client counts |
-| `GET` | `/api/rooms/:room/messages` | Get message history for a room |
+| `GET` | `/ws?room=R&user=U` | Upgrade ke WebSocket di ruang R sebagai pengguna U |
+| `GET` | `/api/rooms` | Mendaftar semua ruangan dan jumlah klien mereka |
+| `GET` | `/api/rooms/:room/messages` | Mendapatkan riwayat pesan untuk sebuah ruangan |
 
-### WebSocket Message Format
+### Format Pesan WebSocket
 
 ```json
 {
@@ -107,18 +107,18 @@ func (r *Room) run() {
 
 ---
 
-## Technical Decisions
+## Keputusan Teknis
 
-### Goroutine-Based Event Loop
+### Event Loop Berbasis Goroutine
 
-Each room runs a dedicated goroutine with three channels (`join`, `leave`, `broadcast`). This actor-model pattern provides:
+Setiap ruangan menjalankan goroutine khusus dengan tiga channel (`join`, `leave`, `broadcast`). Pola actor-model ini menyediakan:
 
-- **Serialised access**: all room state mutations go through the select loop, so no mutex is needed in the broadcast path (though a `sync.RWMutex` guards `history` reads from the REST endpoint).
-- **Non-blocking send**: the `select` + `default` pattern on `c.Send` drops slow clients instead of blocking the broadcast loop.
+- **Akses terserialisasi**: semua mutasi status ruangan melalui select loop, sehingga tidak diperlukan mutex di jalur broadcast (meskipun `sync.RWMutex` melindungi pembacaan `history` dari endpoint REST).
+- **Non-blocking send**: pola `select` + `default` pada `c.Send` menjatuhkan klien lambat alih-alih memblokir loop broadcast.
 
-### Ring Buffer History
+### Riwayat Ring Buffer
 
-The history slice acts as a ring buffer capped at 100 messages. When the limit is reached, the oldest messages are trimmed:
+Irisan riwayat bertindak sebagai ring buffer dengan batas 100 pesan. Ketika batas tercapai, pesan tertua dipangkas:
 
 ```go
 r.history = append(r.history, m)
@@ -129,15 +129,15 @@ if len(r.history) > r.maxHistory {
 
 ### Room Manager
 
-A `Manager` struct provides `GetOrCreate(name)` for lazy room creation. A default `"general"` room is pre-created at startup.
+Struct `Manager` menyediakan `GetOrCreate(name)` untuk pembuatan ruangan secara lazy. Ruangan `"general"` default dibuat sebelumnya saat startup.
 
 ---
 
-## Key Files
+## File Kunci
 
-| File | Purpose |
+| File | Tujuan |
 |------|---------|
-| `room/room.go` | Room struct, event loop, Client type |
-| `room/manager.go` | Room lifecycle management |
-| `ws/handler.go` | WebSocket upgrade and read/write pump |
+| `room/room.go` | Struct Room, event loop, tipe Client |
+| `room/manager.go` | Manajemen siklus hidup ruangan |
+| `ws/handler.go` | Upgrade WebSocket dan pompa baca/tulis |
 | `handler/handler.go` | HTTP handlers (WS upgrade, REST endpoints) |

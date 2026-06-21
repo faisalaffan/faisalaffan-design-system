@@ -1,8 +1,8 @@
 # pkg/consistenthash -- Hash Ring
 
-Consistent hashing ring with 150 virtual nodes per physical node, `crc32` key hashing, and O(log N) node lookup via binary search. Used by the key-value store for distributed shard placement.
+Consistent hashing ring dengan 150 virtual node per physical node, hashing kunci `crc32`, dan pencarian node O(log N) melalui binary search. Digunakan oleh key-value store untuk penempatan shard terdistribusi.
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -27,7 +27,7 @@ flowchart TB
     end
 ```
 
-The ring is a sorted slice of integer hash values. Each physical node is replicated `replicas` times with a `strconv.Itoa(i) + node` key to produce a uniform distribution around the ring. Key lookup walks clockwise to the nearest vNode via binary search, wrapping to index 0 when the target exceeds the maximum hash.
+Ring adalah irisan terurut dari nilai hash integer. Setiap node fisik direplikasi sebanyak `replicas` kali dengan kunci `strconv.Itoa(i) + node` untuk menghasilkan distribusi yang seragam di sekitar ring. Pencarian kunci berjalan searah jarum jam ke vNode terdekat melalui binary search, melingkar ke indeks 0 ketika target melebihi hash maksimum.
 
 ## API
 
@@ -38,9 +38,9 @@ func (h *HashRing) Remove(node string)
 func (h *HashRing) Get(key string) string
 ```
 
-### Constructor
+### Konstruktor
 
-Default replica count is 150 when zero or negative is passed.
+Jumlah replica default adalah 150 ketika nilai nol atau negatif diberikan.
 
 ```go
 ring := consistenthash.New(150)
@@ -48,12 +48,12 @@ ring.Add("node-a")
 ring.Add("node-b")
 ring.Add("node-c")
 
-node := ring.Get("user:42") // Returns one of node-a, node-b, node-c
+node := ring.Get("user:42") // Mengembalikan salah satu dari node-a, node-b, node-c
 ```
 
 ### Add
 
-Inserts `replicas` virtual nodes into the sorted key ring.
+Menyisipkan `replicas` virtual node ke dalam ring kunci yang terurut.
 
 ```go
 func (h *HashRing) Add(node string) {
@@ -68,7 +68,7 @@ func (h *HashRing) Add(node string) {
 
 ### Remove
 
-Deletes all virtual nodes belonging to the given physical node and rebuilds the sorted key slice.
+Menghapus semua virtual node milik node fisik tertentu dan membangun ulang irisan kunci yang terurut.
 
 ```go
 func (h *HashRing) Remove(node string) {
@@ -89,7 +89,7 @@ func (h *HashRing) Remove(node string) {
 
 ### Get
 
-Binary search for the next vNode >= key hash. Returns the corresponding physical node.
+Binary search untuk vNode berikutnya >= hash kunci. Mengembalikan node fisik yang sesuai.
 
 ```go
 func (h *HashRing) Get(key string) string {
@@ -107,10 +107,10 @@ func (h *HashRing) Get(key string) string {
 }
 ```
 
-## Technical Decisions
+## Keputusan Teknis
 
-- **150 virtual nodes**: Balances distribution uniformity against memory footprint. Each vNode occupies ~24 bytes (int key + map entry), so 150 vNodes x 10 nodes = ~36 KB. Increasing to 300 yields diminishing returns for the key-value store use case.
-- **crc32 over md5/sha1**: A non-cryptographic hash is sufficient for distribution. crc32 is hardware-accelerated on modern CPUs and produces a full 32-bit range.
-- **Binary search over red-black tree**: The key slice is append-only during Add and sorted once. Binary search on a sorted slice (`sort.Search`) is O(log N) and cache-friendly. A red-black tree would add complexity with no measurable gain at this replica count.
-- **Panic on empty ring**: Explicitness over silent zero-value. A Get on an empty ring is always a programming error and should fail loudly.
-- **Remove rebuilds the key slice**: Rather than delete from the middle of a slice (O(N) shift), we iterate once and re-slice. This keeps the code simple and correctness obvious.
+- **150 virtual node**: Menyeimbangkan keseragaman distribusi dengan jejak memori. Setiap vNode memakan ~24 byte (kunci int + entri map), jadi 150 vNode x 10 node = ~36 KB. Meningkatkan ke 300 memberikan hasil yang semakin berkurang untuk kasus penggunaan key-value store.
+- **crc32 dibanding md5/sha1**: Hash non-kriptografis sudah cukup untuk distribusi. crc32 dipercepat perangkat keras pada CPU modern dan menghasilkan rentang 32-bit penuh.
+- **Binary search dibanding red-black tree**: Irisan kunci bersifat append-only selama Add dan diurutkan sekali. Binary search pada irisan terurut (`sort.Search`) adalah O(log N) dan ramah-cache. Red-black tree akan menambah kompleksitas tanpa keuntungan yang terukur pada jumlah replica ini.
+- **Panic pada ring kosong**: Eksplisit daripada nilai nol diam-diam. Get pada ring kosong selalu merupakan kesalahan pemrograman dan harus gagal dengan keras.
+- **Remove membangun ulang irisan kunci**: Alih-alih menghapus dari tengah irisan (pergeseran O(N)), kita melakukan iterasi sekali dan mengiris ulang. Ini menjaga kode tetap sederhana dan kebenaran jelas.

@@ -1,11 +1,11 @@
 # faisalaffan-design-system
 
 <p align="center">
-  <img src="../assets/banner/banner.png" alt="banner" width="800"/>
+  <img src="../../assets/01_BANNER.png" alt="banner" width="800"/>
 </p>
 
 <p align="center">
-  <img src="../assets/logo/logo.png" alt="logo" width="400"/>
+  <img src="../../assets/01_LOGO.png" alt="logo" width="200"/>
 </p>
 
 Go monorepo implementing all 12 system design problems from Alex Xu's *System Design Interview* (2nd Ed), backed by theory from Kleppmann's *Designing Data-Intensive Applications*.

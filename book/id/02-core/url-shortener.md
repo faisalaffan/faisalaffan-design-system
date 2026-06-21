@@ -1,8 +1,8 @@
 # URL Shortener
 
-Base62 7-character random shortcode generator with collision retry (up to 5 attempts) and HTTP 302 redirect. Four-layer architecture: Handler, Service, Storage, Shortcode.
+Base62 7-karakter generator shortcode acak dengan collision retry (hingga 5 percobaan) dan redirect HTTP 302. Arsitektur empat lapis: Handler, Service, Storage, Shortcode.
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -36,10 +36,10 @@ sequenceDiagram
 
 ## Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |---|---|---|
-| `POST` | `/shorten` | Create a short URL from a long URL |
-| `GET` | `/:code` | Redirect to the original long URL |
+| `POST` | `/shorten` | Membuat URL pendek dari URL panjang |
+| `GET` | `/:code` | Redirect ke URL panjang asli |
 
 ### POST /shorten
 
@@ -53,13 +53,13 @@ sequenceDiagram
 
 ### GET /:code
 
-Responds with HTTP 302 (Found) and `Location` header set to the original URL. Returns 404 if the shortcode does not exist.
+Merespons dengan HTTP 302 (Found) dan header `Location` diatur ke URL asli. Mengembalikan 404 jika shortcode tidak ada.
 
-## Layers
+## Lapisan
 
 ### Handler
 
-Validates the JSON body, extracts the `code` path param, and delegates to the service. Uses `kit.BadRequest`, `kit.Created`, `kit.NotFound` for consistent JSON responses.
+Memvalidasi body JSON, mengekstrak parameter path `code`, dan mendelegasikan ke service. Menggunakan `kit.BadRequest`, `kit.Created`, `kit.NotFound` untuk respons JSON yang konsisten.
 
 ### Service -- Shorten & Lookup
 
@@ -97,7 +97,7 @@ func (s *ShortenService) Shorten(ctx context.Context, longURL string) (*ShortenR
 
 ### Shortcode Generator
 
-Cryptographically random 7-character string from a 62-character alphabet (a-z, A-Z, 0-9). Uses `crypto/rand` for secure randomness.
+String acak 7-karakter secara kriptografis dari alfabet 62 karakter (a-z, A-Z, 0-9). Menggunakan `crypto/rand` untuk keamanan acak.
 
 ```go
 const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -126,12 +126,12 @@ type Storage interface {
 }
 ```
 
-The default implementation is `storage.MemoryStore` -- a thread-safe in-memory map guarded by `sync.RWMutex`.
+Implementasi default adalah `storage.MemoryStore` -- map in-memory thread-safe yang dilindungi oleh `sync.RWMutex`.
 
-## Technical Decisions
+## Keputusan Teknis
 
-- **7-character base62** = 62^7 = ~3.5 trillion combinations, which makes collision probability negligible at any realistic scale. Collision retry is implemented as a safety net, not an expected code path.
-- **302 (Found) over 301 (Moved Permanently)**: 302 gives the service owner flexibility to change the target URL or deprecate redirects. Browsers cache 301 responses aggressively, making updates invisible to users.
-- **crypto/rand over math/rand**: Shortcodes should not be predictable. Using `crypto/rand` prevents enumeration attacks where an attacker iterates sequential shortcodes.
-- **Up to 5 collision retries**: After 5 consecutive collisions (probability: (1/3.5T)^5 = effectively zero), the service returns an error rather than looping forever. This is a correctness guardrail, not a performance concern.
-- **Four-layer separation**: Handler owns HTTP concerns (JSON parsing, status codes), Service owns business logic (retry, URL assembly), Storage owns persistence, Shortcode owns generation. Each layer is independently testable and swappable.
+- **7-karakter base62** = 62^7 = ~3,5 triliun kombinasi, yang membuat probabilitas collision dapat diabaikan pada skala realistis mana pun. Collision retry diimplementasikan sebagai jaring pengaman, bukan jalur kode yang diharapkan.
+- **302 (Found) dibanding 301 (Moved Permanently)**: 302 memberi pemilik layanan fleksibilitas untuk mengubah URL target atau menonaktifkan redirect. Browser menyimpan cache respons 301 secara agresif, membuat pembaruan tidak terlihat oleh pengguna.
+- **crypto/rand dibanding math/rand**: Shortcode tidak boleh dapat diprediksi. Menggunakan `crypto/rand` mencegah serangan enumerasi di mana penyerang mengiterasi shortcode sekuensial.
+- **Hingga 5 collision retry**: Setelah 5 collision berturut-turut (probabilitas: (1/3,5T)^5 = efektif nol), layanan mengembalikan error daripada melakukan looping selamanya. Ini adalah pagar pengaman kebenaran, bukan masalah performa.
+- **Pemisahan empat lapis**: Handler memiliki urusan HTTP (parsing JSON, kode status), Service memiliki logika bisnis (retry, perakitan URL), Storage memiliki persistensi, Shortcode memiliki pembuatan. Setiap lapisan dapat diuji dan diganti secara independen.

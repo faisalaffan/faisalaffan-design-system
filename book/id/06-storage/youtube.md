@@ -1,12 +1,12 @@
 # YouTube
 
-Video metadata management with simulated transcoding pipeline (uploading -> processing -> ready) and full-text search across titles, descriptions, and tags.
+Manajemen metadata video dengan pipeline transcoding yang disimulasikan (uploading -> processing -> ready) dan pencarian teks lengkap di seluruh judul, deskripsi, dan tag.
 
-Port **8089** | Package `youtube/`
+Port **8089** | Paket `youtube/`
 
 ---
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -28,9 +28,9 @@ stateDiagram-v2
     end note
 ```
 
-### Transcoding Simulation
+### Simulasi Transcoding
 
-When a video is created, a goroutine is spawned to simulate transcoding. After a 1-second delay, the status transitions from `"uploading"` to `"ready"` and a random duration (10-610 seconds) is assigned.
+Ketika video dibuat, sebuah goroutine dibuat untuk mensimulasikan transcoding. Setelah penundaan 1 detik, status bertransisi dari `"uploading"` ke `"ready"` dan durasi acak (10-610 detik) ditetapkan.
 
 ```go
 type MemoryStore struct {
@@ -72,9 +72,9 @@ func (s *MemoryStore) transcode(id string) {
 }
 ```
 
-### Full-Text Search
+### Pencarian Teks Lengkap
 
-Search performs a linear scan through all videos with case-insensitive matching against title, description, and tags:
+Pencarian melakukan pemindaian linear melalui semua video dengan pencocokan case-insensitive terhadap judul, deskripsi, dan tag:
 
 ```go
 func (s *MemoryStore) Search(query string) []*Video {
@@ -110,12 +110,12 @@ func containsTag(tags []string, q string) bool {
 
 ## API Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |--------|------|-------------|
-| `POST` | `/videos` | Upload a new video (body: title, description, tags) |
-| `GET` | `/videos` | List all videos (sorted by upload date, newest first) |
-| `GET` | `/videos/:id` | Get video details (also increments view count) |
-| `GET` | `/search?q=X` | Search videos by title, description, or tags |
+| `POST` | `/videos` | Mengunggah video baru (body: title, description, tags) |
+| `GET` | `/videos` | Mendaftar semua video (diurutkan berdasarkan tanggal unggah, terbaru pertama) |
+| `GET` | `/videos/:id` | Mendapatkan detail video (juga menaikkan hitungan tampilan) |
+| `GET` | `/search?q=X` | Mencari video berdasarkan judul, deskripsi, atau tag |
 
 ### POST /videos
 
@@ -169,38 +169,38 @@ Response:
 
 ---
 
-## Technical Decisions
+## Keputusan Teknis
 
-### Video State Machine
+### State Machine Video
 
 ```
 uploading → processing → ready
 ```
 
-Each video starts as `"uploading"`, transitions through `"processing"` (simulated by the goroutine), and reaches `"ready"`. In production, the processing step would involve actual transcoding (FFmpeg), thumbnail generation, and CDN distribution.
+Setiap video dimulai sebagai `"uploading"`, bertransisi melalui `"processing"` (disimulasikan oleh goroutine), dan mencapai `"ready"`. Dalam produksi, langkah pemrosesan akan melibatkan transcoding aktual (FFmpeg), pembuatan thumbnail, dan distribusi CDN.
 
-### Background Transcoding
+### Transcoding Latar Belakang
 
-A goroutine per video simulates async transcoding. In production:
-- A job queue (RabbitMQ, Redis) replaces goroutines for durability.
-- Transcoding workers run on separate infrastructure.
-- Webhook callbacks or polling notify the client when processing completes.
+Satu goroutine per video mensimulasikan transcoding async. Dalam produksi:
+- Antrean pekerjaan (RabbitMQ, Redis) menggantikan goroutine untuk daya tahan.
+- Worker transcoding berjalan di infrastruktur terpisah.
+- Callback webhook atau polling memberitahu klien ketika pemrosesan selesai.
 
-### Search Implementation
+### Implementasi Pencarian
 
-The current search is an in-memory linear scan. This is sufficient for the demo but would be replaced by:
-- **Postgres full-text search** (`tsvector`/`tsquery`) for moderate scale.
-- **Elasticsearch/Meilisearch** for production-scale search with relevance ranking, typo tolerance, and faceted search.
+Pencarian saat ini adalah pemindaian linear in-memory. Ini cukup untuk demo tetapi akan digantikan oleh:
+- **Pencarian teks lengkap Postgres** (`tsvector`/`tsquery`) untuk skala menengah.
+- **Elasticsearch/Meilisearch** untuk pencarian skala produksi dengan peringkat relevansi, toleransi typo, dan pencarian facet.
 
-### View Counting
+### Penghitungan Tampilan
 
-Each `GET /videos/:id` call increments the view counter. This is intentionally naive -- production systems use a separate counter service or batched writes to avoid write amplification on every read.
+Setiap panggilan `GET /videos/:id` menaikkan penghitung tampilan. Ini sengaja dibuat naif -- sistem produksi menggunakan layanan penghitung terpisah atau penulisan batch untuk menghindari amplifikasi tulis pada setiap pembacaan.
 
 ---
 
-## Key Files
+## File Kunci
 
-| File | Purpose |
+| File | Tujuan |
 |------|---------|
-| `store/store.go` | Video model, CRUD, simulated transcoding, search |
-| `handler/handler.go` | HTTP handlers for upload, list, get, search |
+| `store/store.go` | Model Video, CRUD, transcoding simulasi, pencarian |
+| `handler/handler.go` | HTTP handlers untuk unggah, daftar, dapatkan, cari |

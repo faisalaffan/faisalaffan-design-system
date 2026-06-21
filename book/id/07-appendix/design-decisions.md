@@ -1,123 +1,123 @@
-# Design Decisions
+# Keputusan Teknis
 
-Every architectural decision in this project was made with a specific trade-off in mind. This document captures the rationale behind each one, the alternatives considered, and why the chosen approach won.
+Setiap keputusan arsitektural dalam proyek ini dibuat dengan trade-off tertentu. Dokumen ini menangkap alasan di balik setiap keputusan, alternatif yang dipertimbangkan, dan mengapa pendekatan yang dipilih menang.
 
 ---
 
 ## 1. Gin Gonic
 
-**Decision:** Use Gin Gonic as the HTTP framework for all services.
+**Keputusan:** Menggunakan Gin Gonic sebagai framework HTTP untuk semua layanan.
 
-**Rationale:** Gin Gonic offers the best balance of performance and developer ergonomics among Go HTTP frameworks. It sustains high throughput with minimal allocation overhead (comparable to raw `net/http` in many benchmarks) while providing middleware chaining, request binding, and route grouping out of the box. The middleware ecosystem allows cross-cutting concerns — recovery, logging, rate limiting, CORS — to be composed declaratively rather than duplicated per handler. Alternatives like `net/http`'s default mux were rejected for lacking parameterized routing and middleware support without third-party wrappers; frameworks like Echo or Fiber were considered but offered no meaningful advantage over Gin for this project's scope. Using a single framework across all 11 services ensures consistent patterns for error handling, request validation, and response formatting, which simplifies onboarding and reduces cognitive load when switching between services.
-
----
-
-## 2. Interface-First Storage
-
-**Decision:** Every service defines a `Storage` interface for its data layer, with an in-memory implementation as default.
-
-**Rationale:** Abstracting storage behind an interface means the handler layer never depends on a specific database implementation. The in-memory default (backed by `sync.RWMutex`-protected maps) allows running every service with zero infrastructure dependencies — no Redis, no Postgres, no external databases. When a production-grade deployment is needed, a new implementation of the same interface (e.g., `redisStorage` or `postgresStorage`) can be swapped in without touching a single handler. This pattern also simplifies testing: test suites inject a fresh in-memory store per test case without mocking infrastructure. The trade-off is a thin indirection layer and slightly more code per service, but the decoupling justifies the cost at any scale beyond a throwaway prototype.
+**Alasan:** Gin Gonic menawarkan keseimbangan terbaik antara performa dan ergonomi pengembang di antara framework HTTP Go. Gin mempertahankan throughput tinggi dengan overhead alokasi minimal (sebanding dengan `net/http` mentah di banyak benchmark) sambil menyediakan middleware chaining, request binding, dan pengelompokan rute secara bawaan. Ekosistem middleware memungkinkan cross-cutting concerns -- recovery, logging, rate limiting, CORS -- untuk dikomposisikan secara deklaratif daripada diduplikasi per handler. Alternatif seperti mux default `net/http` ditolak karena kurangnya routing berparameter dan dukungan middleware tanpa wrapper pihak ketiga; framework seperti Echo atau Fiber dipertimbangkan tetapi tidak menawarkan keunggulan berarti dibanding Gin untuk lingkup proyek ini. Menggunakan satu framework di semua 11 layanan memastikan pola yang konsisten untuk penanganan error, validasi permintaan, dan format respons, yang menyederhanakan orientasi dan mengurangi beban kognitif saat beralih antar layanan.
 
 ---
 
-## 3. Single `go.mod`
+## 2. Penyimpanan Interface-First
 
-**Decision:** One `go.mod` at the repository root — no multi-module workspace.
+**Keputusan:** Setiap layanan mendefinisikan interface `Storage` untuk lapisan datanya, dengan implementasi in-memory sebagai default.
 
-**Rationale:** Multi-module repositories solve version conflicts when different modules depend on different versions of the same dependency. This project has no such conflict: all 11 services and 2 shared packages use the same dependency versions. A single `go.mod` means one source of truth for dependency resolution, one `go.sum`, and no workspace configuration to maintain. `go build ./...` and `go test ./...` work immediately across the entire tree. If this project grows to include independently-versioned modules (e.g., a separate SDK or CLI tool), migrating to a multi-module workspace would be straightforward — but for a solo portfolio monorepo at this scale, single-module is the pragmatic choice.
+**Alasan:** Mengabstraksikan penyimpanan di belakang interface berarti lapisan handler tidak pernah bergantung pada implementasi basis data tertentu. Default in-memory (didukung oleh map yang dilindungi `sync.RWMutex`) memungkinkan menjalankan setiap layanan dengan nol dependensi infrastruktur -- tanpa Redis, tanpa Postgres, tanpa basis data eksternal. Ketika deployment tingkat produksi diperlukan, implementasi baru dari interface yang sama (mis., `redisStorage` atau `postgresStorage`) dapat ditukar tanpa menyentuh satu handler pun. Pola ini juga menyederhanakan pengujian: suite tes menyuntikkan penyimpanan in-memory baru per kasus uji tanpa mengejek infrastruktur. Trade-off adalah lapisan indirection tipis dan sedikit lebih banyak kode per layanan, tetapi decoupling membenarkan biaya pada skala apa pun di luar prototipe sekali pakai.
+
+---
+
+## 3. `go.mod` Tunggal
+
+**Keputusan:** Satu `go.mod` di root repositori -- tanpa workspace multi-modul.
+
+**Alasan:** Repositori multi-modul menyelesaikan konflik versi ketika modul yang berbeda bergantung pada versi berbeda dari dependensi yang sama. Proyek ini tidak memiliki konflik seperti itu: semua 11 layanan dan 2 paket bersama menggunakan versi dependensi yang sama. `go.mod` tunggal berarti satu sumber kebenaran untuk resolusi dependensi, satu `go.sum`, dan tanpa konfigurasi workspace yang perlu dipertahankan. `go build ./...` dan `go test ./...` bekerja segera di seluruh pohon. Jika proyek ini berkembang hingga mencakup modul yang berversi independen (mis., SDK atau alat CLI terpisah), migrasi ke workspace multi-modul akan mudah -- tetapi untuk monorepo portofolio solo pada skala ini, modul tunggal adalah pilihan pragmatis.
 
 ---
 
 ## 4. Base62 Random Shortcode
 
-**Decision:** Generate shortcodes as random 7-character Base62 strings with collision retry, rather than hashing the URL.
+**Keputusan:** Menghasilkan shortcode sebagai string Base62 7-karakter acak dengan collision retry, bukan melakukan hash pada URL.
 
-**Rationale:** A 7-character Base62 alphabet `[a-zA-Z0-9]` yields 62^7 = ~3.5 trillion unique codes, making collisions astronomically unlikely at any practical scale. The random generation approach is simpler than URL hashing: it avoids choosing a hash function, truncating to fit the code length, and handling hash collisions (which still need retry logic). It also eliminates the need to rehash when the same URL is shortened twice — each request gets a unique shortcode, which is often the desired behavior (tracking click sources, for example). The trade-off is that identical URLs produce different shortcodes, which wastes storage compared to a content-addressed approach, but this is negligible for a URL shortener's data footprint.
+**Alasan:** Alfabet Base62 7-karakter `[a-zA-Z0-9]` menghasilkan 62^7 = ~3,5 triliun kode unik, membuat collision sangat tidak mungkin pada skala praktis mana pun. Pendekatan pembuatan acak lebih sederhana daripada hashing URL: menghindari pemilihan fungsi hash, pemotongan agar sesuai dengan panjang kode, dan penanganan hash collision (yang masih membutuhkan logika retry). Ini juga menghilangkan kebutuhan untuk melakukan hash ulang ketika URL yang sama diperpendek dua kali -- setiap permintaan mendapatkan shortcode unik, yang sering kali merupakan perilaku yang diinginkan (misalnya, melacak sumber klik). Trade-off adalah bahwa URL identik menghasilkan shortcode berbeda, yang membuang penyimpanan dibandingkan dengan pendekatan yang dialamatkan berdasarkan konten, tetapi ini dapat diabaikan untuk jejak data URL shortener.
 
 ---
 
 ## 5. Sliding Window Rate Limiting
 
-**Decision:** Implement rate limiting using a sliding window algorithm.
+**Keputusan:** Mengimplementasikan rate limiting menggunakan algoritma sliding window.
 
-**Rationale:** Sliding window rate limiting addresses the boundary problem inherent in fixed-window algorithms. With a fixed window, a burst of requests at the end of one window and the start of the next can double the allowed throughput over a short interval. Sliding window tracks request timestamps within the current window fractionally, smoothing the boundary transition. Compared to token bucket — the other common candidate — sliding window uses less memory for high-cardinality keys (no need to maintain a token count and refill timer per key). The memory profile matters when rate limiting by user ID, IP, or API key in systems with millions of unique clients. The trade-off is slightly higher per-request CPU cost to prune expired timestamps, but this is negligible relative to the precision gained.
+**Alasan:** Sliding window rate limiting mengatasi masalah batas yang melekat pada algoritma fixed-window. Dengan fixed window, lonjakan permintaan di akhir satu jendela dan awal jendela berikutnya dapat menggandakan throughput yang diizinkan dalam interval pendek. Sliding window melacak timestamp permintaan dalam jendela saat ini secara fraksional, memperhalus transisi batas. Dibandingkan dengan token bucket -- kandidat umum lainnya -- sliding window menggunakan lebih sedikit memori untuk kunci dengan kardinalitas tinggi (tidak perlu mempertahankan hitungan token dan pengatur waktu isi ulang per kunci). Profil memori penting ketika melakukan rate limiting berdasarkan ID pengguna, IP, atau kunci API dalam sistem dengan jutaan klien unik. Trade-off adalah biaya CPU per-permintaan yang sedikit lebih tinggi untuk memangkas timestamp kedaluwarsa, tetapi ini dapat diabaikan relatif terhadap presisi yang diperoleh.
 
 ---
 
-## 6. Virtual Nodes (150 Replicas)
+## 6. Virtual Nodes (150 Replica)
 
-**Decision:** Use consistent hashing with 150 virtual nodes per physical node, keyed by `crc32` checksum.
+**Keputusan:** Menggunakan consistent hashing dengan 150 virtual node per physical node, dengan kunci checksum `crc32`.
 
-**Rationale:** Consistent hashing solves the re-sharding problem: when a node joins or leaves, only K/N keys need to move (where K is total keys and N is number of nodes), versus nearly all keys in a naive hash-mod-N scheme. Virtual nodes (also called replicas) distribute the hash ring more uniformly, preventing hot spots when nodes have heterogeneous capacity or when a small number of physical nodes would otherwise produce an uneven split. The 150-replica figure is a well-established heuristic from Amazon's Dynamo paper — high enough to give good uniformity, low enough to keep the ring metadata small. `crc32` was chosen over cryptographic hashes (SHA-256, MD5) for speed; it is not security-sensitive since the hash ring is an internal data structure. The trade-off is O(log N) lookup time (binary search on sorted ring) versus O(1) for direct hash-mod-N, but the ring is small enough (150 \* N entries) that this is irrelevant in practice.
+**Alasan:** Consistent hashing memecahkan masalah re-sharding: ketika node bergabung atau pergi, hanya kunci K/N yang perlu dipindahkan (di mana K adalah total kunci dan N adalah jumlah node), dibandingkan dengan hampir semua kunci dalam skema hash-mod-N naif. Virtual node (juga disebut replica) mendistribusikan hash ring secara lebih seragam, mencegah hot spot ketika node memiliki kapasitas heterogen atau ketika sejumlah kecil node fisik akan menghasilkan pembagian yang tidak merata. Angka 150 replica adalah heuristik yang mapan dari makalah Dynamo Amazon -- cukup tinggi untuk memberikan keseragaman yang baik, cukup rendah untuk menjaga metadata ring tetap kecil. `crc32` dipilih daripada hash kriptografis (SHA-256, MD5) untuk kecepatan; ini tidak sensitif terhadap keamanan karena hash ring adalah struktur data internal. Trade-off adalah waktu pencarian O(log N) (binary search pada ring terurut) versus O(1) untuk hash-mod-N langsung, tetapi ring cukup kecil (150 * N entri) sehingga ini tidak relevan dalam praktik.
 
 ---
 
 ## 7. Snowflake 64-Bit IDs
 
-**Decision:** Generate unique 64-bit IDs using the Snowflake algorithm: 41-bit timestamp + 10-bit worker ID + 12-bit sequence.
+**Keputusan:** Menghasilkan ID 64-bit unik menggunakan algoritma Snowflake: timestamp 41-bit + worker ID 10-bit + urutan 12-bit.
 
-**Rationale:** Snowflake IDs are time-sortable, unique without coordination, and fit in a 64-bit integer — a native type in Go and most databases. The bit layout produces ~69 years of IDs from a custom epoch, up to 1024 workers, and 4096 IDs per millisecond per worker. No external service (like a database sequence or ZooKeeper) is needed to generate them. The 64-bit size is smaller than UUIDs (128 bits, 36-character string representation), which matters for index size and storage efficiency. The trade-off is clock dependency: if a worker's clock drifts backward, IDs can collide. Standard mitigations include blocking until the clock catches up or using a ZooKeeper-based epoch. For this project's scope, the basic Snowflake implementation suffices.
+**Alasan:** ID Snowflake dapat diurutkan berdasarkan waktu, unik tanpa koordinasi, dan muat dalam integer 64-bit -- tipe native di Go dan sebagian besar basis data. Tata letak bit menghasilkan ~69 tahun ID dari epoch kustom, hingga 1024 worker, dan 4096 ID per milidetik per worker. Tidak diperlukan layanan eksternal (seperti urutan basis data atau ZooKeeper) untuk menghasilkannya. Ukuran 64-bit lebih kecil dari UUID (128 bit, representasi string 36 karakter), yang penting untuk ukuran indeks dan efisiensi penyimpanan. Trade-off adalah ketergantungan pada jam: jika jam worker mundur, ID dapat bertabrakan. Mitigasi standar termasuk memblokir hingga jam menyusul atau menggunakan epoch berbasis ZooKeeper. Untuk lingkup proyek ini, implementasi Snowflake dasar sudah cukup.
 
 ---
 
 ## 8. Trie-Based Autocomplete
 
-**Decision:** Implement search autocomplete using an in-memory trie with top-K frequency retrieval.
+**Keputusan:** Mengimplementasikan search autocomplete menggunakan trie in-memory dengan pengambilan frekuensi top-K.
 
-**Rationale:** A trie provides O(k) prefix search (where k is the prefix length), which is the theoretical lower bound for prefix-based lookup. Each node stores a sorted top-K list of completions, pre-computed from frequency data, so querying "top 5 results for prefix 'ap'" requires only traversing 'a' → 'p' and reading the cached list — no sorting or ranking at query time. This makes it suitable for latency-sensitive autocomplete where every keystroke triggers a request. Concurrent reads are safe via `sync.RWMutex`, allowing many parallel queries while writes acquire the write lock during re-indexing. The trade-off is memory: a trie with fine-grained nodes can be large. Compact trie variants (radix tree, DAWG) could reduce memory at the cost of implementation complexity, but for the dataset sizes this project targets, the simple trie is sufficient.
+**Alasan:** Trie menyediakan pencarian prefiks O(k) (di mana k adalah panjang prefiks), yang merupakan batas bawah teoretis untuk pencarian berbasis prefiks. Setiap node menyimpan daftar top-K pelengkapan yang diurutkan, dihitung sebelumnya dari data frekuensi, sehingga menanyakan "5 hasil teratas untuk prefiks 'ap'" hanya membutuhkan melintasi 'a' ke 'p' dan membaca daftar yang di-cache -- tanpa pengurutan atau peringkat pada waktu kueri. Ini membuatnya cocok untuk autocomplete yang sensitif terhadap latensi di mana setiap penekanan tombol memicu permintaan. Pembacaan konkuren aman melalui `sync.RWMutex`, memungkinkan banyak kueri paralel sementara tulisan memperoleh write lock selama re-indexing. Trade-off adalah memori: trie dengan node berbutir halus bisa menjadi besar. Varian trie kompak (radix tree, DAWG) dapat mengurangi memori dengan mengorbankan kompleksitas implementasi, tetapi untuk ukuran dataset yang ditargetkan proyek ini, trie sederhana sudah cukup.
 
 ---
 
 ## 9. Fan-Out on Write
 
-**Decision:** Push new posts to all followers' timelines at write time (fan-out on write).
+**Keputusan:** Mendorong postingan baru ke timeline semua pengikut pada waktu tulis (fan-out on write).
 
-**Rationale:** Fan-out on write (push model) trades write amplification for instant timeline reads. When a user posts, the system iterates over the user's followers and inserts the post into each follower's timeline. Reading a timeline is then a simple O(1) lookup — fetch the pre-computed list. This is the right choice for celebrities with millions of followers; for them, a hybrid approach (push to active followers, pull from inactive) or pure pull model is more appropriate. For this project's scale, the simple push model demonstrates the core trade-off clearly: fast reads cost expensive writes. The alternative (fan-out on read / pull model) would require merging timelines from followed users at query time, shifting the cost to reads.
+**Alasan:** Fan-out on write (model push) menukar amplifikasi tulis dengan pembacaan timeline instan. Ketika pengguna memposting, sistem mengiterasi pengikut pengguna dan menyisipkan postingan ke dalam timeline setiap pengikut. Membaca timeline kemudian menjadi pencarian O(1) sederhana -- ambil daftar yang telah dihitung sebelumnya. Ini adalah pilihan yang tepat untuk pengguna dengan jutaan pengikut; untuk mereka, pendekatan hibrida (push ke pengikut aktif, pull dari tidak aktif) atau model pull murni lebih tepat. Untuk skala proyek ini, model push sederhana menunjukkan trade-off inti dengan jelas: baca cepat membutuhkan tulis mahal. Alternatif (fan-out on read / model pull) akan membutuhkan penggabungan timeline dari pengguna yang diikuti pada waktu kueri, menggeser biaya ke pembacaan.
 
 ---
 
-## 10. BFS Crawler with Politeness
+## 10. BFS Crawler dengan Politeness
 
-**Decision:** Implement the web crawler as a breadth-first traversal over a channel-based URL frontier, with per-domain rate limiting for politeness.
+**Keputusan:** Mengimplementasikan web crawler sebagai traversal breadth-first melalui URL frontier berbasis channel, dengan rate limiting per-domain untuk kesopanan.
 
-**Rationale:** BFS ensures coverage breadth: the crawler discovers pages layer by layer rather than diving deep into a single domain. The URL frontier is implemented as Go channels, providing natural concurrency control — workers consume from the channel and send discovered URLs back. Per-domain delay enforces politeness: after fetching a page from `example.com`, the crawler waits a configurable interval before fetching another from the same domain. This respects `robots.txt` directives and prevents overloading any single origin server. HTML link extraction uses `golang.org/x/net/html`, the standard Go library for HTML parsing. Deduplication via a Bloom filter or set ensures each URL is crawled at most once per run. The trade-off is that BFS can consume significant memory for the frontier queue on large crawls, but controlling crawl depth mitigates this.
+**Alasan:** BFS memastikan cakupan keluasan: crawler menemukan halaman lapis demi lapis daripada menyelam dalam ke satu domain. URL frontier diimplementasikan sebagai channel Go, menyediakan kontrol konkurensi alami -- worker mengonsumsi dari channel dan mengirimkan URL yang ditemukan kembali. Penundaan per-domain menegakkan kesopanan: setelah mengambil halaman dari `example.com`, crawler menunggu interval yang dapat dikonfigurasi sebelum mengambil dari domain yang sama. Ini menghormati arahan `robots.txt` dan mencegah membebani server asal mana pun. Ekstraksi tautan HTML menggunakan `golang.org/x/net/html`, pustaka Go standar untuk parsing HTML. Deduplikasi melalui Bloom filter atau set memastikan setiap URL di-crawl paling banyak sekali per proses. Trade-off adalah bahwa BFS dapat mengonsumsi memori yang signifikan untuk antrean frontier pada crawl besar, tetapi mengontrol kedalaman crawl mengurangi ini.
 
 ---
 
 ## 11. WebSocket Rooms
 
-**Decision:** Implement chat rooms as goroutine-based event loops with a ring buffer for message history.
+**Keputusan:** Mengimplementasikan ruang chat sebagai event loop berbasis goroutine dengan ring buffer untuk riwayat pesan.
 
-**Rationale:** Each chat room is a goroutine running an event loop that listens on three channels: `join`, `leave`, and `broadcast`. This model maps naturally to WebSocket chat semantics — users join rooms, send messages, and receive broadcasts. The goroutine-per-room approach is efficient in Go: goroutines are lightweight (~2 KB stack) and idle ones consume negligible resources. A ring buffer capped at 100 messages stores recent history, so newly joined users see recent messages without querying a database. The ring buffer is fixed-size and lock-free within the single goroutine, avoiding synchronization overhead. The alternative — a shared data structure with mutexes for all rooms — would couple room state management and reduce clarity. The trade-off is that a very large number of idle rooms could consume goroutine overhead, but practical deployments rarely have millions of concurrently active rooms.
+**Alasan:** Setiap ruang chat adalah goroutine yang menjalankan event loop yang mendengarkan pada tiga channel: `join`, `leave`, dan `broadcast`. Model ini secara alami memetakan ke semantik chat WebSocket -- pengguna bergabung ke ruangan, mengirim pesan, dan menerima siaran. Pendekatan goroutine-per-ruangan efisien di Go: goroutine ringan (~2 KB stack) dan yang idle mengonsumsi sumber daya yang dapat diabaikan. Ring buffer dengan batas 100 pesan menyimpan riwayat terbaru, sehingga pengguna yang baru bergabung melihat pesan terbaru tanpa menanyakan basis data. Ring buffer berukuran tetap dan lock-free dalam goroutine tunggal, menghindari overhead sinkronisasi. Alternatif -- struktur data bersama dengan mutex untuk semua ruangan -- akan menggabungkan manajemen status ruangan dan mengurangi kejelasan. Trade-off adalah bahwa sejumlah besar ruangan idle dapat mengonsumsi overhead goroutine, tetapi deployment praktis jarang memiliki jutaan ruangan yang aktif secara bersamaan.
 
 ---
 
 ## 12. Multi-Channel Notification
 
-**Decision:** Implement notifications through a sender interface with separate implementations for in-app, email, and push notifications, decoupled via pub/sub.
+**Keputusan:** Mengimplementasikan notifikasi melalui interface sender dengan implementasi terpisah untuk notifikasi in-app, email, dan push, dipisahkan melalui pub/sub.
 
-**Rationale:** The sender interface (`Sender`) defines a single contract: `Send(recipient, title, body)`. Each channel implements it independently — in-app (persisted to storage, polled by the client), email (logs to stdout as simulation), and push (logs to stdout as simulation). Publishers (services that generate notifications) never know about delivery mechanisms; they publish to a channel, and registered senders consume from it. This pub/sub decoupling means adding a new channel (SMS, Slack, webhook) requires zero changes to publishers — just write a new `Sender` and register it. The trade-off is eventual delivery semantics: if a sender is slow or fails, the pub/sub channel must handle backpressure. For this project, the channel is buffered and synchronous, which is adequate for demonstration purposes.
+**Alasan:** Interface sender (`Sender`) mendefinisikan satu kontrak: `Send(recipient, title, body)`. Setiap saluran mengimplementasikannya secara independen -- in-app (disimpan ke penyimpanan, diambil oleh klien), email (log ke stdout sebagai simulasi), dan push (log ke stdout sebagai simulasi). Publisher (layanan yang menghasilkan notifikasi) tidak pernah tahu tentang mekanisme pengiriman; mereka mempublikasikan ke saluran, dan sender terdaftar mengonsumsinya. Decoupling pub/sub ini berarti menambahkan saluran baru (SMS, Slack, webhook) membutuhkan nol perubahan pada publisher -- hanya menulis `Sender` baru dan mendaftarkannya. Trade-off adalah semantik pengiriman eventual: jika sender lambat atau gagal, saluran pub/sub harus menangani backpressure. Untuk proyek ini, saluran di-buffer dan sinkron, yang memadai untuk tujuan demonstrasi.
 
 ---
 
-## 13. Simulated Transcoding
+## 13. Simulasi Transcoding
 
-**Decision:** Simulate video transcoding as an asynchronous goroutine-based process with a state machine.
+**Keputusan:** Mensimulasikan transcoding video sebagai proses asinkron berbasis goroutine dengan state machine.
 
-**Rationale:** Video transcoding is computationally expensive and inherently asynchronous. This implementation models the real-world pipeline as a state machine: `uploading` → `processing` → `ready`. When a video is uploaded, a goroutine is spawned that simulates transcoding work (via `time.Sleep`), then transitions the video to `ready`. This mirrors production transcoding pipelines (AWS Elastic Transcoder, FFmpeg jobs) without requiring actual FFmpeg binaries or GPU hardware. The state machine pattern makes it easy to extend: adding a `failed` state, progress reporting, or parallel quality variants are just additional states and transitions. The trade-off is that simulated work is unrealistically predictable — real transcoding times vary with video length, resolution, and codec — but this is acceptable for demonstrating the async processing pattern and API design.
+**Alasan:** Transcoding video mahal secara komputasi dan secara inheren asinkron. Implementasi ini memodelkan pipeline dunia nyata sebagai state machine: `uploading` ke `processing` ke `ready`. Ketika video diunggah, sebuah goroutine dibuat yang mensimulasikan pekerjaan transcoding (melalui `time.Sleep`), kemudian mentransisikan video ke `ready`. Ini mencerminkan pipeline transcoding produksi (AWS Elastic Transcoder, pekerjaan FFmpeg) tanpa memerlukan biner FFmpeg atau perangkat keras GPU yang sebenarnya. Pola state machine membuatnya mudah diperluas: menambahkan status `failed`, pelaporan kemajuan, atau varian kualitas paralel hanyalah status dan transisi tambahan. Trade-off adalah bahwa pekerjaan simulasi dapat diprediksi secara tidak realistis -- waktu transcoding nyata bervariasi dengan panjang video, resolusi, dan codec -- tetapi ini dapat diterima untuk mendemonstrasikan pola pemrosesan async dan desain API.
 
 ---
 
 ## 14. File Versioning
 
-**Decision:** Store immutable version history for files — each update appends a new version rather than overwriting in place.
+**Keputusan:** Menyimpan riwayat versi immutable untuk file -- setiap pembaruan menambahkan versi baru daripada menimpa di tempat.
 
-**Rationale:** Immutable versioning means every file update creates a new immutable snapshot of the file content, with an incrementing version number. Old versions are retained and accessible by version ID, enabling rollback, audit trails, and concurrent access to historical states. This is the same design used by Google Drive, Dropbox, and S3 object versioning. The implementation stores versions in an ordered slice per file metadata entry; the latest version is always the last element. The trade-off is storage amplification: editing a 100 MB file 50 times consumes ~5 GB of raw storage. Production systems use delta encoding or snapshot scheduling to mitigate this, but for this project, full-version storage is the clearest demonstration of the concept and is acceptable at the target data scale.
+**Alasan:** Versioning immutable berarti setiap pembaruan file membuat snapshot immutable baru dari konten file, dengan nomor versi yang bertambah. Versi lama dipertahankan dan dapat diakses oleh ID versi, memungkinkan rollback, jejak audit, dan akses konkuren ke status historis. Ini adalah desain yang sama yang digunakan oleh Google Drive, Dropbox, dan versioning objek S3. Implementasi menyimpan versi dalam irisan terurut per entri metadata file; versi terbaru selalu merupakan elemen terakhir. Trade-off adalah amplifikasi penyimpanan: mengedit file 100 MB sebanyak 50 kali mengonsumsi ~5 GB penyimpanan mentah. Sistem produksi menggunakan delta encoding atau penjadwalan snapshot untuk mengurangi ini, tetapi untuk proyek ini, penyimpanan versi penuh adalah demonstrasi konsep yang paling jelas dan dapat diterima pada skala data yang ditargetkan.
 
 ---
 
 ## 15. Graceful Shutdown
 
-**Decision:** Every service handles SIGINT and SIGTERM with a 5-second graceful shutdown timeout.
+**Keputusan:** Setiap layanan menangani SIGINT dan SIGTERM dengan timeout graceful shutdown 5 detik.
 
-**Rationale:** A service that dies without draining inflight requests can corrupt data, drop messages, or leave clients hanging. The graceful shutdown pattern — catching OS signals, notifying the HTTP server to stop accepting new requests, waiting for active requests to finish (with a timeout), then exiting — ensures clean teardown. The 5-second timeout is a reasonable default: long enough to complete typical HTTP requests (which should take milliseconds), short enough that the process won't hang indefinitely on a stuck handler. This pattern is implemented once in `pkg/kit` and reused by every service, ensuring consistent behavior across the project. The alternative — ignoring signals or calling `os.Exit(0)` immediately — is appropriate only for stateless batch jobs, not network services.
+**Alasan:** Layanan yang mati tanpa menguras permintaan yang sedang berlangsung dapat merusak data, menjatuhkan pesan, atau membuat klien menggantung. Pola graceful shutdown -- menangkap sinyal OS, memberi tahu server HTTP untuk berhenti menerima permintaan baru, menunggu permintaan aktif selesai (dengan timeout), lalu keluar -- memastikan pembersihan yang rapi. Timeout 5 detik adalah default yang wajar: cukup lama untuk menyelesaikan permintaan HTTP tipikal (yang seharusnya memakan waktu milidetik), cukup pendek sehingga proses tidak akan menggantung tanpa batas pada handler yang macet. Pola ini diimplementasikan sekali di `pkg/kit` dan digunakan kembali oleh setiap layanan, memastikan perilaku yang konsisten di seluruh proyek. Alternatif -- mengabaikan sinyal atau memanggil `os.Exit(0)` segera -- hanya sesuai untuk pekerjaan batch tanpa status, bukan layanan jaringan.

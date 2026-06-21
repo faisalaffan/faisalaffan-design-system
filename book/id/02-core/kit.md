@@ -1,8 +1,8 @@
 # pkg/kit -- Gin Server Factory
 
-Gin-based HTTP server factory, configuration loader, JSON response helpers, typed errors, and built-in middleware -- shared by every service in the monorepo.
+Gin-based HTTP server factory, configuration loader, helper respons JSON, error bertipe, dan middleware bawaan -- digunakan bersama oleh setiap layanan di monorepo.
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -32,11 +32,11 @@ flowchart LR
     RL -->|used optionally by service| MW
 ```
 
-## Components
+## Komponen
 
 ### Config Loader
 
-`LoadConfig()` reads `PORT` and `ENV` environment variables with sane defaults. Used by every service `main.go`.
+`LoadConfig()` membaca variabel lingkungan `PORT` dan `ENV` dengan nilai default yang wajar. Digunakan oleh setiap `main.go` layanan.
 
 ```go
 type Config struct {
@@ -59,7 +59,7 @@ func LoadConfig() Config {
 
 ### Server Factory
 
-`NewServer` creates a Gin engine pre-configured with recovery and logging middleware, debug/release/test mode based on `Config.Env`, and a `/health` endpoint.
+`NewServer` membuat engine Gin yang sudah dikonfigurasi dengan middleware recovery dan logging, mode debug/release/test berdasarkan `Config.Env`, dan endpoint `/health`.
 
 ```go
 func NewServer(cfg Config) *gin.Engine {
@@ -75,15 +75,15 @@ func NewServer(cfg Config) *gin.Engine {
 
 ### Response Helpers
 
-| Function | HTTP Status | Description |
+| Fungsi | HTTP Status | Deskripsi |
 |---|---|---|
-| `OK` | 200 | Standard success payload |
-| `Created` | 201 | Resource created |
-| `BadRequest` | 400 | Validation / bad input |
-| `NotFound` | 404 | Resource not found |
-| `InternalError` | 500 | Server-side failure |
+| `OK` | 200 | Payload sukses standar |
+| `Created` | 201 | Resource dibuat |
+| `BadRequest` | 400 | Validasi / input salah |
+| `NotFound` | 404 | Resource tidak ditemukan |
+| `InternalError` | 500 | Kegagalan di sisi server |
 
-All responses share a consistent JSON envelope:
+Semua respons berbagi format JSON yang konsisten:
 
 ```go
 type Response struct {
@@ -95,7 +95,7 @@ type Response struct {
 
 ### AppError
 
-Unifies error handling across service and handler layers with an error code, human-readable message, and optional wrapped cause.
+Menyatukan penanganan error di seluruh lapisan layanan dan handler dengan kode error, pesan yang dapat dibaca manusia, dan penyebab terbungkus opsional.
 
 ```go
 type AppError struct {
@@ -118,7 +118,7 @@ func (e *AppError) Unwrap() error { return e.Err }
 
 #### Recovery
 
-Catches panics, logs the stack trace via `debug.Stack()`, and responds with 500 instead of crashing the process.
+Menangkap panic, mencatat stack trace melalui `debug.Stack()`, dan merespons dengan 500 alih-alih membuat proses crash.
 
 ```go
 func Recovery() gin.HandlerFunc {
@@ -138,7 +138,7 @@ func Recovery() gin.HandlerFunc {
 
 #### Logging
 
-Logs every request with method, path, status code, and duration.
+Mencatat setiap permintaan dengan method, path, kode status, dan durasi.
 
 ```go
 func Logging() gin.HandlerFunc {
@@ -157,7 +157,7 @@ func Logging() gin.HandlerFunc {
 
 #### RateLimit Bridge
 
-Attaches a rate-limiter algorithm to any route. Used by the rate-limiter service and available as a general-purpose guard.
+Menempelkan algoritma rate-limiter ke rute mana pun. Digunakan oleh layanan rate-limiter dan tersedia sebagai pengaman serba guna.
 
 ```go
 func RateLimitPerSecond(algo algorithm.Algorithm, limit int) gin.HandlerFunc {
@@ -176,14 +176,14 @@ func RateLimitPerSecond(algo algorithm.Algorithm, limit int) gin.HandlerFunc {
 
 ## Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |---|---|---|
-| GET | `/health` | Health check, returns `{"data": {"status": "ok"}}` |
+| GET | `/health` | Health check, mengembalikan `{"data": {"status": "ok"}}` |
 
-## Technical Decisions
+## Keputusan Teknis
 
-- **Gin over net/http**: Consistent framework choice across all 12 services. Built-in binding, validation, and middleware chaining.
-- **gin.New() over gin.Default()**: Explicit middleware registration avoids surprise inclusion of `gin.Logger()` and `gin.Recovery()` with different output formats.
-- **Logging over structured logger**: `log.Printf` keeps the dependency surface minimal. Services that need structured output can add a logger later without changing the middleware interface.
-- **Response envelope**: A single `Response` struct with `Data`, `Error`, and optional `Meta` makes client-side parsing uniform. No competing conventions between services.
-- **AppError pattern**: Wraps the cause with `fmt.Errorf` for stack-free error chains. `Unwrap()` enables `errors.Is` / `errors.As` at caller sites.
+- **Gin dibanding net/http**: Pilihan framework yang konsisten di semua 12 layanan. Binding, validasi, dan middleware chaining bawaan.
+- **gin.New() dibanding gin.Default()**: Registrasi middleware eksplisit menghindari penyertaan tak terduga dari `gin.Logger()` dan `gin.Recovery()` dengan format output berbeda.
+- **Logging dibanding structured logger**: `log.Printf` menjaga permukaan dependensi tetap minimal. Layanan yang membutuhkan output terstruktur dapat menambahkan logger nanti tanpa mengubah antarmuka middleware.
+- **Response envelope**: Struct `Response` tunggal dengan `Data`, `Error`, dan `Meta` opsional membuat parsing di sisi klien seragam. Tidak ada konvensi yang bersaing antar layanan.
+- **Pola AppError**: Membungkus penyebab dengan `fmt.Errorf` untuk rantai error tanpa stack. `Unwrap()` memungkinkan `errors.Is` / `errors.As` di situs pemanggil.

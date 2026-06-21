@@ -1,12 +1,12 @@
 # Notification System
 
-Pub/sub notification delivery across multiple channels with a `Sender` interface. In-app notifications are persisted; email and push are simulated via log output.
+Pengiriman notifikasi pub/sub di berbagai saluran dengan interface `Sender`. Notifikasi in-app dipertahankan; email dan push disimulasikan melalui output log.
 
-Port **8083** | Package `notification-system/`
+Port **8083** | Paket `notification-system/`
 
 ---
 
-## Architecture
+## Arsitektur
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -30,7 +30,7 @@ flowchart LR
 
 ### Sender Interface
 
-All senders implement a common interface, allowing new channels (SMS, Slack, webhook) to be added without changing the dispatch logic.
+Semua pengirim mengimplementasikan interface yang sama, memungkinkan saluran baru (SMS, Slack, webhook) ditambahkan tanpa mengubah logika pengiriman.
 
 ```go
 type Sender interface {
@@ -41,7 +41,7 @@ type Sender interface {
 
 ---
 
-## Code Example
+## Contoh Kode
 
 ### Service Layer: Channel Routing
 
@@ -83,7 +83,7 @@ func (s *Service) Send(userID string, ch channel.Type, title, body string) (*cha
 }
 ```
 
-### In-App Sender Implementation
+### Implementasi In-App Sender
 
 ```go
 func (s *InAppSender) Send(n *Notification) error {
@@ -117,11 +117,11 @@ func (s *PushSender) Send(n *Notification) error {
 
 ## API Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |--------|------|-------------|
-| `POST` | `/send` | Send a notification (body: user_id, channel, title, body) |
-| `GET` | `/notifications?user=X` | List notifications for a user |
-| `GET` | `/notifications/:id` | Get a single notification by ID |
+| `POST` | `/send` | Mengirim notifikasi (body: user_id, channel, title, body) |
+| `GET` | `/notifications?user=X` | Mendaftar notifikasi untuk pengguna |
+| `GET` | `/notifications/:id` | Mendapatkan satu notifikasi berdasarkan ID |
 
 ### POST /send Request Body
 
@@ -136,35 +136,35 @@ func (s *PushSender) Send(n *Notification) error {
 
 ---
 
-## Technical Decisions
+## Keputusan Teknis
 
-### Interface-Based Dispatch
+### Dispatch Berbasis Interface
 
-The `Sender` interface decouples notification routing from delivery logic. Adding a new channel (SMS, Slack, webhook) requires only:
+Interface `Sender` memisahkan perutean notifikasi dari logika pengiriman. Menambahkan saluran baru (SMS, Slack, webhook) hanya membutuhkan:
 
-1. Implement the `Sender` interface.
-2. Register the sender in `Service.New()`.
+1. Mengimplementasikan interface `Sender`.
+2. Mendaftarkan pengirim di `Service.New()`.
 
-No changes to the handler or service dispatch logic.
+Tidak ada perubahan pada handler atau logika dispatch layanan.
 
-### Three Delivery Semantics
+### Tiga Semantik Pengiriman
 
-| Channel | Behaviour |
+| Saluran | Perilaku |
 |---------|-----------|
-| `in_app` | Persisted to in-memory store, status becomes `"delivered"`, retrievable via GET endpoints |
-| `email` | Simulated via `log.Printf`, status becomes `"sent"`, no actual SMTP call |
-| `push` | Simulated via `log.Printf`, status becomes `"sent"`, no actual FCM/APNs call |
+| `in_app` | Disimpan ke penyimpanan in-memory, status menjadi `"delivered"`, dapat diambil melalui endpoint GET |
+| `email` | Disimulasikan melalui `log.Printf`, status menjadi `"sent"`, tanpa panggilan SMTP aktual |
+| `push` | Disimulasikan melalui `log.Printf`, status menjadi `"sent"`, tanpa panggilan FCM/APNs aktual |
 
 ### In-Memory Store
 
-Notifications are stored in a flat slice on `channel.Store`. Querying by user ID does a linear scan -- acceptable for the demo scale but would need indexing in production (e.g., per-user lists or database queries).
+Notifikasi disimpan dalam irisan datar di `channel.Store`. Kueri berdasarkan ID pengguna melakukan pemindaian linear -- dapat diterima untuk skala demo tetapi akan membutuhkan pengindeksan di produksi (mis., daftar per-pengguna atau kueri basis data).
 
 ---
 
-## Key Files
+## File Kunci
 
-| File | Purpose |
+| File | Tujuan |
 |------|---------|
-| `channel/channel.go` | Sender interface, Notification model, transport implementations |
-| `service/service.go` | Business logic: channel routing, ID generation |
-| `handler/handler.go` | HTTP handlers for send and retrieval |
+| `channel/channel.go` | Interface Sender, model Notification, implementasi transport |
+| `service/service.go` | Logika bisnis: perutean saluran, pembuatan ID |
+| `handler/handler.go` | HTTP handlers untuk pengiriman dan pengambilan |

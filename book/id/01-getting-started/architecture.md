@@ -1,28 +1,28 @@
-# Architecture
+# Arsitektur
 
-## High-Level Design
+## Desain Tingkat Tinggi
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart TB
-    subgraph "Batch 1 — Core"
+    subgraph "Batch 1 -- Core"
         US["url-shortener :8080"]
         RL["rate-limiter :8081"]
     end
-    subgraph "Batch 2 — Data"
+    subgraph "Batch 2 -- Data"
         ID["unique-id-generator :8084"]
         KV["key-value-store :8085"]
         AC["search-autocomplete :8086"]
     end
-    subgraph "Batch 3 — Realtime"
+    subgraph "Batch 3 -- Realtime"
         CS["chat-system :8082"]
         NS["notification-system :8083"]
     end
-    subgraph "Batch 4 — Scale"
+    subgraph "Batch 4 -- Scale"
         NF["news-feed :8087"]
         WC["web-crawler :8088"]
     end
-    subgraph "Batch 5 — Storage"
+    subgraph "Batch 5 -- Storage"
         YT["youtube :8089"]
         GD["google-drive :8090"]
     end
@@ -44,17 +44,17 @@ flowchart TB
     GD --> KIT
 ```
 
-## Shared Packages
+## Paket Bersama
 
 ### pkg/kit
-Gin factory, config loader, JSON response helpers, AppError types, and middleware (recovery, logging, rate-limit bridge).
+Gin factory, config loader, helper respons JSON, tipe AppError, dan middleware (recovery, logging, rate-limit bridge).
 
 ### pkg/consistenthash
-Hash ring with 150 virtual nodes per physical node. `crc32` hashing. Used by key-value-store for shard-to-node mapping.
+Hash ring dengan 150 virtual node per physical node. Hashing `crc32`. Digunakan oleh key-value-store untuk pemetaan shard-ke-node.
 
-## Design Philosophy
+## Filosofi Desain
 
-- **Interface-first**: every service defines a `Storage` interface. In-memory default, swappable to Redis/Postgres.
-- **Single module**: one `go.mod` at root. All services share dependency versions.
-- **Graceful shutdown**: every service handles SIGINT/SIGTERM with 5s timeout.
-- **Gin Gonic**: consistent HTTP framework across all services.
+- **Interface-first**: setiap layanan mendefinisikan interface `Storage`. Default in-memory, dapat diganti ke Redis/Postgres.
+- **Modul tunggal**: satu `go.mod` di root. Semua layanan berbagi versi dependensi yang sama.
+- **Graceful shutdown**: setiap layanan menangani SIGINT/SIGTERM dengan timeout 5 detik.
+- **Gin Gonic**: framework HTTP yang konsisten di semua layanan.

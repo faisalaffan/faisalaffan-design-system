@@ -1,10 +1,10 @@
 # Search Autocomplete
 
-Prefix-tree (Trie) with per-node frequency counters, top-K result ranking by frequency, and lexicographic tiebreaking. Exposes `POST /train` for learning terms and `GET /autocomplete?q=...` for prefix search.
+Prefix-tree (Trie) dengan penghitung frekuensi per-node, peringkat hasil top-K berdasarkan frekuensi, dan pemutus seri leksikografis. Mengekspos `POST /train` untuk mempelajari istilah dan `GET /autocomplete?q=...` untuk pencarian prefiks.
 
-## Architecture
+## Arsitektur
 
-### Trie Structure
+### Struktur Trie
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -53,9 +53,9 @@ flowchart TB
     style END_DEV2 fill:#4a9
 ```
 
-Each edge is a character in the alphabet. Terminal nodes (filled squares above) carry a frequency counter incremented via `Insert` or `Increment`. The prefix tree compresses shared prefixes so `"design"` and `"developer"` share the `"d"`, `"e"` path.
+Setiap tepi adalah karakter dalam alfabet. Node terminal (kotak terisi di atas) membawa penghitung frekuensi yang dinaikkan melalui `Insert` atau `Increment`. Pohon prefiks mengompresi prefiks bersama sehingga `"design"` dan `"developer"` berbagi jalur `"d"`, `"e"`.
 
-### Search Flow
+### Alur Pencarian
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -78,11 +78,11 @@ flowchart TB
 
 ## Endpoints
 
-| Method | Path | Description |
+| Method | Path | Deskripsi |
 |---|---|---|
-| `GET` | `/autocomplete` | Search for prefix suggestions |
-| `POST` | `/train` | Increment a single term's frequency |
-| `POST` | `/train/bulk` | Increment multiple terms at once |
+| `GET` | `/autocomplete` | Mencari saran prefiks |
+| `POST` | `/train` | Menaikkan frekuensi satu istilah |
+| `POST` | `/train/bulk` | Menaikkan beberapa istilah sekaligus |
 
 ### GET /autocomplete?q=de&limit=3
 
@@ -120,7 +120,7 @@ GET /autocomplete?q=de&limit=3
 {"data": {"trained": 3}}
 ```
 
-## Trie Implementation
+## Implementasi Trie
 
 ```go
 type node struct {
@@ -174,7 +174,7 @@ func (t *Trie) Search(prefix string, limit int) []Result {
 }
 ```
 
-The handler also provides a bulk train endpoint for batch ingestion:
+Handler juga menyediakan endpoint train massal untuk ingest batch:
 
 ```go
 type bulkTrainRequest struct {
@@ -194,11 +194,11 @@ func (h *AutocompleteHandler) TrainBulk(c *gin.Context) {
 }
 ```
 
-## Technical Decisions
+## Keputusan Teknis
 
-- **Trie over inverted index**: A Trie is the canonical data structure for prefix autocomplete. Lookup time is O(len(prefix) + number of descendant nodes) regardless of dictionary size. An inverted index would require a separate prefix query layer.
-- **Per-node map over array of 26**: `map[rune]*node` supports arbitrary Unicode characters (Chinese, Arabic, emoji). A fixed-size array would limit the alphabet to ASCII. The memory overhead of a map is acceptable at this scale.
-- **Top-K by frequency, lexicographic tiebreak**: The two-stage sort produces deterministic results. Without the lexicographic fallback, results with equal frequency would be in non-deterministic map iteration order.
-- **DFS collection over precomputed suggestions**: Precomputing the top-K per prefix would speed up lookups at the cost of memory and update complexity. The current approach keeps the data structure simple and correct. Production systems at scale can add a cache layer in front of the Trie.
-- **RWMutex for concurrent access**: The Trie uses a read-write mutex. `Search` acquires a read lock (concurrent readers), while `Insert` / `Increment` acquire a write lock (exclusive). This maximizes throughput under read-heavy autocomplete workloads.
-- **Seed terms in main.go**: The service pre-populates common terms (`"design"`, `"developer"`, `"database"`, `"distributed"`, `"docker"`, `"deploy"`) so the autocomplete endpoint returns useful results immediately without training.
+- **Trie dibanding inverted index**: Trie adalah struktur data kanonik untuk autocomplete prefiks. Waktu pencarian adalah O(panjang(prefiks) + jumlah node turunan) terlepas dari ukuran kamus. Inverted index akan memerlukan lapisan kueri prefiks terpisah.
+- **Map per-node dibanding array of 26**: `map[rune]*node` mendukung karakter Unicode arbitrer (China, Arab, emoji). Array ukuran tetap akan membatasi alfabet ke ASCII. Overhead memori dari map dapat diterima pada skala ini.
+- **Top-K berdasarkan frekuensi, pemutus seri leksikografis**: Pengurutan dua tahap menghasilkan hasil deterministik. Tanpa fallback leksikografis, hasil dengan frekuensi yang sama akan berada dalam urutan iterasi map yang non-deterministik.
+- **Koleksi DFS dibanding saran yang telah dihitung sebelumnya**: Menghitung top-K per prefiks sebelumnya akan mempercepat pencarian dengan mengorbankan memori dan kompleksitas pembaruan. Pendekatan saat ini menjaga struktur data tetap sederhana dan benar. Sistem produksi pada skala besar dapat menambahkan lapisan cache di depan Trie.
+- **RWMutex untuk akses konkuren**: Trie menggunakan read-write mutex. `Search` memperoleh read lock (pembaca konkuren), sementara `Insert` / `Increment` memperoleh write lock (eksklusif). Ini memaksimalkan throughput di bawah beban kerja autocomplete yang didominasi baca.
+- **Seed terms di main.go**: Layanan melakukan pre-populasi istilah umum (`"design"`, `"developer"`, `"database"`, `"distributed"`, `"docker"`, `"deploy"`) sehingga endpoint autocomplete mengembalikan hasil yang berguna segera tanpa pelatihan.

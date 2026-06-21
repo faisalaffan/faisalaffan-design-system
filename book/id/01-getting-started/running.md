@@ -1,9 +1,9 @@
-# Running the Services
+# Menjalankan Layanan
 
-Each service is a standalone Go binary with its own port.
+Setiap layanan adalah binary Go mandiri dengan port-nya sendiri.
 
 ```bash
-# Start any service
+# Mulai layanan apa pun
 go run ./services/url-shortener          # :8080
 go run ./services/rate-limiter           # :8081
 go run ./services/chat-system            # :8082
@@ -17,16 +17,16 @@ go run ./services/youtube                # :8089
 go run ./services/google-drive           # :8090
 ```
 
-## Verify
+## Verifikasi
 
 ```bash
-go test ./...    # 100 tests across 44 packages
-go build ./...   # Build all
-go vet ./...     # Static analysis
+go test ./...    # 100 tes di 44 paket
+go build ./...   # Build semua
+go vet ./...     # Analisis statis
 ```
 
-## Dependencies
+## Dependensi
 
 ```bash
-docker compose up -d   # Redis + Postgres (for future persistence layers)
+docker compose up -d   # Redis + Postgres (untuk lapisan persistensi masa depan)
 ```
