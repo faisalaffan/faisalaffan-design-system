@@ -1,6 +1,14 @@
 package storage
 
-// Storage defines the interface for URL persistence.
+import (
+	"context"
+	"errors"
+)
+
+var ErrNotFound = errors.New("shortcode not found")
+
 type Storage interface {
-	// TODO: define methods
+	Save(ctx context.Context, code string, url string) error
+	Get(ctx context.Context, code string) (string, error)
+	Exists(ctx context.Context, code string) (bool, error)
 }
