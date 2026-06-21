@@ -16,7 +16,9 @@
 
 ---
 
-Go monorepo berisi implementasi latihan system design. Setiap folder adalah service standalone dengan entrypoint sendiri.
+Go monorepo mengimplementasikan semua 12 problem system design dari "System Design Interview" (2nd Ed) karya Alex Xu, didukung teori dari "Designing Data-Intensive Applications" karya Kleppmann.
+
+**100 tes | 44 package | 12 layanan | 2 package bersama**
 
 ## Arsitektur
 
@@ -33,6 +35,21 @@ flowchart TB
         AC["search-autocomplete<br/>:8086"]
     end
 
+    subgraph "Batch 3"
+        CS["chat-system<br/>:8082<br/>WebSocket"]
+        NS["notification-system<br/>:8083<br/>pub/sub"]
+    end
+
+    subgraph "Batch 4"
+        NF["news-feed<br/>:8087<br/>fan-out"]
+        WC["web-crawler<br/>:8088<br/>BFS"]
+    end
+
+    subgraph "Batch 5"
+        YT["youtube<br/>:8089"]
+        GD["google-drive<br/>:8090"]
+    end
+
     subgraph "Bersama (pkg/)"
         KIT["kit<br/>Gin factory"]
         CH["consistenthash<br/>Hash ring"]
@@ -44,81 +61,49 @@ flowchart TB
     KV --> KIT
     KV --> CH
     AC --> KIT
-
-    subgraph "Segera Hadir (Batch 3-5)"
-        DC["distributed-cache"]
-        CS["chat-system"]
-        NF["news-feed"]
-        WC["web-crawler"]
-    end
+    CS --> KIT
+    NS --> KIT
+    NF --> KIT
+    WC --> KIT
+    YT --> KIT
+    GD --> KIT
 
     style KIT fill:#009688,color:#fff
     style CH fill:#ff9800,color:#000
 ```
 
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant ID as ID Generator
-    participant US as URL Shortener
-    participant KV as Key-Value Store
-    participant AC as Autocomplete
+## Layanan
 
-    C->>ID: GET /id
-    ID-->>C: {id: 123456789}
-
-    C->>US: POST /shorten {url}
-    US-->>C: 201 {short_url, code}
-
-    C->>KV: PUT /mykey {value}
-    KV-->>C: 200 {stored: true}
-    C->>KV: GET /mykey
-    KV-->>C: 200 {value}
-
-    C->>AC: POST /train/bulk {terms}
-    AC-->>C: 200 {trained: N}
-    C->>AC: GET /autocomplete?q=pref
-    AC-->>C: {results: [...]}
-```
-
-## Struktur
-
-```
-├── url-shortener/          # Layanan URL shortener (:8080)
-│   ├── handler/            # Gin HTTP handler
-│   ├── service/            # Logika bisnis
-│   ├── storage/            # Interface storage + in-memory
-│   └── shortcode/          # Generator kode acak base62
-├── rate-limiter/           # Layanan rate limiter (:8081)
-│   ├── algorithm/          # Token bucket, sliding window, fixed window
-│   └── storage/            # Interface counter store + in-memory
-├── unique-id-generator/    # Generator ID Snowflake (:8084)
-│   ├── snowflake/          # ID 64-bit: timestamp + worker + sequence
-│   └── handler/            # GET /id
-├── key-value-store/        # KV store terdistribusi (:8085)
-│   ├── storage/            # Interface store + in-memory
-│   ├── shard/              # Shard manager dengan consistent hashing
-│   └── handler/            # GET/PUT/DELETE /:key
-├── search-autocomplete/    # Layanan autocomplete (:8086)
-│   ├── trie/               # Prefix tree concurrent-safe
-│   └── handler/            # GET /autocomplete, POST /train
-├── distributed-cache/      # — segera
-├── chat-system/            # — segera
-└── pkg/                    # Komponen bersama
-    ├── kit/                # Gin factory, config, response helper, middleware
-    └── consistenthash/     # Consistent hashing dengan virtual nodes
-```
+| # | Layanan | Port | Pola Utama | Batch |
+|---|---------|------|-----------|-------|
+| 1 | **url-shortener** | 8080 | Base62 + collision retry | 1 |
+| 2 | **rate-limiter** | 8081 | Sliding window + token bucket | 1 |
+| 3 | **chat-system** | 8082 | WebSocket rooms + broadcast | 3 |
+| 4 | **notification-system** | 8083 | Pub/sub + multi-channel | 3 |
+| 5 | **unique-id-generator** | 8084 | Snowflake 64-bit | 2 |
+| 6 | **key-value-store** | 8085 | Consistent hashing sharding | 2 |
+| 7 | **search-autocomplete** | 8086 | Trie + top-K frekuensi | 2 |
+| 8 | **news-feed** | 8087 | Fan-out on write | 4 |
+| 9 | **web-crawler** | 8088 | BFS + politeness + dedup | 4 |
+| 10 | **youtube** | 8089 | Metadata + search + transcode | 5 |
+| 11 | **google-drive** | 8090 | File + folder + versioning | 5 |
 
 ## Menjalankan
 
 ```bash
 go run ./url-shortener          # :8080
 go run ./rate-limiter           # :8081
+go run ./chat-system            # :8082
+go run ./notification-system    # :8083
 go run ./unique-id-generator    # :8084
 go run ./key-value-store        # :8085
 go run ./search-autocomplete    # :8086
+go run ./news-feed              # :8087
+go run ./web-crawler            # :8088
+go run ./youtube                # :8089
+go run ./google-drive           # :8090
 
-go test ./...                   # 48 tes di 25 package
+go test ./...                   # 100 tes di 44 package
 go build ./...                  # Build semua
 go vet ./...                    # Vet semua
 ```
@@ -126,7 +111,7 @@ go vet ./...                    # Vet semua
 ## Dependensi
 
 ```bash
-docker compose up -d       # Redis + Postgres (untuk problem mendatang)
+docker compose up -d       # Redis + Postgres (untuk persistensi mendatang)
 ```
 
 ## Keputusan Teknis
@@ -140,5 +125,11 @@ docker compose up -d       # Redis + Postgres (untuk problem mendatang)
 | **Sliding window rate limiting** | Lebih presisi dari fixed window. Profil memori lebih baik dari token bucket untuk high-cardinality keys. |
 | **Virtual nodes (150 replika)** | Consistent hashing dengan 150 virtual node. `crc32` untuk kecepatan — cukup uniform. |
 | **Snowflake 64-bit ID** | Timestamp(41) + Worker(10) + Sequence(12) = 4096 ID/ms/worker, ~69 tahun masa pakai. Tanpa koordinasi. |
-| **Trie-based autocomplete** | Pencarian prefix O(k) di mana k = panjang input. Top-K berdasarkan frekuensi + tiebreak leksikografis. Concurrent-safe untuk read. |
-| **Graceful shutdown** | Setiap layanan tangani SIGINT/SIGTERM dengan timeout 5 detik. Pola production di kode latihan. |
+| **Trie-based autocomplete** | Pencarian prefix O(k). Top-K berdasarkan frekuensi + tiebreak leksikografis. Concurrent-safe untuk read. |
+| **Fan-out on write** | Push post baru ke timeline semua follower saat write. Tradeoff write amplification untuk instant timeline reads. |
+| **BFS crawler dengan politeness** | URL frontier berbasis channel. Delay per domain. Ekstraksi link HTML via `golang.org/x/net/html`. |
+| **WebSocket rooms** | Room event loop berbasis goroutine (channel join/leave/broadcast). Riwayat pesan ring buffer (100 msg cap). |
+| **Notifikasi multi-channel** | Interface Sender: in-app (tersimpan), email, push (simulasi). Pub/sub mendekopel publisher dari delivery. |
+| **Transcoding simulasi** | Pemrosesan video async berbasis goroutine. State machine: uploading → processing → ready. |
+| **File versioning** | Riwayat versi immutable per file. Setiap update menambah versi baru. Konten lama dipertahankan untuk rollback. |
+| **Graceful shutdown** | Setiap layanan menangani SIGINT/SIGTERM dengan timeout 5 detik. Pola production di kode latihan. |
