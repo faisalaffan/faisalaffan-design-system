@@ -14,3 +14,8 @@
 
 # Superpowers internal docs (auto-generated plans/specs)
 docs/
+
+# Environment files — .env.example is committed as template
+.env
+.env.*
+!.env.example
