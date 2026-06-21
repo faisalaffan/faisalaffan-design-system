@@ -5,6 +5,7 @@ Pluggable algorithm interface with three implementations (sliding window, token 
 ## Architecture
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     subgraph "HTTP Layer"
         REQ["Request"]

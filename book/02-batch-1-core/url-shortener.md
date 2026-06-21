@@ -5,6 +5,7 @@ Base62 7-character random shortcode generator with collision retry (up to 5 atte
 ## Architecture
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 sequenceDiagram
     participant C as Client
     participant H as Handler

@@ -21,6 +21,7 @@ Go monorepo mengimplementasikan semua 12 problem system design dari "System Desi
 ## Arsitektur
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     subgraph "Batch 1"
         US["url-shortener<br/>:8080"]

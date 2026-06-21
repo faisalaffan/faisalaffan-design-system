@@ -3,6 +3,7 @@
 ## High-Level Design
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     subgraph "Batch 1 — Core"
         US["url-shortener :8080"]

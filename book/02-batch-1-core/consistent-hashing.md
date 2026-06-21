@@ -5,6 +5,7 @@ Consistent hashing ring with 150 virtual nodes per physical node, `crc32` key ha
 ## Architecture
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     subgraph "Hash Ring (0..2^32-1)"
         direction LR

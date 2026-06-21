@@ -7,6 +7,7 @@ Prefix-tree (Trie) with per-node frequency counters, top-K result ranking by fre
 ### Trie Structure
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     subgraph "Trie for terms: 'design', 'developer', 'database'"
         ROOT["root<br/>(freq=0)"]
@@ -57,6 +58,7 @@ Each edge is a character in the alphabet. Terminal nodes (filled squares above) 
 ### Search Flow
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     subgraph "GET /autocomplete?q=de&limit=3"
         Q["q = 'de'"]

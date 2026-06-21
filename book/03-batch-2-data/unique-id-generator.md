@@ -22,6 +22,7 @@ Snowflake-style 64-bit unique ID generator with 41-bit timestamp (epoch 2024-01-
 - **Bits 0--11 (12 bits)**: Sequence number per millisecond (0--4095).
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart TB
     subgraph "ID Generation Flow"
         CALL["Generator.Next()"]

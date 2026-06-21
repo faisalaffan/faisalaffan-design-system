@@ -5,6 +5,7 @@ Gin-based HTTP server factory, configuration loader, JSON response helpers, type
 ## Architecture
 
 ```mermaid
+%%{init: {"theme": "default"}}%%
 flowchart LR
     subgraph Service
         M[main.go]
