@@ -1,0 +1,253 @@
+/* ============================================================
+   faisalaffan-design-system — GitBook Custom Theme
+   Gradient • Inter/Plus Jakarta Sans • Pill Sidebar
+   ============================================================ */
+
+/* --- Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* --- CSS Variables --- */
+:root {
+  --gradient-start: #667eea;
+  --gradient-mid: #764ba2;
+  --gradient-end: #f093fb;
+  --gradient-accent: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --gradient-subtle: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  --gradient-warm: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --sidebar-bg: #f8f9fc;
+  --sidebar-active-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --sidebar-active-text: #ffffff;
+  --sidebar-hover-bg: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a5568;
+  --border-subtle: #e2e8f0;
+  --card-shadow: 0 1px 3px rgba(102, 126, 234, 0.08), 0 4px 12px rgba(118, 75, 162, 0.04);
+}
+
+/* --- Global Typography --- */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-primary);
+  line-height: 1.7;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 2.2em;
+  margin-top: 0;
+}
+
+h2 {
+  font-size: 1.6em;
+  margin-top: 2em;
+  padding-bottom: 0.3em;
+  border-bottom: 2px solid transparent;
+  border-image: var(--gradient-accent);
+  border-image-slice: 1;
+}
+
+h3 {
+  font-size: 1.25em;
+  color: #667eea;
+}
+
+code {
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  font-size: 0.88em;
+  background: var(--gradient-subtle);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #764ba2;
+}
+
+pre {
+  border-radius: 10px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-subtle);
+}
+
+pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+/* --- Sidebar — Filled & Pill --- */
+.book-summary {
+  background: var(--sidebar-bg);
+  font-family: 'Inter', sans-serif;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.book-summary ul.summary li a,
+.book-summary ul.summary li span {
+  border-radius: 10px;
+  margin: 3px 10px;
+  padding: 8px 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.book-summary ul.summary li a:hover {
+  background: var(--gradient-subtle);
+  color: #667eea;
+  transform: translateX(3px);
+}
+
+.book-summary ul.summary li.active > a {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transform: translateX(3px);
+}
+
+/* Pill shape for chapter headers */
+.book-summary ul.summary li.chapter > a,
+.book-summary ul.summary li.chapter > span {
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #667eea;
+  margin-top: 8px;
+}
+
+/* --- Gradient Header / Title --- */
+.book-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.book-header h1 {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+
+.book-header .btn {
+  color: #ffffff;
+  border-color: rgba(255,255,255,0.3);
+}
+
+/* --- Links --- */
+a {
+  color: #667eea;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #764ba2;
+}
+
+/* --- Tables --- */
+table {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-subtle);
+}
+
+thead {
+  background: var(--gradient-accent);
+  color: #ffffff;
+}
+
+thead th {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 12px 16px;
+}
+
+tbody td {
+  padding: 10px 16px;
+}
+
+tbody tr:nth-child(even) {
+  background: rgba(102, 126, 234, 0.03);
+}
+
+/* --- Blockquotes --- */
+blockquote {
+  border-left: 3px solid transparent;
+  border-image: var(--gradient-accent);
+  border-image-slice: 1;
+  background: var(--gradient-subtle);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 20px;
+  margin: 1.5em 0;
+}
+
+blockquote p {
+  margin: 0;
+}
+
+/* --- Mermaid Diagrams --- */
+.mermaid {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-subtle);
+}
+
+/* --- Search Box --- */
+#book-search-input {
+  border-radius: 10px;
+  margin: 10px;
+  border: 1px solid var(--border-subtle);
+  padding: 8px 14px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.25s;
+}
+
+#book-search-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  outline: none;
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #667eea, #764ba2);
+  border-radius: 3px;
+}
+
+/* --- Section Dividers --- */
+.markdown-section hr {
+  height: 2px;
+  background: var(--gradient-accent);
+  border: none;
+  border-radius: 1px;
+  margin: 2em 0;
+}
+
+/* --- Inline Gradient Accent --- */
+.markdown-section em strong,
+.markdown-section strong em {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
