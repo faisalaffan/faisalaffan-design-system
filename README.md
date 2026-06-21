@@ -5,11 +5,11 @@
 </p>
 
 <p align="center">
-  <img src="assets/banner/banner.png" alt="banner" width="800"/>
+  <img src="assets/01_BANNER.png" alt="banner" width="800"/>
 </p>
 
 <p align="center">
-  <img src="assets/logo/logo.png" alt="faisalaffan-design-system logo" width="400"/>
+  <img src="assets/01_LOGO.png" alt="faisalaffan-design-system logo" width="400"/>
 </p>
 
 ---
