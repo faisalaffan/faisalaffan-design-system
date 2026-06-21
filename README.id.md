@@ -1,17 +1,15 @@
 # faisalaffan-design-system
 
-[English](README.md)
-
-## 01_LOGO
-
 <p align="center">
-  <img src="assets/logo/logo.svg" alt="faisalaffan-design-system logo" width="400"/>
+  <a href="README.md">🇬🇧 English</a>
 </p>
 
-## 02_BANNER
+<p align="center">
+  <img src="assets/banner/banner.png" alt="banner" width="800"/>
+</p>
 
 <p align="center">
-  <img src="assets/banner/banner.svg" alt="banner" width="800"/>
+  <img src="assets/logo/logo.png" alt="faisalaffan-design-system logo" width="400"/>
 </p>
 
 ---
