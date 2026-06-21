@@ -18,59 +18,6 @@ Go monorepo implementing all 12 system design problems from Alex Xu's "System De
 
 **100 tests | 44 packages | 12 services | 2 shared packages**
 
-## Architecture
-
-```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
-flowchart TB
-    subgraph "Batch 1"
-        US["url-shortener<br/>:8080"]
-        RL["rate-limiter<br/>:8081"]
-    end
-
-    subgraph "Batch 2"
-        ID["unique-id-generator<br/>:8084"]
-        KV["key-value-store<br/>:8085"]
-        AC["search-autocomplete<br/>:8086"]
-    end
-
-    subgraph "Batch 3"
-        CS["chat-system<br/>:8082<br/>WebSocket"]
-        NS["notification-system<br/>:8083<br/>pub/sub"]
-    end
-
-    subgraph "Batch 4"
-        NF["news-feed<br/>:8087<br/>fan-out"]
-        WC["web-crawler<br/>:8088<br/>BFS"]
-    end
-
-    subgraph "Batch 5"
-        YT["youtube<br/>:8089"]
-        GD["google-drive<br/>:8090"]
-    end
-
-    subgraph "Shared (pkg/)"
-        KIT["kit<br/>Gin factory"]
-        CH["consistenthash<br/>Hash ring"]
-    end
-
-    US --> KIT
-    RL --> KIT
-    ID --> KIT
-    KV --> KIT
-    KV --> CH
-    AC --> KIT
-    CS --> KIT
-    NS --> KIT
-    NF --> KIT
-    WC --> KIT
-    YT --> KIT
-    GD --> KIT
-
-    style KIT fill:#009688,color:#fff
-    style CH fill:#ff9800,color:#000
-```
-
 ## Services
 
 | # | Service | Port | Core Pattern | Batch |
