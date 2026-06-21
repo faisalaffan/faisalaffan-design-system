@@ -16,7 +16,7 @@
 
 Go monorepo implementing all 12 system design problems from Alex Xu's "System Design Interview" (2nd Ed), backed by theory from Kleppmann's "Designing Data-Intensive Applications".
 
-**100 tests | 44 packages | 12 services | 2 shared packages**
+**196 tests | 88 packages | 22 services | 2 shared packages**
 
 ## Services
 
@@ -34,6 +34,21 @@ Go monorepo implementing all 12 system design problems from Alex Xu's "System De
 | 10 | **youtube** | 8089 | Metadata + search + transcode | 5 |
 | 11 | **google-drive** | 8090 | Files + folders + versioning | 5 |
 
+### Q-Commerce
+
+| # | Service | Port | Core Pattern |
+|---|---------|------|-------------|
+| 12 | **inventory-service** | 8100 | Redis Lua atomic reservation, dual-store, TTL reaper |
+| 13 | **geo-service** | 8101 | H3 hexagon indexing, haversine tie-breaking |
+| 14 | **flash-sale** | 8102 | Stock buckets, waiting room, HMAC attestation |
+| 15 | **checkout-service** | 8103 | Saga orchestration, outbox, idempotency |
+| 16 | **promo-engine** | 8104 | AST rule tree, Redis Lua counters, fraud detection |
+| 17 | **dispatch-service** | 8105 | Batch collector, greedy matcher, driver state machine |
+| 18 | **eta-service** | 8106 | Concurrent estimation, Kalman, sticky ETA cache |
+| 19 | **search-service** | 8107 | Multi-match ranking, trie autocomplete, composite score |
+| 20 | **tracking-service** | 8108 | WebSocket ingestion, Kalman filter, SSE push |
+| 21 | **pricing-service** | 8109 | Surge detection, price lock, elasticity tracker |
+
 ## Running
 
 ```bash
@@ -48,8 +63,18 @@ go run ./services/news-feed              # :8087
 go run ./services/web-crawler            # :8088
 go run ./services/youtube                # :8089
 go run ./services/google-drive           # :8090
+go run ./services/inventory-service      # :8100
+go run ./services/geo-service            # :8101
+go run ./services/flash-sale             # :8102
+go run ./services/checkout-service       # :8103
+go run ./services/promo-engine           # :8104
+go run ./services/dispatch-service       # :8105
+go run ./services/eta-service            # :8106
+go run ./services/search-service         # :8107
+go run ./services/tracking-service       # :8108
+go run ./services/pricing-service        # :8109
 
-go test ./...                   # 100 tests across 44 packages
+go test ./...                   # 196 tests across 88 packages
 go build ./...                  # Build all
 go vet ./...                    # Vet all
 ```

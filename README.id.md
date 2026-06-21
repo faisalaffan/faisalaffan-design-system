@@ -16,7 +16,7 @@
 
 Go monorepo mengimplementasikan semua 12 problem system design dari "System Design Interview" (2nd Ed) karya Alex Xu, didukung teori dari "Designing Data-Intensive Applications" karya Kleppmann.
 
-**100 tes | 44 package | 12 layanan | 2 package bersama**
+**196 tes | 88 package | 22 layanan | 2 paket bersama**
 
 ## Layanan
 
@@ -34,6 +34,21 @@ Go monorepo mengimplementasikan semua 12 problem system design dari "System Desi
 | 10 | **youtube** | 8089 | Metadata + search + transcode | 5 |
 | 11 | **google-drive** | 8090 | File + folder + versioning | 5 |
 
+### Q-Commerce
+
+| # | Layanan | Port | Pola Utama |
+|---|---------|------|-----------|
+| 12 | **inventory-service** | 8100 | Redis Lua atomic reservation, dual-store, TTL reaper |
+| 13 | **geo-service** | 8101 | H3 hexagon indexing, haversine tie-breaking |
+| 14 | **flash-sale** | 8102 | Stock buckets, waiting room, HMAC attestation |
+| 15 | **checkout-service** | 8103 | Saga orchestration, outbox, idempotency |
+| 16 | **promo-engine** | 8104 | AST rule tree, Redis Lua counters, fraud detection |
+| 17 | **dispatch-service** | 8105 | Batch collector, greedy matcher, driver state machine |
+| 18 | **eta-service** | 8106 | Concurrent estimation, Kalman, sticky ETA cache |
+| 19 | **search-service** | 8107 | Multi-match ranking, trie autocomplete, composite score |
+| 20 | **tracking-service** | 8108 | WebSocket ingestion, Kalman filter, SSE push |
+| 21 | **pricing-service** | 8109 | Surge detection, price lock, elasticity tracker |
+
 ## Menjalankan
 
 ```bash
@@ -48,8 +63,18 @@ go run ./services/news-feed              # :8087
 go run ./services/web-crawler            # :8088
 go run ./services/youtube                # :8089
 go run ./services/google-drive           # :8090
+go run ./services/inventory-service      # :8100
+go run ./services/geo-service            # :8101
+go run ./services/flash-sale             # :8102
+go run ./services/checkout-service       # :8103
+go run ./services/promo-engine           # :8104
+go run ./services/dispatch-service       # :8105
+go run ./services/eta-service            # :8106
+go run ./services/search-service         # :8107
+go run ./services/tracking-service       # :8108
+go run ./services/pricing-service        # :8109
 
-go test ./...                   # 100 tes di 44 package
+go test ./...                   # 196 tes di 88 package
 go build ./...                  # Build semua
 go vet ./...                    # Vet semua
 ```
