@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/faisalaffan/faisalaffan-design-system/pkg/kit"
+	"github.com/faisalaffan/faisalaffan-design-system/pkg/kit/circuitbreaker"
 	"github.com/faisalaffan/faisalaffan-design-system/pkg/kit/middleware"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/model"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/repository"
@@ -22,16 +23,18 @@ type FlashSaleService interface {
 	QueueStatus(ctx context.Context, productID, userID string) (*model.QueueStatusResponse, error)
 	ReleaseReservation(ctx context.Context, reservationID string) error
 	ConfirmReservation(ctx context.Context, reservationID string) error
+	DryRun(ctx context.Context, req model.CheckoutRequest) (*model.DryRunResponse, error)
 }
 
 type FlashSaleHandler struct {
 	svc        FlashSaleService
 	repo       *repository.FlashSaleRepo
 	hmacSecret []byte
+	cb         *circuitbreaker.CircuitBreaker
 }
 
-func New(svc FlashSaleService, repo *repository.FlashSaleRepo, hmacSecret string) *FlashSaleHandler {
-	return &FlashSaleHandler{svc: svc, repo: repo, hmacSecret: []byte(hmacSecret)}
+func New(svc FlashSaleService, repo *repository.FlashSaleRepo, hmacSecret string, cb *circuitbreaker.CircuitBreaker) *FlashSaleHandler {
+	return &FlashSaleHandler{svc: svc, repo: repo, hmacSecret: []byte(hmacSecret), cb: cb}
 }
 
 // GET /flash-sale/token?device_fp=X
@@ -161,6 +164,49 @@ func (h *FlashSaleHandler) QueueStream(c *gin.Context) {
 	}
 }
 
+// POST /flash-sale/dry-run
+func (h *FlashSaleHandler) DryRun(c *gin.Context) {
+	var req model.CheckoutRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		kit.BadRequest(c, err.Error())
+		return
+	}
+	resp, err := h.svc.DryRun(c.Request.Context(), req)
+	if err != nil {
+		kit.InternalError(c, "dry-run failed")
+		return
+	}
+	middleware.GlobalMetrics.Inc("flash_dry_run_total")
+	if resp.WouldSucceed {
+		middleware.GlobalMetrics.Inc("flash_dry_run_success")
+	}
+	kit.OK(c, resp)
+}
+
+// GET /flash-sale/metrics
+func (h *FlashSaleHandler) Metrics(c *gin.Context) {
+	snapshot := middleware.GlobalMetrics.Snapshot()
+	kit.OK(c, snapshot)
+}
+
+// GET /flash-sale/health
+func (h *FlashSaleHandler) Health(c *gin.Context) {
+	state := "closed"
+	if h.cb != nil && h.cb.State() == circuitbreaker.Open {
+		state = "open"
+	}
+	failures, threshold := 0, 0
+	if h.cb != nil {
+		failures, threshold = h.cb.Counts()
+	}
+	kit.OK(c, gin.H{
+		"status":         "ok",
+		"circuit_breaker": state,
+		"failures":       failures,
+		"threshold":      threshold,
+	})
+}
+
 func (h *FlashSaleHandler) Register(r *gin.RouterGroup) {
 	r.POST("/flash-sale/checkout", h.Checkout)
 	r.POST("/flash-sale/release", h.Release)
@@ -168,4 +214,7 @@ func (h *FlashSaleHandler) Register(r *gin.RouterGroup) {
 	r.GET("/flash-sale/queue-status", h.QueueStatus)
 	r.GET("/flash-sale/queue-stream", h.QueueStream)
 	r.GET("/flash-sale/token", middleware.CDNCache(middleware.DefaultCacheConfig()), h.Token)
+	r.POST("/flash-sale/dry-run", h.DryRun)
+	r.GET("/flash-sale/metrics", h.Metrics)
+	r.GET("/flash-sale/health", h.Health)
 }

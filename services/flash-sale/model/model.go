@@ -81,3 +81,15 @@ type QueueEvent struct {
 	Position int    `json:"position"`
 	Status   string `json:"status"`
 }
+
+// DryRunResponse contains the result of a dry-run checkout pipeline execution.
+type DryRunResponse struct {
+	AttestationPassed bool   `json:"attestation_passed"`
+	RateLimitPassed   bool   `json:"rate_limit_passed"`
+	StockAvailable    bool   `json:"stock_available"`
+	WouldSucceed      bool   `json:"would_succeed"`
+	BucketIndex       int    `json:"bucket_index,omitempty"`
+	RemainingStock    int    `json:"remaining_stock"`
+	LatencyMs         int64  `json:"latency_ms"`
+	FailureAt         string `json:"failure_at,omitempty"`
+}

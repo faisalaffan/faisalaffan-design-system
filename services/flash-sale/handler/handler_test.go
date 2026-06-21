@@ -13,10 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ensure mockService implements FlashSaleService at compile time
+var _ FlashSaleService = (*mockService)(nil)
+
 // mockService implements FlashSaleService for unit tests.
 type mockService struct {
 	checkoutFn    func(context.Context, model.CheckoutRequest) (*model.CheckoutResponse, error)
 	queueStatusFn func(context.Context, string, string) (*model.QueueStatusResponse, error)
+	dryRunFn      func(context.Context, model.CheckoutRequest) (*model.DryRunResponse, error)
 }
 
 func (m *mockService) Checkout(ctx context.Context, req model.CheckoutRequest) (*model.CheckoutResponse, error) {
@@ -28,15 +32,24 @@ func (m *mockService) QueueStatus(ctx context.Context, productID, userID string)
 }
 func (m *mockService) ReleaseReservation(ctx context.Context, reservationID string) error { return nil }
 func (m *mockService) ConfirmReservation(ctx context.Context, reservationID string) error { return nil }
+func (m *mockService) DryRun(ctx context.Context, req model.CheckoutRequest) (*model.DryRunResponse, error) {
+	if m.dryRunFn != nil {
+		return m.dryRunFn(ctx, req)
+	}
+	return &model.DryRunResponse{WouldSucceed: true}, nil
+}
 
 func setupTest(mock *mockService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	g := gin.New()
-	h := New(mock, nil, "") // repo=nil for mock tests
+	h := New(mock, nil, "", nil) // repo=nil, cb=nil for mock tests
 	g.POST("/flash-sale/checkout", h.Checkout)
 	g.POST("/flash-sale/release", h.Release)
 	g.POST("/flash-sale/confirm", h.Confirm)
 	g.GET("/flash-sale/queue-status", h.QueueStatus)
+	g.POST("/flash-sale/dry-run", h.DryRun)
+	g.GET("/flash-sale/metrics", h.Metrics)
+	g.GET("/flash-sale/health", h.Health)
 	return g
 }
 
@@ -193,5 +206,136 @@ func TestQueueStatus_MissingParams(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestDryRun_WouldSucceed(t *testing.T) {
+	mock := &mockService{
+		dryRunFn: func(_ context.Context, _ model.CheckoutRequest) (*model.DryRunResponse, error) {
+			return &model.DryRunResponse{
+				AttestationPassed: true,
+				RateLimitPassed:   true,
+				StockAvailable:    true,
+				WouldSucceed:      true,
+				RemainingStock:    42,
+				LatencyMs:         5,
+			}, nil
+		},
+	}
+	g := setupTest(mock)
+
+	w := postJSON(t, g, "/flash-sale/dry-run", model.CheckoutRequest{
+		ProductID: "prod-1", UserID: "user-1", DeviceFP: "fp-abc",
+		Attestation: "tok", ExpiresAt: 2000000000, Quantity: 1, IdempotencyKey: "idem-dry-1",
+	})
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var resp kit.Response
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	data, _ := json.Marshal(resp.Data)
+	var dr model.DryRunResponse
+	json.Unmarshal(data, &dr)
+	if !dr.WouldSucceed {
+		t.Fatalf("expected dry-run to succeed, got %+v", dr)
+	}
+	if dr.RemainingStock != 42 {
+		t.Fatalf("expected remaining_stock=42, got %d", dr.RemainingStock)
+	}
+}
+
+func TestDryRun_FailsAtAttestation(t *testing.T) {
+	mock := &mockService{
+		dryRunFn: func(_ context.Context, _ model.CheckoutRequest) (*model.DryRunResponse, error) {
+			return &model.DryRunResponse{
+				FailureAt:  "attestation",
+				LatencyMs:  1,
+			}, nil
+		},
+	}
+	g := setupTest(mock)
+
+	w := postJSON(t, g, "/flash-sale/dry-run", model.CheckoutRequest{
+		ProductID: "prod-1", UserID: "user-1", DeviceFP: "fp-abc",
+		Attestation: "bad", ExpiresAt: 2000000000, Quantity: 1, IdempotencyKey: "idem-dry-2",
+	})
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var resp kit.Response
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	data, _ := json.Marshal(resp.Data)
+	var dr model.DryRunResponse
+	json.Unmarshal(data, &dr)
+	if dr.WouldSucceed {
+		t.Fatal("expected dry-run to fail")
+	}
+	if dr.FailureAt != "attestation" {
+		t.Fatalf("expected failure_at=attestation, got %s", dr.FailureAt)
+	}
+}
+
+func TestDryRun_MissingFields(t *testing.T) {
+	mock := &mockService{}
+	g := setupTest(mock)
+
+	w := postJSON(t, g, "/flash-sale/dry-run", map[string]string{})
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestMetrics(t *testing.T) {
+	mock := &mockService{}
+	g := setupTest(mock)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/flash-sale/metrics", nil)
+	g.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var resp kit.Response
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	// Snapshot should be a map (possibly empty in tests)
+	if resp.Data == nil {
+		t.Fatal("expected non-nil metrics data")
+	}
+}
+
+func TestHealth(t *testing.T) {
+	mock := &mockService{}
+	g := setupTest(mock)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/flash-sale/health", nil)
+	g.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var resp kit.Response
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	data, _ := json.Marshal(resp.Data)
+	var health map[string]interface{}
+	json.Unmarshal(data, &health)
+	if health["status"] != "ok" {
+		t.Fatalf("expected status=ok, got %v", health["status"])
+	}
+	if health["circuit_breaker"] != "closed" {
+		t.Fatalf("expected circuit_breaker=closed (nil CB), got %v", health["circuit_breaker"])
 	}
 }

@@ -172,6 +172,46 @@ func (s *FlashSaleService) ConfirmReservation(ctx context.Context, reservationID
 	return s.repo.ConfirmReservation(ctx, reservationID)
 }
 
+// DryRun executes the FULL checkout pipeline (attestation -> rate limit -> stock check)
+// but uses a READ-ONLY stock check instead of decrementing real stock.
+func (s *FlashSaleService) DryRun(ctx context.Context, req model.CheckoutRequest) (*model.DryRunResponse, error) {
+	start := time.Now()
+	resp := &model.DryRunResponse{}
+
+	// Step 1: Attestation verification
+	if !s.verifyAttestation(req.DeviceFP, req.ExpiresAt, req.Attestation) {
+		resp.FailureAt = "attestation"
+		resp.LatencyMs = time.Since(start).Milliseconds()
+		return resp, nil
+	}
+	resp.AttestationPassed = true
+
+	// Step 2: Rate limit check — we want to know if we'd be rate limited
+	allowed, err := s.repo.CheckRateLimit(ctx, req.DeviceFP, s.rateWindow, s.rateBurst)
+	if err != nil || !allowed {
+		resp.FailureAt = "rate_limit"
+		resp.LatencyMs = time.Since(start).Milliseconds()
+		return resp, nil
+	}
+	resp.RateLimitPassed = true
+
+	// Step 3: Stock check (READ-ONLY — never decrement real stock)
+	remaining, err := s.repo.GetStockForDryRun(ctx, req.ProductID)
+	if err != nil || remaining < req.Quantity {
+		if err == nil {
+			resp.RemainingStock = remaining
+		}
+		resp.FailureAt = "stock"
+		resp.LatencyMs = time.Since(start).Milliseconds()
+		return resp, nil
+	}
+	resp.StockAvailable = true
+	resp.RemainingStock = remaining
+	resp.WouldSucceed = true
+	resp.LatencyMs = time.Since(start).Milliseconds()
+	return resp, nil
+}
+
 func (s *FlashSaleService) QueueStatus(ctx context.Context, productID, userID string) (*model.QueueStatusResponse, error) {
 	pos, err := s.repo.QueuePosition(ctx, productID, userID)
 	if err != nil {

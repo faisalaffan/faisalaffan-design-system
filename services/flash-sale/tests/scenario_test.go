@@ -52,7 +52,7 @@ func setupRealService(t *testing.T) (*service.FlashSaleService, *repository.Flas
 
 	eventPub := &event.LogPublisher{}
 	svc := service.New(repo, testHMACSecret, eventPub)
-	h := handler.New(svc, repo, testHMACSecret)
+	h := handler.New(svc, repo, testHMACSecret, nil)
 
 	cleanup := func() {
 		keys, _ := rdb.Keys(ctx, "flash:*").Result()

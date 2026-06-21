@@ -334,6 +334,20 @@ func (r *FlashSaleRepo) InitProduct(ctx context.Context, productID string, total
 	return err
 }
 
+// GetStockForDryRun reads the current total stock for a product without decrementing.
+// This is a read-only operation used by the dry-run pipeline.
+func (r *FlashSaleRepo) GetStockForDryRun(ctx context.Context, productID string) (int, error) {
+	key := r.totalKey(productID)
+	val, err := r.rdb.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return strconv.Atoi(val)
+}
+
 // PublishQueueEvent publishes a queue position update to Redis pub/sub (for SSE).
 func (r *FlashSaleRepo) PublishQueueEvent(ctx context.Context, productID, userID string, event model.QueueEvent) error {
 	b, _ := json.Marshal(event)
