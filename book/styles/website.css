@@ -322,16 +322,55 @@ blockquote p {
 /* ============================================================
    MERMAID
    ============================================================ */
-.mermaid {
+.mermaid,
+div.mermaid,
+pre.mermaid,
+.embed-mermaid,
+gitbook-mermaid,
+svg.mermaid,
+svg[id^="mermaid-"] {
   background: #ffffff !important;
+  background-color: #ffffff !important;
   border-radius: 12px;
   padding: 20px;
   box-shadow: var(--card-shadow);
   border: 1px solid var(--border-subtle);
 }
 
-[data-theme="dark"] .mermaid {
+/* Hindari nested padding dan border untuk elemen svg/pre/code di dalam container */
+.mermaid svg,
+div.mermaid svg,
+.embed-mermaid svg,
+gitbook-mermaid svg,
+.mermaid pre,
+.mermaid code {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+[data-theme="dark"] .mermaid,
+[data-theme="dark"] div.mermaid,
+[data-theme="dark"] pre.mermaid,
+[data-theme="dark"] .embed-mermaid,
+[data-theme="dark"] gitbook-mermaid,
+[data-theme="dark"] svg.mermaid,
+[data-theme="dark"] svg[id^="mermaid-"] {
   background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+[data-theme="dark"] .mermaid svg,
+[data-theme="dark"] div.mermaid svg,
+[data-theme="dark"] .embed-mermaid svg,
+[data-theme="dark"] gitbook-mermaid svg,
+[data-theme="dark"] .mermaid pre,
+[data-theme="dark"] .mermaid code {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 /* ============================================================
