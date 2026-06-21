@@ -31,7 +31,7 @@ Go monorepo implementing all 12 system design problems from Alex Xu's *System De
 ## Quick Start
 
 ```bash
-go run ./url-shortener     # Pick any service
+go run ./services/url-shortener     # Pick any service
 go test ./...              # 100 tests
 go build ./...             # Build all
 ```

@@ -105,7 +105,7 @@ Every `Get`, `Put`, and `Delete` call resolves the key to a shard through `getSh
 Nodes are configured via the `KV_NODES` environment variable as a comma-separated list:
 
 ```bash
-KV_NODES=node-a,node-b,node-c go run ./key-value-store
+KV_NODES=node-a,node-b,node-c go run ./services/key-value-store
 ```
 
 When the variable is empty, a single `default` node is used.

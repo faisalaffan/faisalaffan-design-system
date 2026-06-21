@@ -47,7 +47,7 @@ The project is organized into five batches, each grouping related services:
 
 ```bash
 # Run any service
-go run ./url-shortener
+go run ./services/url-shortener
 
 # Run all tests
 go test ./...

@@ -1,11 +1,11 @@
 # =============================================================================
 # This repository is organized into 4 zones:
 #
-#   /<service>/    — 11 Go system-design services (code)
-#   /pkg/          — 2 shared Go packages (code)
-#   /book/         — GitBook documentation (docs)
-#   /assets/       — Brand assets: logo, banner (media)
-#   /.github/      — CI, templates, community files (meta)
+#   /services/    — 11 Go system-design services (code)
+#   /pkg/         — 2 shared Go packages (code)
+#   /book/        — GitBook documentation (docs)
+#   /assets/      — Brand assets: logo, banner (media)
+#   /.github/     — CI, templates, community files (meta)
 #
 #   go.mod, go.sum — Go module files
 #   README.md      — Project landing page

@@ -10,8 +10,8 @@ Go monorepo for system design exercise implementations. Single module, multiple 
 
 ```bash
 # Run any problem directly
-go run ./url-shortener
-go run ./rate-limiter
+go run ./services/url-shortener
+go run ./services/rate-limiter
 
 # Build all
 go build ./...
@@ -20,8 +20,8 @@ go build ./...
 go test ./...
 
 # Run tests for specific folder
-go test ./url-shortener/...
-go test ./rate-limiter/handler/...
+go test ./services/url-shortener/...
+go test ./services/rate-limiter/handler/...
 
 # Vet and lint
 go vet ./...
@@ -33,21 +33,21 @@ golangci-lint run ./...  # if golangci-lint installed
 ```
 go.mod                        # single module (not multi-module)
 go.sum
-url-shortener/
-  main.go                     # package main + func main()
-  handler/
-  storage/
-rate-limiter/
-  main.go
-  algorithm/
-distributed-cache/
-  main.go
-chat-system/
-  main.go
+services/                     # 11 system design services
+  url-shortener/
+  rate-limiter/
+  chat-system/
+  notification-system/
+  unique-id-generator/
+  key-value-store/
+  search-autocomplete/
+  news-feed/
+  web-crawler/
+  youtube/
+  google-drive/
 pkg/                          # shared code across problems
-  consistenthash/
-  bloomfilter/
-  ratelimit/
+  kit/                        # Gin factory, config, response helpers, middleware
+  consistenthash/             # Hash ring with virtual nodes
 ```
 
 **Module decision**: Single `go.mod` at root. No `go work` workspace. All problems share same Go version and dependency set. Trade-off: `go.sum` accumulates all deps but acceptable for solo/portfolio repo.

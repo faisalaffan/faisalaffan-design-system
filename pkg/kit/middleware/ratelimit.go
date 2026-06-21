@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/faisalaffan/faisalaffan-design-system/rate-limiter/algorithm"
+	"github.com/faisalaffan/faisalaffan-design-system/services/rate-limiter/algorithm"
 	"github.com/gin-gonic/gin"
 )
 
