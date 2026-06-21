@@ -187,3 +187,7 @@ func RateLimitPerSecond(algo algorithm.Algorithm, limit int) gin.HandlerFunc {
 - **Logging over structured logger**: `log.Printf` keeps the dependency surface minimal. Services that need structured output can add a logger later without changing the middleware interface.
 - **Response envelope**: A single `Response` struct with `Data`, `Error`, and optional `Meta` makes client-side parsing uniform. No competing conventions between services.
 - **AppError pattern**: Wraps the cause with `fmt.Errorf` for stack-free error chains. `Unwrap()` enables `errors.Is` / `errors.As` at caller sites.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/pkg/kit/server.go)

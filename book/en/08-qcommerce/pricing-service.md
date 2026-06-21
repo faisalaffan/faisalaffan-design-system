@@ -493,3 +493,7 @@ GET /api/v1/locked-price?order_id=ord_xyz
 - **FNV-1a deterministic bucketing**: A/B test consistency is critical — switching a user between control and treatment mid-order would invalidate the test. FNV-1a is fast (hardware-accelerated on modern CPUs), deterministic, and produces uniform distributions suitable for bucketing.
 - **Hard cap on total multiplier (5.0x)**: Prevents extreme surge scenarios from creating unacceptably high fees. The cap is adjusted per area based on elasticity: price-sensitive areas get a lower cap (1.5x), while inelastic markets can surge higher (5.0x). This is a business safety net, not a technical limit.
 - **Minimum fee floor (5000 IDR) and ceiling (75000 IDR)**: Ensures every delivery covers the platform's marginal cost (floor) while maintaining customer trust that fees will not exceed a reasonable maximum (ceiling). Both values are configurable per area.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/pricing-service/main.go)

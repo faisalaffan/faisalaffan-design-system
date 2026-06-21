@@ -202,3 +202,7 @@ func (h *AutocompleteHandler) TrainBulk(c *gin.Context) {
 - **DFS collection over precomputed suggestions**: Precomputing the top-K per prefix would speed up lookups at the cost of memory and update complexity. The current approach keeps the data structure simple and correct. Production systems at scale can add a cache layer in front of the Trie.
 - **RWMutex for concurrent access**: The Trie uses a read-write mutex. `Search` acquires a read lock (concurrent readers), while `Insert` / `Increment` acquire a write lock (exclusive). This maximizes throughput under read-heavy autocomplete workloads.
 - **Seed terms in main.go**: The service pre-populates common terms (`"design"`, `"developer"`, `"database"`, `"distributed"`, `"docker"`, `"deploy"`) so the autocomplete endpoint returns useful results immediately without training.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/search-autocomplete/main.go)

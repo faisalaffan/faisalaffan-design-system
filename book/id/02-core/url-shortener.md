@@ -135,3 +135,7 @@ Implementasi default adalah `storage.MemoryStore` -- map in-memory thread-safe y
 - **crypto/rand dibanding math/rand**: Shortcode tidak boleh dapat diprediksi. Menggunakan `crypto/rand` mencegah serangan enumerasi di mana penyerang mengiterasi shortcode sekuensial.
 - **Hingga 5 collision retry**: Setelah 5 collision berturut-turut (probabilitas: (1/3,5T)^5 = efektif nol), layanan mengembalikan error daripada melakukan looping selamanya. Ini adalah pagar pengaman kebenaran, bukan masalah performa.
 - **Pemisahan empat lapis**: Handler memiliki urusan HTTP (parsing JSON, kode status), Service memiliki logika bisnis (retry, perakitan URL), Storage memiliki persistensi, Shortcode memiliki pembuatan. Setiap lapisan dapat diuji dan diganti secara independen.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/url-shortener/main.go)

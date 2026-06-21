@@ -243,3 +243,7 @@ func verifyWebhookSignature(payload []byte, signature string, secret []byte) boo
 - **SetNX 5 detik untuk lock**: Cukup untuk menyelesaikan sebagian besar saga (< 1 detik). Jika saga memakan waktu lebih dari 5 detik karena kegagalan, lock akan kedaluwarsa dan request kedua bisa masuk. Ini kasus tepi yang bisa diterima.
 - **Transactional outbox, bukan dual-write langsung**: Menulis ke database dan mengirim event secara atomik menghindari masalah dual-write (DB commit berhasil, event gagal terkirim). Outbox memberikan exactly-once delivery semantics.
 - **HMAC untuk webhook, bukan IP whitelist**: IP payment gateway bisa berubah tanpa pemberitahuan. HMAC dengan shared secret memberikan keamanan tanpa ketergantungan pada infrastruktur jaringan.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/checkout-service/main.go)

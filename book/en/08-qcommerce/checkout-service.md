@@ -196,3 +196,7 @@ func (s *Service) executeSaga(ctx context.Context, req *CheckoutRequest) (*Check
 - **Transactional outbox**: Guarantees at-least-once event delivery without two-phase commit. Events and order state are written atomically to Postgres. A background publisher reads unprocessed outbox rows, publishes to the event bus, and marks them as processed.
 - **HMAC webhook with timing-safe compare**: Prevents webhook forgery and timing side-channel attacks. `hmac.Equal` runs in constant time regardless of how many bytes match, unlike a naive `==` comparison that short-circuits on the first mismatch.
 - **Compensation in reverse order**: Each step's compensator reverses its action. If step 3 fails, step 2 and step 1 compensators run in reverse order (2 then 1), leaving the system in a clean state. Compensation is best-effort and may require manual intervention for partial failures.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/checkout-service/main.go)

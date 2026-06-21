@@ -232,3 +232,7 @@ func (s *Service) heuristicETA(req *ETARequest) *Component {
 - **p50/p80/p95 composition**: Each component returns three percentiles. The total ETA is a simple sum of corresponding percentiles per component. Providing multiple percentiles lets the frontend choose: show p50 as the primary ETA, p80 as the "latest" estimate, and p95 for internal capacity planning.
 - **Sticky ETA cache (30s TTL)**: Prevents the ETA from fluctuating on every request. Once calculated, the ETA is cached for 30 seconds and served to all consumers (customer app, dispatch system, tracking page). The 30-second window is short enough to reflect meaningful changes (driver assignment, traffic) but long enough to prevent visual jitter.
 - **Fallback heuristic**: When all component data is unavailable, the heuristic returns a distance-based estimate at a default speed of 10 km/h. This is an approximation but keeps the service functional during data source degradation.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/eta-service/main.go)

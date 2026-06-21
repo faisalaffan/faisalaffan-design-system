@@ -153,3 +153,7 @@ All mutations are serialised via `sync.RWMutex`. Timeline reads use `RLock` for 
 |------|---------|
 | `store/store.go` | In-memory data model, fan-out logic, paginated reads |
 | `handler/handler.go` | HTTP handlers for users, posts, follow, timeline |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/news-feed/main.go)

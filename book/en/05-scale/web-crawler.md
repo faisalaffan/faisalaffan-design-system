@@ -238,3 +238,7 @@ Three goroutines consume from the frontier channel concurrently. The `sync.WaitG
 |------|---------|
 | `crawler/crawler.go` | Crawler engine: BFS loop, HTTP fetch, HTML parsing |
 | `handler/handler.go` | HTTP handlers for starting and querying crawl jobs |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/web-crawler/main.go)

@@ -243,3 +243,7 @@ The `CheckoutResponse.order_id` field provides the ID for deep link construction
 4. [ ] Token stored in Keychain (iOS) / EncryptedSharedPreferences (Android), never plain storage
 5. [ ] App Attest (iOS) / Play Integrity (Android) for hardware-backed device attestation
 6. [ ] Idempotency key generated client-side as UUID v4 per checkout attempt
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/flash-sale/main.go)

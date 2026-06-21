@@ -136,3 +136,7 @@ func (g *Generator) Next() (int64, error)
 - **Mutex dibanding atomic CAS**: Kesederhanaan. CAS dengan loop retry pada overflow urutan sedikit lebih cepat tetapi menambahkan masalah kebenaran halus seputar pemeriksaan jam monotonik. Mutex menjamin linearizability dari jalur pembuatan.
 - **Deteksi drift jam**: Jika jam sistem mundur, generator mengembalikan error alih-alih menghasilkan ID duplikat. Ini adalah fail-safe: deployment produksi harus menggunakan NTP dengan `-x` (slew bertahap) daripada `-g` (langkah), dan memonitor pergeseran jam.
 - **Worker ID dari lingkungan**: Tidak diperlukan layanan koordinasi (ZooKeeper / etcd) untuk deployment node tunggal. Deployment multi-worker dapat menggunakan variabel lingkungan yang diatur pada waktu deployment (ordinal Kubernetes StatefulSet, variabel Terraform, dll.).
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/unique-id-generator/main.go)

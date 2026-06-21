@@ -114,3 +114,7 @@ func (h *HashRing) Get(key string) string {
 - **Binary search over red-black tree**: The key slice is append-only during Add and sorted once. Binary search on a sorted slice (`sort.Search`) is O(log N) and cache-friendly. A red-black tree would add complexity with no measurable gain at this replica count.
 - **Panic on empty ring**: Explicitness over silent zero-value. A Get on an empty ring is always a programming error and should fail loudly.
 - **Remove rebuilds the key slice**: Rather than delete from the middle of a slice (O(N) shift), we iterate once and re-slice. This keeps the code simple and correctness obvious.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/pkg/consistenthash/consistenthash.go)

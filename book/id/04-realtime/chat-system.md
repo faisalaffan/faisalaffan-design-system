@@ -141,3 +141,7 @@ Struct `Manager` menyediakan `GetOrCreate(name)` untuk pembuatan ruangan secara 
 | `room/manager.go` | Manajemen siklus hidup ruangan |
 | `ws/handler.go` | Upgrade WebSocket dan pompa baca/tulis |
 | `handler/handler.go` | HTTP handlers (WS upgrade, REST endpoints) |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/chat-system/main.go)

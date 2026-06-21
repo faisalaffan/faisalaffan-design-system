@@ -238,3 +238,7 @@ Tiga goroutine mengonsumsi dari channel frontier secara konkuren. `sync.WaitGrou
 |------|---------|
 | `crawler/crawler.go` | Engine crawler: loop BFS, HTTP fetch, parsing HTML |
 | `handler/handler.go` | HTTP handlers untuk memulai dan menanyakan pekerjaan crawl |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/web-crawler/main.go)

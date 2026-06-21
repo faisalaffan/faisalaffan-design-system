@@ -213,3 +213,7 @@ func jaccardBigramSimilarity(a, b string) float64 {
 - **Exclusivity groups + stackable resolution**: Groups prevent conflicting promotions from stacking (e.g., two 50%-off coupons). Within stackable groups, promos apply sequentially on the remaining amount, ensuring predictable discount calculation. The resolution order is deterministic: exclusivity winners selected first, then stackable promos applied.
 - **Jaccard bigram similarity for address fraud**: Bigram Jaccard is simple to implement and effective at catching address manipulation ("Jl. Sudirman No. 5" vs "Jalan Sudirman Nomor 5" score ~0.55; "Jl. Sudirman No. 5" vs "Jl. Sudirman No. 15" score ~0.69). The 0.85 threshold catches near-identical addresses while tolerating legitimate variations.
 - **Device fingerprint hashing**: Fingerprints are stored as HMAC-SHA256 hashes, not plaintext, preventing PII leakage if the database is compromised. The hash is deterministic per device, enabling replay detection without storing raw biometric or hardware identifiers.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/promo-engine/main.go)

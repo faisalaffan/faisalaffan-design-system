@@ -135,3 +135,7 @@ The default implementation is `storage.MemoryStore` -- a thread-safe in-memory m
 - **crypto/rand over math/rand**: Shortcodes should not be predictable. Using `crypto/rand` prevents enumeration attacks where an attacker iterates sequential shortcodes.
 - **Up to 5 collision retries**: After 5 consecutive collisions (probability: (1/3.5T)^5 = effectively zero), the service returns an error rather than looping forever. This is a correctness guardrail, not a performance concern.
 - **Four-layer separation**: Handler owns HTTP concerns (JSON parsing, status codes), Service owns business logic (retry, URL assembly), Storage owns persistence, Shortcode owns generation. Each layer is independently testable and swappable.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/url-shortener/main.go)

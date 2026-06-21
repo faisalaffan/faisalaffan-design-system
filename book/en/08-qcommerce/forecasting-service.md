@@ -171,3 +171,7 @@ APE = |forecast - actual| / actual × 100
 | **Stockout imputation before training** | Without imputation: stockout → forecast drops → replenishment drops → more stockouts (dangerous feedback loop). |
 | **External regressors required** | Without weather, holiday, and promo data, the model is blind to demand shifts. |
 | **Per-SKU parameter overrides** | Different SKUs have different demand characteristics (staples vs. luxury vs. seasonal). |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/forecasting-service/main.go)

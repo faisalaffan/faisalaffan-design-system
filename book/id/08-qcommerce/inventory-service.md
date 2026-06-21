@@ -190,3 +190,7 @@ Setiap bucket adalah kunci Redis terpisah (`stock:{hub}:{sku}:bucket:{0..N-1}`).
 - **TTL-based reaper menggantikan cron job**: Reaper in-process menghindari kompleksitas penjadwalan eksternal (cron, scheduler terdistribusi). Jika instance mati, TTL Redis sendiri yang membersihkan hold.
 - **10 bucket per SKU panas**: Angka yang cukup untuk mendistribusikan kontensi di keyspace Redis sambil tetap menjaga kompleksitas manajemen bucket tetap rendah. Jumlah bucket bisa dikonfigurasi per SKU.
 - **Hash FNV-1a untuk pemilihan bucket**: Algoritma hash cepat dan deterministik tanpa alokasi memori berarti. Tidak perlu consistent hashing karena jumlah bucket tetap per SKU.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/inventory-service/main.go)

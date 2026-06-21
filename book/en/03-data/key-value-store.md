@@ -130,3 +130,7 @@ The default `MemoryStore` uses `sync.RWMutex` with a `map[string]string`. Reads 
 - **Raw body PUT**: The request body is stored as-is without JSON parsing. This makes the store agnostic to data format -- it can hold JSON, plain text, serialized protobuf, or any byte string.
 - **No TTL / expiration**: The initial implementation is a plain key-value map. TTL can be added at the storage layer without changing the shard manager or handler.
 - **Shard-local memory stores**: Each shard is an isolated `sync.RWMutex`-guarded map. There is no cross-shard communication, replication, or consensus. Production deployments would replace `MemoryStore` with a persistent storage engine (RocksDB, SQLite) or a replicated store (Redis Cluster, etcd).
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/key-value-store/main.go)

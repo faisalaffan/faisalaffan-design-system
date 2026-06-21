@@ -168,3 +168,7 @@ Notifikasi disimpan dalam irisan datar di `channel.Store`. Kueri berdasarkan ID 
 | `channel/channel.go` | Interface Sender, model Notification, implementasi transport |
 | `service/service.go` | Logika bisnis: perutean saluran, pembuatan ID |
 | `handler/handler.go` | HTTP handlers untuk pengiriman dan pengambilan |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/notification-system/main.go)

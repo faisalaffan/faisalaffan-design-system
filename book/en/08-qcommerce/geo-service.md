@@ -139,3 +139,7 @@ func (s *Service) CheckServiceability(ctx context.Context, lat, lng float64) (*S
 - **Haversine distance**: Simple spherical distance formula that is accurate enough for sub-5 km distances typical of q-commerce. More complex algorithms (Vincenty, geodesic) add latency without meaningful precision gains at this scale.
 - **40/40/20 tie-breaking formula**: Prioritises proximity and stock availability equally, with rider supply as a secondary factor. The weights are configurable per deployment and can be tuned based on local business priorities.
 - **5-tier fallback**: Ensures the service never returns an error even if the primary data sources are unavailable. The fallback chain degrades gracefully from precise (Redis) to approximate (default hub), maintaining availability over accuracy during outages.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/geo-service/main.go)

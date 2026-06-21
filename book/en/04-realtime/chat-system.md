@@ -141,3 +141,7 @@ A `Manager` struct provides `GetOrCreate(name)` for lazy room creation. A defaul
 | `room/manager.go` | Room lifecycle management |
 | `ws/handler.go` | WebSocket upgrade and read/write pump |
 | `handler/handler.go` | HTTP handlers (WS upgrade, REST endpoints) |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/chat-system/main.go)

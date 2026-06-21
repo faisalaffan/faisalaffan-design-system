@@ -153,3 +153,7 @@ Semua mutasi diserialisasikan melalui `sync.RWMutex`. Pembacaan timeline menggun
 |------|---------|
 | `store/store.go` | Model data in-memory, logika fan-out, pembacaan terpaginasikan |
 | `handler/handler.go` | HTTP handlers untuk pengguna, postingan, follow, timeline |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/news-feed/main.go)

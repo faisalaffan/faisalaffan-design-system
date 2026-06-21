@@ -325,3 +325,7 @@ func (s *Service) searchWithFallback(ctx context.Context, q SearchQuery) ([]Prod
 - **Bobot relevansi 40%**: Relevansi adalah faktor tunggal terpenting, tetapi tidak mendominasi sepenuhnya. 60% sisanya mempertimbangkan faktor bisnis (stok, margin, popularitas) sehingga hasil yang paling relevan secara bisnis muncul lebih tinggi, bukan hanya yang paling cocok secara teks.
 - **Trie per-hub untuk autocomplete**: Setiap hub memiliki prefix tree sendiri karena inventaris berbeda per hub. Ini menjaga saran autocomplete tetap relevan secara lokal. Trie dibangun ulang secara periodik (setiap 5 menit) dari data katalog.
 - **3 tingkat fallback dengan degradasi eksplisit**: Daripada mengembalikan hasil kosong, fallback melebar secara bertahap. Setiap level memberi tahu klien melalui field `fallback_level` sehingga UI bisa menampilkan indikasi bahwa hasilnya kurang spesifik.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/search-service/main.go)

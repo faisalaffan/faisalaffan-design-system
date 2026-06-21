@@ -168,3 +168,7 @@ Notifications are stored in a flat slice on `channel.Store`. Querying by user ID
 | `channel/channel.go` | Sender interface, Notification model, transport implementations |
 | `service/service.go` | Business logic: channel routing, ID generation |
 | `handler/handler.go` | HTTP handlers for send and retrieval |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/notification-system/main.go)

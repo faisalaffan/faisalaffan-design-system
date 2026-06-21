@@ -199,3 +199,7 @@ func (s *Service) antiStarvationBoost(driverID string) float64 {
 - **7-state driver machine**: Each state transition corresponds to a meaningful business event (accepted, arrived, picked up, delivered). This granularity enables precise tracking of driver performance metrics — average time from acceptance to arrival, picking time per item, etc.
 - **Exponential backoff (1s, 2s, 4s) with max 3 attempts**: Prevents rapid reassignment cycles that flood drivers with notifications. After 3 rejections, the order waits for the next batch cycle, giving the system time to find a better-suited driver.
 - **Anti-starvation heuristic**: Drivers who have been idle for more than 2 minutes get a score boost, and more than 5 minutes get a significant boost. This ensures all drivers get orders consistently, improving driver retention and platform fairness.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/dispatch-service/main.go)

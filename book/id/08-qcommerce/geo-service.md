@@ -193,3 +193,7 @@ TTL 1 jam  -> stabilitas hub (hub jarang pindah)
 - **Bobot skor 40/40/20**: Jarak dan stok memiliki bobot sama karena keduanya sama-sama kritis untuk kelayakan pengiriman. Rider memiliki bobot lebih rendah karena jumlah rider bisa berubah cepat dan biasanya tidak menjadi bottleneck di area perkotaan.
 - **Cache TTL 1 jam untuk stabilitas hub**: Hub berubah jarang (penambahan/pengurangan mingguan). TTL 1 jam mengurangi beban Postgres secara signifikan tanpa risiko data basi yang berarti.
 - **Cache-aside, bukan write-through**: Hub ditulis langsung ke Postgres oleh admin. Cache Redis diisi secara lazy saat query pertama. Ini menghindari cache thundering herd pada startup dingin.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/geo-service/main.go)

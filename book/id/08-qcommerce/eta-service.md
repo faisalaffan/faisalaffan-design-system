@@ -272,3 +272,7 @@ func compose(picking, queue, travel time.Duration) ETAComposition {
 - **Sticky cache 30 detik**: Mencegah ETA berubah drastis antara halaman keranjang dan checkout. TTL 30 detik cukup untuk menjaga konsistensi UX tanpa data terlalu basi. Kunci cache adalah {hub_id}:{customer_hexagon}, bukan per-pengguna, sehingga semua pengguna di area yang sama mendapat ETA yang sama.
 - **p50/p80/p95, bukan single value**: Memberi fleksibilitas pada UI untuk menampilkan ETA yang sesuai konteks. Halaman ringkasan bisa menampilkan p50, sementara halaman checkout yang lebih konservatif bisa menampilkan p80.
 - **Timeout 5 detik per request**: Jika salah satu goroutine timeout (misalnya Redis down), komponen yang gagal menggunakan nilai default. Request tetap berhasil dengan estimasi yang kurang akurat, bukan gagal total. Ini penting untuk ketahanan layanan.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/eta-service/main.go)

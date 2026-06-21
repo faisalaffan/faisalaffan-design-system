@@ -220,3 +220,7 @@ func (s *Service) searchWithFallback(ctx context.Context, q string, hubID string
 - **Trie-based autocomplete with top-K cache**: Each trie node stores a pre-computed list of the K most frequent completions. This makes autocomplete response times independent of the corpus size — only the prefix length matters for traversal.
 - **Three-tier zero-result fallback**: Fuzzy expansion catches typos, token drop handles long queries with no matches, and category browse is the ultimate fallback — showing the user something rather than nothing. Each tier is logged so the product team can identify missing index entries or unexpected queries.
 - **Hub-scoped filtering**: Every search includes a `hub_id` filter to ensure results are only from the user's delivery hub. This is critical for q-commerce where inventory varies per hub.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/search-service/main.go)

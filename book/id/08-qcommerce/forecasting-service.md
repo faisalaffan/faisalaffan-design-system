@@ -161,3 +161,7 @@ APE = |forecast - aktual| / aktual × 100
 | **Imputasi stockout sebelum training** | Tanpa imputasi: stockout → forecast turun → replenishment turun → makin stockout (loop feedback berbahaya). |
 | **Regressor eksternal wajib** | Tanpa data cuaca, hari libur, dan promo, model buta terhadap pergeseran permintaan. |
 | **Override parameter per SKU** | SKU berbeda memiliki karakteristik permintaan berbeda (kebutuhan pokok vs. mewah vs. musiman). |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/forecasting-service/main.go)

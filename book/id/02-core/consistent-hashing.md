@@ -114,3 +114,7 @@ func (h *HashRing) Get(key string) string {
 - **Binary search dibanding red-black tree**: Irisan kunci bersifat append-only selama Add dan diurutkan sekali. Binary search pada irisan terurut (`sort.Search`) adalah O(log N) dan ramah-cache. Red-black tree akan menambah kompleksitas tanpa keuntungan yang terukur pada jumlah replica ini.
 - **Panic pada ring kosong**: Eksplisit daripada nilai nol diam-diam. Get pada ring kosong selalu merupakan kesalahan pemrograman dan harus gagal dengan keras.
 - **Remove membangun ulang irisan kunci**: Alih-alih menghapus dari tengah irisan (pergeseran O(N)), kita melakukan iterasi sekali dan mengiris ulang. Ini menjaga kode tetap sederhana dan kebenaran jelas.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/pkg/consistenthash/consistenthash.go)

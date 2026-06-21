@@ -202,3 +202,7 @@ func (h *AutocompleteHandler) TrainBulk(c *gin.Context) {
 - **Koleksi DFS dibanding saran yang telah dihitung sebelumnya**: Menghitung top-K per prefiks sebelumnya akan mempercepat pencarian dengan mengorbankan memori dan kompleksitas pembaruan. Pendekatan saat ini menjaga struktur data tetap sederhana dan benar. Sistem produksi pada skala besar dapat menambahkan lapisan cache di depan Trie.
 - **RWMutex untuk akses konkuren**: Trie menggunakan read-write mutex. `Search` memperoleh read lock (pembaca konkuren), sementara `Insert` / `Increment` memperoleh write lock (eksklusif). Ini memaksimalkan throughput di bawah beban kerja autocomplete yang didominasi baca.
 - **Seed terms di main.go**: Layanan melakukan pre-populasi istilah umum (`"design"`, `"developer"`, `"database"`, `"distributed"`, `"docker"`, `"deploy"`) sehingga endpoint autocomplete mengembalikan hasil yang berguna segera tanpa pelatihan.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/search-autocomplete/main.go)

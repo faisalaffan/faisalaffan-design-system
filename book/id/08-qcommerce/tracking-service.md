@@ -305,3 +305,7 @@ data: {"lat": -6.2150, "lng": 106.8455, "speed": 28, "bearing": 175, "timestamp"
 - **Pipeline serial per-order**: GPS driver untuk order yang sama HARUS diproses berurutan. Pipeline berbasis channel per-order menjamin urutan tanpa blokade antar-order yang berbeda.
 - **SSE, bukan WebSocket**: Pelanggan hanya perlu menerima pembaruan satu arah. SSE memanfaatkan HTTP/1.1 streaming, lebih sederhana daripada WebSocket, dan memiliki native browser API `EventSource` dengan reconnection otomatis.
 - **Keepalive 15 detik**: SSE bisa terputus oleh proxy/idle connection timeout tanpa deteksi. Keepalive `: heartbeat` setiap 15 detik menjaga koneksi tetap hidup dan memberikan deteksi pemutusan yang cepat (dalam 2 interval heartbeat).
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/tracking-service/main.go)

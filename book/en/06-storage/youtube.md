@@ -204,3 +204,7 @@ Each `GET /videos/:id` call increments the view counter. This is intentionally n
 |------|---------|
 | `store/store.go` | Video model, CRUD, simulated transcoding, search |
 | `handler/handler.go` | HTTP handlers for upload, list, get, search |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/youtube/main.go)

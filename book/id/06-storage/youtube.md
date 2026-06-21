@@ -204,3 +204,7 @@ Setiap panggilan `GET /videos/:id` menaikkan penghitung tampilan. Ini sengaja di
 |------|---------|
 | `store/store.go` | Model Video, CRUD, transcoding simulasi, pencarian |
 | `handler/handler.go` | HTTP handlers untuk unggah, daftar, dapatkan, cari |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/youtube/main.go)

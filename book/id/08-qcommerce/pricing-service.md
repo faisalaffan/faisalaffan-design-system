@@ -508,3 +508,7 @@ GET /api/v1/locked-price?order_id=ord_xyz
 - **Pembuatan bucket deterministik FNV-1a**: Konsistensi A/B test sangat penting -- memindahkan pengguna antara kontrol dan perlakuan di tengah order akan membatalkan pengujian. FNV-1a cepat (dipercepat perangkat keras pada CPU modern), deterministik, dan menghasilkan distribusi seragam yang cocok untuk pembuatan bucket.
 - **Batas keras pada pengali total (5.0x)**: Mencegah skenario lonjakan ekstrem menciptakan biaya yang sangat tinggi. Batas disesuaikan per area berdasarkan elastisitas: area sensitif harga mendapatkan batas lebih rendah (1.5x), sementara pasar inelastis dapat melonjak lebih tinggi (5.0x). Ini adalah jaring pengaman bisnis, bukan batas teknis.
 - **Bawah biaya minimum (5000 IDR) dan langit-langit (75000 IDR)**: Memastikan setiap pengiriman menutupi biaya marjinal platform (bawah) sambil mempertahankan kepercayaan pelanggan bahwa biaya tidak akan melebihi maksimum yang wajar (langit-langit). Kedua nilai dapat dikonfigurasi per area.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/pricing-service/main.go)

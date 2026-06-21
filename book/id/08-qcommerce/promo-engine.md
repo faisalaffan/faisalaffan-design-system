@@ -327,3 +327,7 @@ func (f *FraudDetector) jaccardSimilarity(a, b []string) float64 {
 - **Prioritas numerik untuk stackable resolution**: Prioritas rendah = lebih tinggi, mengikuti konvensi Unix nice value. Promo dengan prioritas lebih tinggi (angka lebih kecil) diproses lebih dulu. Promo non-stackable memblokir promo lain setelahnya.
 - **Dua lapisan deteksi kecurangan**: Fingerprint hash mendeteksi penyalahgunaan perangkat (cepat, murah). Similaritas Jaccard mendeteksi pola mencurigakan yang lebih halus (lebih mahal, dijalankan batch). Bersama-sama memberikan cakupan deteksi yang luas.
 - **Pohon kondisi disimpan sebagai JSON di Postgres**: Struktur AST bisa langsung diserialisasi ke JSON dan disimpan di kolom `condition_tree`. Tidak perlu tabel kondisi normalisasi. JSONB di Postgres memungkinkan indeks dan query jika diperlukan.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/promo-engine/main.go)

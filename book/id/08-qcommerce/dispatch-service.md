@@ -341,3 +341,7 @@ Backoff schedule: 2 detik -> 4 detik -> 8 detik -> 16 detik -> 30 detik -> manua
 - **Anti-starvation weight (10%)**: Mencegah order tertentu tidak pernah ter-assign karena selalu kalah skor. Bobot meningkat seiring waktu tunggu, mencapai maksimum setelah 30 menit. Ini memastikan keadilan tanpa mengorbankan efisiensi secara signifikan.
 - **7 state driver dengan transisi eksplisit**: Setiap transisi divalidasi terhadap daftar state yang diizinkan. State ilegal (misalnya, `Idle -> Delivering`) ditolak. Ini mencegah bug due to race condition dari pembaruan status driver yang tidak sinkron.
 - **Exponential backoff untuk reassignment**: Driver yang menolak atau timeout tidak langsung di-assign ulang ke driver yang sama. Backoff eksponensial (2s-30s) memberi waktu untuk situasi berubah (driver jadi tersedia, order dibatalkan) tanpa membanjiri notifikasi.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/dispatch-service/main.go)

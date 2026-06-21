@@ -187,3 +187,7 @@ func RateLimitPerSecond(algo algorithm.Algorithm, limit int) gin.HandlerFunc {
 - **Logging dibanding structured logger**: `log.Printf` menjaga permukaan dependensi tetap minimal. Layanan yang membutuhkan output terstruktur dapat menambahkan logger nanti tanpa mengubah antarmuka middleware.
 - **Response envelope**: Struct `Response` tunggal dengan `Data`, `Error`, dan `Meta` opsional membuat parsing di sisi klien seragam. Tidak ada konvensi yang bersaing antar layanan.
 - **Pola AppError**: Membungkus penyebab dengan `fmt.Errorf` untuk rantai error tanpa stack. `Unwrap()` memungkinkan `errors.Is` / `errors.As` di situs pemanggil.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/pkg/kit/server.go)

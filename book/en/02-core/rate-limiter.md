@@ -171,3 +171,7 @@ Key extracted from `c.ClientIP()`. Returns 429 Too Many Requests when exceeded.
 - **Per-key maps with mutexes**: In-process maps keep the implementation self-contained with zero external dependencies. Contention is negligible for typical per-IP granularity (one goroutine per request).
 - **Algorithm interface as the seam**: New algorithms (e.g., sliding window counter from Redis) can be added by implementing `Allow(key, limit, window)`. No middleware or handler code changes.
 - **Storage interface for production use**: The algorithm state is ephemeral. Production deployments swap `MemoryStore` for Redis using the `Store` interface, making rate limits survive restarts and scale across instances.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/rate-limiter/main.go)

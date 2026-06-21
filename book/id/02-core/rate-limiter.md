@@ -171,3 +171,7 @@ Kunci diekstrak dari `c.ClientIP()`. Mengembalikan 429 Too Many Requests ketika 
 - **Map per-kunci dengan mutex**: Map dalam proses menjaga implementasi tetap mandiri dengan nol dependensi eksternal. Kontensi dapat diabaikan untuk granularitas per-IP yang tipikal (satu goroutine per permintaan).
 - **Algorithm interface sebagai titik sambung**: Algoritma baru (mis., sliding window counter dari Redis) dapat ditambahkan dengan mengimplementasikan `Allow(key, limit, window)`. Tidak ada perubahan pada kode middleware atau handler.
 - **Storage interface untuk penggunaan produksi**: Status algoritma bersifat sementara. Deployment produksi mengganti `MemoryStore` dengan Redis menggunakan interface `Store`, membuat rate limit bertahan dari restart dan berskala lintas instance.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/rate-limiter/main.go)

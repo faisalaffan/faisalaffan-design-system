@@ -136,3 +136,7 @@ func (g *Generator) Next() (int64, error)
 - **Mutex over atomic CAS**: Simplicity. CAS with a retry loop on sequence overflow is marginally faster but adds subtle correctness concerns around the monotonic clock check. A mutex guarantees linearizability of the generation path.
 - **Clock drift detection**: If the system clock jumps backward, the generator returns an error instead of producing duplicate IDs. This is a fail-safe: production deployments should use NTP with `-x` (gradual slew) rather than `-g` (step), and monitor clock skew.
 - **Worker ID from environment**: No coordination service (ZooKeeper / etcd) required for single-node deployments. Multi-worker deployments can use the environment variable set at deployment time (Kubernetes StatefulSet ordinal, Terraform variable, etc.).
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/unique-id-generator/main.go)

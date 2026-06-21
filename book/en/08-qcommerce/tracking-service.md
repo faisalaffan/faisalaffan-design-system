@@ -239,3 +239,7 @@ data: {"lat": -6.2095, "lng": 106.8460, "speed": 9.2, "timestamp": "2026-06-22T1
 - **Per-order serial pipeline**: Each order's location updates are processed serially through validation, Kalman filter, and broadcast. This prevents out-of-order processing within a single order's timeline. Different orders can be processed concurrently.
 - **15-second SSE keepalive**: SSE connections can be dropped by proxies and load balancers that timeout idle connections. A 15-second comment-only keepalive (`: keepalive`) keeps the connection alive without sending actual data. The comment format is designed to be ignored by SSE parsers.
 - **Ping/pong WebSocket keepalive (30s)**: Driver connections may be on mobile networks with NAT timeouts. The 30-second ping interval keeps the connection alive through typical carrier NAT timeouts (30-60s).
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/tracking-service/main.go)

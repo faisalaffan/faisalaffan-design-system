@@ -206,3 +206,7 @@ Konten file dan metadata disimpan secara terpisah. Map `fileData` menyimpan kont
 |------|---------|
 | `store/store.go` | Model File, Folder, FileVersion; CRUD; riwayat versi; berbagi |
 | `handler/handler.go` | HTTP handlers untuk file, folder, versi, berbagi, unduh |
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/google-drive/main.go)

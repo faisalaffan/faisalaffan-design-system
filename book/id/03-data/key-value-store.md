@@ -130,3 +130,7 @@ type Store interface {
 - **Raw body PUT**: Body permintaan disimpan apa adanya tanpa parsing JSON. Ini membuat penyimpanan agnostik terhadap format data -- dapat menyimpan JSON, teks biasa, protobuf serial, atau string byte apa pun.
 - **Tanpa TTL / kedaluwarsa**: Implementasi awal adalah map key-value biasa. TTL dapat ditambahkan di lapisan penyimpanan tanpa mengubah shard manager atau handler.
 - **Penyimpanan memori lokal shard**: Setiap shard adalah map yang dilindungi `sync.RWMutex` yang terisolasi. Tidak ada komunikasi lintas-shard, replikasi, atau konsensus. Deployment produksi akan mengganti `MemoryStore` dengan engine penyimpanan persisten (RocksDB, SQLite) atau penyimpanan tereplikasi (Redis Cluster, etcd).
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/key-value-store/main.go)

@@ -293,3 +293,7 @@ Field `CheckoutResponse.order_id` menyediakan ID untuk konstruksi deep link di s
 4. [ ] Token disimpan di Keychain (iOS) / EncryptedSharedPreferences (Android), tidak pernah di penyimpanan biasa
 5. [ ] App Attest (iOS) / Play Integrity (Android) untuk hardware-backed device attestation
 6. [ ] Idempotency key dibuat oleh klien sebagai UUID v4 per percobaan checkout
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/flash-sale/main.go)

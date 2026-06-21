@@ -146,3 +146,7 @@ return { ARGV[3], ARGV[1] }
 - **30-second reservation TTL**: Balances customer holding time against inventory pressure. Long enough for the checkout saga to complete; short enough that abandoned checkouts release stock quickly.
 - **Dual-store (Redis + Postgres)**: Redis handles the hot path with sub-millisecond latency. Postgres provides durability, audit trails, and reconciliation. The operational cost is eventual consistency between the two stores, managed by the reaper and a periodic reconciliation job.
 - **Background reaper goroutine**: Polls every 5 seconds for expired reservations. The 30-second TTL plus 5-second scan interval means a maximum 35-second window between expiry and stock release — acceptable for q-commerce where re-order time is the bottleneck.
+
+## Source Code
+
+[View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/inventory-service/main.go)
