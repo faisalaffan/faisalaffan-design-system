@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/faisalaffan/faisalaffan-design-system/pkg/kit"
+	"github.com/faisalaffan/faisalaffan-design-system/pkg/kit/middleware"
+	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/event"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/handler"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/repository"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/service"
@@ -41,16 +43,29 @@ func main() {
 		log.Fatalf("repo init: %v", err)
 	}
 
-	svc := service.New(repo, hmacSecret)
+	// Event channel (buffered, non-blocking to not hold up checkout)
+	eventCh := make(chan []byte, 100)
+	eventPub := event.NewChannelPublisher(eventCh)
+
+	// Consumer goroutine: reads events from channel (stand-in for Kafka consumer)
+	go func() {
+		for data := range eventCh {
+			_ = data // events processed here (e.g., Kafka producer, webhook dispatch)
+		}
+	}()
+
+	svc := service.New(repo, hmacSecret, eventPub)
 
 	// Start background jobs: reaper, waiting room cleanup, admission consumer
 	bgCtx, bgCancel := context.WithCancel(context.Background())
 	defer bgCancel()
 	svc.StartBackgroundJobs(bgCtx, "") // empty productID = scan all
 
-	h := handler.New(svc, repo)
+	h := handler.New(svc, repo, hmacSecret)
 
 	srv := kit.NewServer(cfg)
+	// CDN cache middleware: only applied to GET/HEAD 2xx/3xx (filtered internally)
+	srv.Use(middleware.CDNCache(middleware.DefaultCacheConfig()))
 	h.Register(&srv.RouterGroup)
 
 	httpSrv := &http.Server{Addr: ":" + cfg.Port, Handler: srv}
@@ -66,6 +81,8 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("shutting down...")
+
+	close(eventCh)
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

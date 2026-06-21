@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/event"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/model"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/repository"
 )
@@ -23,12 +24,14 @@ type FlashSaleService struct {
 	rateBurst   int
 	bucketCount int
 	resTTL      time.Duration
+	eventPub    event.Publisher
 }
 
-func New(repo *repository.FlashSaleRepo, hmacSecret string) *FlashSaleService {
+func New(repo *repository.FlashSaleRepo, hmacSecret string, eventPub event.Publisher) *FlashSaleService {
 	return &FlashSaleService{
 		repo:        repo,
 		hmacSecret:  []byte(hmacSecret),
+		eventPub:    eventPub,
 		rateWindow:  model.DefaultRateLimitWindow,
 		rateBurst:   model.DefaultRateLimitBurst,
 		bucketCount: model.DefaultBucketCount,
@@ -119,6 +122,20 @@ func (s *FlashSaleService) Checkout(ctx context.Context, req model.CheckoutReque
 		}
 		// Gap 1: reservation created with TTL in Lua. Reaper will auto-release if expired.
 		s.cacheResult(ctx, req.IdempotencyKey, *resp)
+
+		// Publish order created event (async, non-blocking)
+		evt := event.OrderCreatedEvent{
+			OrderID:       resp.OrderID,
+			UserID:        req.UserID,
+			ProductID:     req.ProductID,
+			Quantity:      req.Quantity,
+			ReservationID: reservationID,
+			DeviceFP:      req.DeviceFP,
+		}
+		if err := s.eventPub.PublishOrderCreated(ctx, evt); err != nil {
+			log.Printf("warn: event publish failed for order %s: %v", resp.OrderID, err)
+		}
+
 		return resp, nil
 	}
 

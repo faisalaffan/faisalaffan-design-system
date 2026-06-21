@@ -32,7 +32,7 @@ func (m *mockService) ConfirmReservation(ctx context.Context, reservationID stri
 func setupTest(mock *mockService) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	g := gin.New()
-	h := New(mock, nil) // repo=nil for mock tests
+	h := New(mock, nil, "") // repo=nil for mock tests
 	g.POST("/flash-sale/checkout", h.Checkout)
 	g.POST("/flash-sale/release", h.Release)
 	g.POST("/flash-sale/confirm", h.Confirm)

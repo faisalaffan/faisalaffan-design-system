@@ -2,11 +2,16 @@ package handler
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/faisalaffan/faisalaffan-design-system/pkg/kit"
+	"github.com/faisalaffan/faisalaffan-design-system/pkg/kit/middleware"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/model"
 	"github.com/faisalaffan/faisalaffan-design-system/services/flash-sale/repository"
 	"github.com/gin-gonic/gin"
@@ -20,12 +25,28 @@ type FlashSaleService interface {
 }
 
 type FlashSaleHandler struct {
-	svc FlashSaleService
-	repo *repository.FlashSaleRepo
+	svc        FlashSaleService
+	repo       *repository.FlashSaleRepo
+	hmacSecret []byte
 }
 
-func New(svc FlashSaleService, repo *repository.FlashSaleRepo) *FlashSaleHandler {
-	return &FlashSaleHandler{svc: svc, repo: repo}
+func New(svc FlashSaleService, repo *repository.FlashSaleRepo, hmacSecret string) *FlashSaleHandler {
+	return &FlashSaleHandler{svc: svc, repo: repo, hmacSecret: []byte(hmacSecret)}
+}
+
+// GET /flash-sale/token?device_fp=X
+func (h *FlashSaleHandler) Token(c *gin.Context) {
+	deviceFP := c.Query("device_fp")
+	if deviceFP == "" {
+		kit.BadRequest(c, "device_fp query param is required")
+		return
+	}
+	// Generate HMAC token (server-side, shared secret never in client)
+	mac := hmac.New(sha256.New, h.hmacSecret)
+	payload := fmt.Sprintf("%s:%d", deviceFP, time.Now().Unix()+30)
+	mac.Write([]byte(payload))
+	token := hex.EncodeToString(mac.Sum(nil))
+	kit.OK(c, gin.H{"token": token, "expires_in": 30})
 }
 
 // POST /flash-sale/checkout
@@ -146,4 +167,5 @@ func (h *FlashSaleHandler) Register(r *gin.RouterGroup) {
 	r.POST("/flash-sale/confirm", h.Confirm)
 	r.GET("/flash-sale/queue-status", h.QueueStatus)
 	r.GET("/flash-sale/queue-stream", h.QueueStream)
+	r.GET("/flash-sale/token", middleware.CDNCache(middleware.DefaultCacheConfig()), h.Token)
 }
