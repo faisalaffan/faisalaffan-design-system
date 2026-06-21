@@ -9,7 +9,7 @@ Port **8087** | Package `news-feed/`
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart LR
     subgraph Write Path
         A[User Alice] -->|POST /posts| CreatePost

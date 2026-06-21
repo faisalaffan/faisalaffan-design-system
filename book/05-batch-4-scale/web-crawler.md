@@ -9,7 +9,7 @@ Port **8088** | Package `web-crawler/`
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart TD
     Client -->|POST /crawl| StartCrawl
     StartCrawl -->|start goroutine| Run

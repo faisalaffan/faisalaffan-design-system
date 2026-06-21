@@ -9,7 +9,7 @@ Port **8089** | Package `youtube/`
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 stateDiagram-v2
     [*] --> uploading: POST /videos
     uploading --> processing: goroutine (1s delay)

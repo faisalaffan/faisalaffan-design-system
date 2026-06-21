@@ -5,7 +5,7 @@ Consistent-hashing-backed distributed key-value store. The `shard.Manager` uses 
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart TB
     subgraph "API Layer"
         PUT["PUT /:key"]

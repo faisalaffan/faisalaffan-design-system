@@ -3,7 +3,7 @@
 ## High-Level Design
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart TB
     subgraph "Batch 1 — Core"
         US["url-shortener :8080"]

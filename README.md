@@ -21,7 +21,7 @@ Go monorepo implementing all 12 system design problems from Alex Xu's "System De
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart TB
     subgraph "Batch 1"
         US["url-shortener<br/>:8080"]

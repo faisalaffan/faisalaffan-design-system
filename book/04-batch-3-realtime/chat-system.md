@@ -9,7 +9,7 @@ Port **8082** | Package `chat-system/`
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 sequenceDiagram
     participant A as Client A (room=R)
     participant B as Client B (room=R)

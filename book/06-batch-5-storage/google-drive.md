@@ -9,7 +9,7 @@ Port **8090** | Package `google-drive/`
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 sequenceDiagram
     participant Client
     participant Handler as DriveHandler

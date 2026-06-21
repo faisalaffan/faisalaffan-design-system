@@ -9,7 +9,7 @@ Port **8083** | Package `notification-system/`
 ## Architecture
 
 ```mermaid
-%%{init: {"theme": "default"}}%%
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart LR
     Client -->|POST /send| SendHandler
     SendHandler --> Service
