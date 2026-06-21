@@ -244,6 +244,42 @@ The `CheckoutResponse.order_id` field provides the ID for deep link construction
 5. [ ] App Attest (iOS) / Play Integrity (Android) for hardware-backed device attestation
 6. [ ] Idempotency key generated client-side as UUID v4 per checkout attempt
 
+## Scenario Tests — Design Validation
+
+Each scenario test proves a design decision by demonstrating the consequence of NOT having it.
+
+| # | Scenario | Problem Solved | Without This Design |
+|---|----------|---------------|---------------------|
+| 1 | **Happy Path** — Budi checkout Indomie sukses | Reservation ID ensures stock is tracked per-checkout. Order ID for downstream processing. | No reservation → stock can't be released if checkout fails mid-flow. Stock silently lost. |
+| 2 | **Double-Tap** — User panik, double-click checkout | Idempotency key (`SetNX` lock + cached result) prevents duplicate orders from network retry | OkHttp/URLSession auto-retry creates 2 orders. User charged twice. Stock deducted twice. |
+| 3 | **50,000× Spike** — 200 users fight for 100 stock | Lua atomic script: check + decrement in one Redis operation | Race condition: GET → check → DECRBY. Between GET and DECRBY, another request also sees stock. Result: **300% oversell** (real 2024 incident — 12,000 cancelled orders). |
+| 4 | **Bot Attack** — Fake token + 30 spam requests | HMAC attestation (invalid → 401) + device-FP rate limit (burst=20 → 429) | Bots scrape all stock in < 1 second. IP-based limits bypassed via proxy rotation (1000 residential proxies). Real users see "sold out". |
+| 5 | **Stock Exhausted** — User 101 enters waiting room | Redis sorted set queue persists across restarts. `ZRank` gives real-time position. | In-memory Go channel/slice queue: lost on deploy/restart. Users randomly reconnect with no position. "Sold out" page → user leaves. |
+| 6 | **Checkout Failed** — Payment gateway timeout 15s | Compensating transaction: `POST /release` returns stock atomically. Idempotent release. | Reserved stock never returned. 100 reserved → 80 sold = 20 units "ghost stock" (reserved forever). Reaper releases after 5 min TTL but that's too slow for high-demand sale. |
+| 7 | **Token Expired** — 31 seconds past expiry | Clock skew tolerance ±30s. HMAC signature verified server-side. | 0s tolerance: users with 5s clock drift always rejected. >60s tolerance: replay attack window too wide. Bots reuse old tokens. |
+| 8 | **Token Issuance** — `GET /flash-sale/token` | HMAC secret lives only on server. Client requests token, server signs it. | Secret in APK/IPA binary → decompiled → extracted → bots generate valid tokens. Entire attestation system bypassed. |
+| 9 | **Device Spam** — 25 requests from same device | Sliding window per `device_fp` (FNV hash). Burst = limit × 2 = 20. | IP-based limit: bot farm with 1000 proxies gets 5000 requests. Device-based limit: exactly `burst` per device, regardless of IP count. |
+| 10 | **Mobile Flaky** — 4G→WiFi handoff, OkHttp retries POST | Same idempotency key on retry → 409 Conflict + cached result | OkHttp retries POST silently. Server sees 2 identical requests → 2 orders. User opens app: "Why am I charged twice?" |
+| 11 | **Stock Fragmentation** — Primary bucket empty, others have stock | Sequential bucket fallback: `(primary + i) % N`. Different devices hash to different buckets. | No fallback: user hashes to empty bucket → "sold out" even though other buckets have 9 units each. False negative rate = 10% per bucket. |
+
+## What's Still Missing — Production Readiness Gaps
+
+These are not in scope of the current implementation but would be required for a real production deployment:
+
+| Gap | Priority | What To Build |
+|-----|----------|---------------|
+| **Circuit Breaker** | Critical | Redis connection failure → open circuit → graceful "sale not available" page, not 500 errors |
+| **Rate Limit Response Headers** | Critical | `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After` headers so clients can back off intelligently |
+| **Observability** | High | Prometheus counters: `flash_checkout_attempts`, `flash_oversold_total`, `flash_rate_limited_total`. Histogram: `flash_checkout_duration_ms` |
+| **Distributed Tracing** | High | OpenTelemetry spans across attestation → rate limit → stock → waiting room pipeline stages |
+| **Dead Letter Queue** | High | Events that fail to publish (channel full) should go to DLQ, not just logged and dropped |
+| **Admin Dashboard API** | Medium | `GET /admin/sales/:id/metrics` — real-time remaining stock, queue depth, completed count, rate limit hit rate |
+| **Dry Run Mode** | Medium | `POST /flash-sale/dry-run` — tests the full pipeline without deducting real stock. For load testing and sale rehearsal. |
+| **Geo-Distributed Redis** | Medium | Multi-region Redis with CRDT or active-active for flash sales across regions (Jakarta, Singapore, Bangkok) |
+| **CAPTCHA Integration** | Medium | The attestation payload currently doesn't include actual CAPTCHA score. Integrate with reCAPTCHA/hCaptcha for bot detection signal. |
+| **Sale Configuration UI** | Low | Store flash sale config (start time, stock, bucket count, price) in a database so sales can be scheduled without code deploy |
+| **Post-Sale Analytics** | Low | P99 latency, conversion rate (checkout attempts → completed), bot detection rate, stockout time |
+
 ## Source Code
 
 [View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/flash-sale/main.go)

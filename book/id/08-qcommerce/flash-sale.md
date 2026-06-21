@@ -294,6 +294,42 @@ Field `CheckoutResponse.order_id` menyediakan ID untuk konstruksi deep link di s
 5. [ ] App Attest (iOS) / Play Integrity (Android) untuk hardware-backed device attestation
 6. [ ] Idempotency key dibuat oleh klien sebagai UUID v4 per percobaan checkout
 
+## Uji Skenario — Validasi Desain
+
+Setiap uji skenario membuktikan keputusan desain dengan menunjukkan konsekuensi jika TIDAK diimplementasikan.
+
+| # | Skenario | Masalah yang Diselesaikan | Tanpa Desain Ini |
+|---|----------|--------------------------|------------------|
+| 1 | **Happy Path** — Budi checkout Indomie sukses | Reservation ID memastikan stok terlacak per checkout. Order ID untuk pemrosesan downstream. | Tanpa reservasi → stok tidak bisa dikembalikan jika checkout gagal di tengah. Stok hilang diam-diam. |
+| 2 | **Double-Tap** — User panik, double-click checkout | Kunci idempotensi (`SetNX` lock + hasil cache) mencegah pesanan ganda dari retry jaringan | OkHttp/URLSession auto-retry membuat 2 pesanan. User ditagih dua kali. Stok terpotong dua kali. |
+| 3 | **Lonjakan 50.000×** — 200 user berebut 100 stok | Skrip Lua atomik: cek + pengurangan dalam satu operasi Redis | Race condition: GET → cek → DECRBY. Antara GET dan DECRBY, request lain juga melihat stok. Hasil: **oversell 300%** (insiden nyata 2024 — 12.000 pesanan dibatalkan). |
+| 4 | **Serangan Bot** — Token palsu + 30 request spam | Atestasi HMAC (invalid → 401) + rate limit device-FP (burst=20 → 429) | Bot menguras semua stok dalam < 1 detik. Batas berbasis IP dilewati via rotasi proxy (1000 proxy residensial). User asli lihat "stok habis". |
+| 5 | **Stok Habis** — User ke-101 masuk ruang tunggu | Antrean Redis sorted set persisten lintas restart. `ZRank` memberi posisi real-time. | Antrean in-memory Go channel/slice: hilang saat deploy/restart. User reconnect secara acak tanpa posisi. Halaman "stok habis" → user pergi. |
+| 6 | **Checkout Gagal** — Timeout payment gateway 15 detik | Transaksi kompensasi: `POST /release` mengembalikan stok secara atomik. Release idempoten. | Stok yang direservasi tidak pernah kembali. 100 direservasi → 80 terjual = 20 unit "stok hantu" (reserved selamanya). Reaper melepaskan setelah TTL 5 menit tapi itu terlalu lambat untuk sale permintaan tinggi. |
+| 7 | **Token Kedaluwarsa** — 31 detik lewat expiry | Toleransi clock skew ±30s. Tanda tangan HMAC diverifikasi server-side. | Toleransi 0s: user dengan drift jam 5 detik selalu ditolak. Toleransi >60s: jendela serangan replay terlalu lebar. Bot menggunakan ulang token lama. |
+| 8 | **Penerbitan Token** — `GET /flash-sale/token` | Secret HMAC hanya ada di server. Klien meminta token, server menandatanganinya. | Secret di binary APK/IPA → didekompilasi → diekstrak → bot menghasilkan token valid. Seluruh sistem atestasi dilewati. |
+| 9 | **Spam Perangkat** — 25 request dari perangkat yang sama | Sliding window per `device_fp` (hash FNV). Burst = limit × 2 = 20. | Batas berbasis IP: bot farm dengan 1000 proxy mendapat 5000 request. Batas berbasis perangkat: tepat `burst` per perangkat, terlepas dari jumlah IP. |
+| 10 | **Mobile Flaky** — Handoff 4G→WiFi, OkHttp retry POST | Kunci idempotensi yang sama pada retry → 409 Conflict + hasil cache | OkHttp retry POST secara diam-diam. Server melihat 2 request identik → 2 pesanan. User buka aplikasi: "Kenapa saya ditagih dua kali?" |
+| 11 | **Fragmentasi Stok** — Bucket primer kosong, bucket lain ada stok | Fallback bucket sekuensial: `(primer + i) % N`. Perangkat berbeda hash ke bucket berbeda. | Tanpa fallback: user hash ke bucket kosong → "stok habis" padahal bucket lain punya 9 unit. Tingkat false negative = 10% per bucket. |
+
+## Yang Masih Kurang — Kesenjangan Production Readiness
+
+Ini tidak termasuk dalam cakupan implementasi saat ini tetapi diperlukan untuk deployment production sungguhan:
+
+| Kesenjangan | Prioritas | Yang Harus Dibangun |
+|-------------|----------|---------------------|
+| **Circuit Breaker** | Kritis | Kegagalan koneksi Redis → buka circuit → halaman "sale tidak tersedia" yang anggun, bukan error 500 |
+| **Header Rate Limit Response** | Kritis | Header `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After` agar klien bisa back off dengan cerdas |
+| **Observability** | Tinggi | Counter Prometheus: `flash_checkout_attempts`, `flash_oversold_total`, `flash_rate_limited_total`. Histogram: `flash_checkout_duration_ms` |
+| **Distributed Tracing** | Tinggi | Span OpenTelemetry di seluruh tahap pipeline: atestasi → rate limit → stok → ruang tunggu |
+| **Dead Letter Queue** | Tinggi | Event yang gagal publish (channel penuh) harus masuk DLQ, bukan hanya di-log dan dibuang |
+| **API Dashboard Admin** | Sedang | `GET /admin/sales/:id/metrics` — stok tersisa real-time, kedalaman antrean, jumlah selesai, tingkat hit rate limit |
+| **Mode Dry Run** | Sedang | `POST /flash-sale/dry-run` — menguji pipeline penuh tanpa mengurangi stok asli. Untuk load testing dan gladi resik sale. |
+| **Redis Geo-Distributed** | Sedang | Redis multi-region dengan CRDT atau active-active untuk flash sale lintas region (Jakarta, Singapura, Bangkok) |
+| **Integrasi CAPTCHA** | Sedang | Payload atestasi saat ini tidak menyertakan skor CAPTCHA aktual. Integrasikan dengan reCAPTCHA/hCaptcha untuk sinyal deteksi bot. |
+| **UI Konfigurasi Sale** | Rendah | Simpan konfigurasi flash sale (waktu mulai, stok, jumlah bucket, harga) di database agar sale bisa dijadwalkan tanpa deploy kode |
+| **Analitik Pasca-Sale** | Rendah | Latensi P99, tingkat konversi (percobaan checkout → selesai), tingkat deteksi bot, waktu stok habis |
+
 ## Source Code
 
 [View on GitHub](https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/flash-sale/main.go)
