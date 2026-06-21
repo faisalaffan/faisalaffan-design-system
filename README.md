@@ -2,6 +2,20 @@
 
 [Bahasa Indonesia](README.id.md)
 
+## 01_LOGO
+
+<p align="center">
+  <img src="assets/logo/logo.svg" alt="faisalaffan-design-system logo" width="400"/>
+</p>
+
+## 02_BANNER
+
+<p align="center">
+  <img src="assets/banner/banner.svg" alt="banner" width="800"/>
+</p>
+
+---
+
 Go monorepo for system design exercise implementations. Each folder is a standalone service with its own entrypoint.
 
 ## Architecture
