@@ -23,32 +23,32 @@ func LoadConfig() Config {
 		log.Printf("info: .env.local not found, using OS env or defaults")
 	}
 
-	port := envOrDefault("PORT", "8080")
-	env := envOrDefault("ENV", "development")
+	port := EnvOrDefault("PORT", "8080")
+	env := EnvOrDefault("ENV", "development")
 
 	return Config{
 		Port:          port,
 		Env:           env,
-		RedisAddr:     envOrDefault("REDIS_ADDR", "localhost:6379"),
+		RedisAddr:     EnvOrDefault("REDIS_ADDR", "localhost:6379"),
 		RedisPassword: os.Getenv("REDIS_PASSWORD"),
-		HmacSecret:    envOrDefault("HMAC_SECRET", "change-me-in-production"),
+		HmacSecret:    EnvOrDefault("HMAC_SECRET", "change-me-in-production"),
 		ServicePorts: map[string]string{
-			"inventory":    envOrDefault("PORT_INVENTORY", "8100"),
-			"geo":          envOrDefault("PORT_GEO", "8101"),
-			"flash_sale":   envOrDefault("PORT_FLASH_SALE", "8102"),
-			"checkout":     envOrDefault("PORT_CHECKOUT", "8103"),
-			"promo":        envOrDefault("PORT_PROMO", "8104"),
-			"dispatch":     envOrDefault("PORT_DISPATCH", "8105"),
-			"eta":          envOrDefault("PORT_ETA", "8106"),
-			"search":       envOrDefault("PORT_SEARCH", "8107"),
-			"tracking":     envOrDefault("PORT_TRACKING", "8108"),
-			"pricing":      envOrDefault("PORT_PRICING", "8109"),
-			"forecasting":  envOrDefault("PORT_FORECASTING", "8110"),
+			"inventory":    EnvOrDefault("PORT_INVENTORY", "8100"),
+			"geo":          EnvOrDefault("PORT_GEO", "8101"),
+			"flash_sale":   EnvOrDefault("PORT_FLASH_SALE", "8102"),
+			"checkout":     EnvOrDefault("PORT_CHECKOUT", "8103"),
+			"promo":        EnvOrDefault("PORT_PROMO", "8104"),
+			"dispatch":     EnvOrDefault("PORT_DISPATCH", "8105"),
+			"eta":          EnvOrDefault("PORT_ETA", "8106"),
+			"search":       EnvOrDefault("PORT_SEARCH", "8107"),
+			"tracking":     EnvOrDefault("PORT_TRACKING", "8108"),
+			"pricing":      EnvOrDefault("PORT_PRICING", "8109"),
+			"forecasting":  EnvOrDefault("PORT_FORECASTING", "8110"),
 		},
 	}
 }
 
-func envOrDefault(key, fallback string) string {
+func EnvOrDefault(key, fallback string) string {
 	v := os.Getenv(key)
 	if v == "" {
 		return fallback

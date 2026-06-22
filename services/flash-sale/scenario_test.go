@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -18,23 +19,36 @@ import (
 
 	"github.com/faisalaffan/faisalaffan-design-system/pkg/kit"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 )
 
+func init() {
+	// Search .env.local from current dir up to repo root (Go test CWD = package dir)
+	for _, path := range []string{".env.local", "../../.env.local"} {
+		if _, err := os.Stat(path); err == nil {
+			_ = godotenv.Load(path)
+			break
+		}
+	}
+	_ = kit.LoadConfig() // fallback: OS env
+}
+
 const (
-	testRedisAddr   = "localhost:6379"
-	testHMACSecret  = "flash-sale-scenario-test-secret"
 	testProductID   = "flash-indomie-2026"
 	testBucketCount = 10
 	testTotalStock  = 100
 )
 
+func getRedisAddr() string  { return kit.EnvOrDefault("REDIS_ADDR", "localhost:6379") }
+func getHMACSecret() string { return kit.EnvOrDefault("HMAC_SECRET", "flash-sale-scenario-test-secret") }
+
 func setupRealService(t *testing.T) (*Service, *Store, *Handler, func()) {
 	t.Helper()
-	rdb := redis.NewClient(&redis.Options{Addr: testRedisAddr})
+	rdb := redis.NewClient(&redis.Options{Addr: getRedisAddr()})
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		t.Skipf("Redis not available at %s -- skipping scenario test", testRedisAddr)
+		t.Skipf("Redis not available at %s -- skipping scenario test", getRedisAddr())
 	}
 	keys, _ := rdb.Keys(ctx, "flash:*").Result()
 	rlKeys, _ := rdb.Keys(ctx, "rl:flash:*").Result()
@@ -43,7 +57,7 @@ func setupRealService(t *testing.T) (*Service, *Store, *Handler, func()) {
 		rdb.Del(ctx, allKeys...)
 	}
 
-	store := NewStore(rdb, testHMACSecret)
+	store := NewStore(rdb, getHMACSecret())
 	if err := store.Init(ctx); err != nil {
 		t.Fatalf("store init: %v", err)
 	}
@@ -88,7 +102,7 @@ func TestScenario_HappyPath_SuccessfulCheckout(t *testing.T) {
 	g := newGinEngine(h)
 
 	deviceFP := "fp-budi-iphone"
-	token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 
 	body := CheckoutRequest{
 		ProductID: testProductID, UserID: "user-budi", DeviceFP: deviceFP,
@@ -127,7 +141,7 @@ func TestScenario_DoubleTap_IdempotencyPreventsDoubleOrder(t *testing.T) {
 	g := newGinEngine(h)
 
 	deviceFP := "fp-double-tap"
-	token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 
 	body := CheckoutRequest{
 		ProductID: testProductID, UserID: "user-dinda", DeviceFP: deviceFP,
@@ -167,7 +181,7 @@ func TestScenario_ConcurrentSpike_NoOversell(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			deviceFP := fmt.Sprintf("fp-user-%d", idx)
-			token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+			token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 			body := CheckoutRequest{
 				ProductID: testProductID, UserID: fmt.Sprintf("user-%d", idx), DeviceFP: deviceFP,
 				Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: fmt.Sprintf("idem-%d", idx),
@@ -222,7 +236,7 @@ func TestScenario_BotAttack_RateLimitAndAttestationBlock(t *testing.T) {
 	t.Log("✅ Bot dengan token palsu ditolak (401). HMAC attestation bekerja.")
 
 	// Rate limit spam
-	token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 	body.Attestation = token
 	body.ExpiresAt = expiresAt
 	rateLimited := 0
@@ -251,7 +265,7 @@ func TestScenario_StockExhausted_EntersWaitingRoom(t *testing.T) {
 
 	for i := 0; i < testTotalStock; i++ {
 		deviceFP := fmt.Sprintf("fp-early-%d", i)
-		token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+		token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 		body := CheckoutRequest{
 			ProductID: testProductID, UserID: fmt.Sprintf("user-early-%d", i), DeviceFP: deviceFP,
 			Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: fmt.Sprintf("idem-early-%d", i),
@@ -264,7 +278,7 @@ func TestScenario_StockExhausted_EntersWaitingRoom(t *testing.T) {
 	}
 
 	deviceFP := "fp-late-user"
-	token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 	body := CheckoutRequest{
 		ProductID: testProductID, UserID: "user-late", DeviceFP: deviceFP,
 		Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: "idem-late-001",
@@ -304,7 +318,7 @@ func TestScenario_CheckoutFailed_ReservationReleased(t *testing.T) {
 	g := newGinEngine(h)
 
 	deviceFP := "fp-release-test"
-	token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 	body := CheckoutRequest{
 		ProductID: testProductID, UserID: "user-release", DeviceFP: deviceFP,
 		Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: "idem-release-001",
@@ -356,7 +370,7 @@ func TestScenario_ExpiredToken_RejectedWithSkewTolerance(t *testing.T) {
 
 	deviceFP := "fp-expired-test"
 	expiredAt := time.Now().Unix() - 31
-	mac := hmac.New(sha256.New, []byte(testHMACSecret))
+	mac := hmac.New(sha256.New, []byte(getHMACSecret()))
 	mac.Write([]byte(deviceFP + ":" + strconv.FormatInt(expiredAt, 10)))
 	oldToken := hex.EncodeToString(mac.Sum(nil))
 
@@ -410,7 +424,7 @@ func TestScenario_SameDeviceSpam_RateLimitedPerDeviceFP(t *testing.T) {
 	g := newGinEngine(h)
 
 	deviceFP := "fp-spam-device"
-	token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 	allowed, blocked := 0, 0
 
 	for i := 0; i < 25; i++ {
@@ -443,7 +457,7 @@ func TestScenario_MobileNetworkFlaky_IdempotencySavesDoubleOrder(t *testing.T) {
 	g := newGinEngine(h)
 
 	deviceFP := "fp-mobile-flaky"
-	token, expiresAt := generateHMACToken(deviceFP, []byte(testHMACSecret))
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 	sameKey := "idem-mobile-retry"
 
 	body := CheckoutRequest{
@@ -477,7 +491,7 @@ func TestScenario_StockFragmentation_BucketFallbackSavesSale(t *testing.T) {
 	ctx := context.Background()
 
 	deviceFP1 := "fp-frag-a"
-	token1, expiresAt1 := generateHMACToken(deviceFP1, []byte(testHMACSecret))
+	token1, expiresAt1 := generateHMACToken(deviceFP1, []byte(getHMACSecret()))
 	body1 := CheckoutRequest{
 		ProductID: testProductID, UserID: "user-frag-a", DeviceFP: deviceFP1,
 		Attestation: token1, ExpiresAt: expiresAt1, Quantity: 1, IdempotencyKey: "idem-frag-a",
@@ -492,7 +506,7 @@ func TestScenario_StockFragmentation_BucketFallbackSavesSale(t *testing.T) {
 	}
 
 	deviceFP2 := "fp-frag-b-different-hash"
-	token2, expiresAt2 := generateHMACToken(deviceFP2, []byte(testHMACSecret))
+	token2, expiresAt2 := generateHMACToken(deviceFP2, []byte(getHMACSecret()))
 	body2 := CheckoutRequest{
 		ProductID: testProductID, UserID: "user-frag-b", DeviceFP: deviceFP2,
 		Attestation: token2, ExpiresAt: expiresAt2, Quantity: 1, IdempotencyKey: "idem-frag-b",
