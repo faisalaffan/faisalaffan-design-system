@@ -34,6 +34,40 @@ sequenceDiagram
     FS-->>U: Posisi antrean / konfirmasi
 ```
 
+**Tech Stack**
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+flowchart TB
+    subgraph Layer1["Lapisan HTTP"]
+        Gin["Gin Gonic<br/>router + middleware"]
+        Kit["pkg/kit<br/>NewServer, config, response helpers"]
+    end
+
+    subgraph Layer2["Lapisan Layanan"]
+        Svc["Flash Sale Service<br/>orkestrator pipeline 5 langkah"]
+        Types["types.go<br/>CheckoutRequest, CheckoutResponse,<br/>konstanta, tipe domain"]
+    end
+
+    subgraph Layer3["Lapisan Data"]
+        Store["store.go<br/>3 skrip Lua (EvalSha)<br/>SetNX idempotensi<br/>sliding window rate limit<br/>sorted set ruang tunggu"]
+    end
+
+    subgraph Layer4["Infrastruktur"]
+        Redis["Redis<br/>Lua scripting (operasi atomik)<br/>Sorted Sets (antrean + rate limit)<br/>String counters (bucket stok)<br/>SetNX (kunci idempotensi)<br/>Pipeline (init batch)"]
+        Go["Go 1.26 stdlib<br/>crypto/hmac, crypto/sha256<br/>hash/fnv, crypto/rand<br/>net/http, context"]
+        Env[".env.local<br/>REDIS_ADDR, HMAC_SECRET<br/>dimuat via godotenv<br/>dicari naik dari CWD"]
+    end
+
+    Gin --> Svc
+    Kit --> Gin
+    Svc --> Store
+    Svc --> Types
+    Store --> Redis
+    Store --> Go
+    Go --> Env
+```
+
 Setiap langkah jadi gerbang. Gagal di titik mana pun → kode HTTP langsung. Tanpa partial state. Tanpa silent degradation.
 
 ## Safety Net
