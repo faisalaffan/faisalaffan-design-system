@@ -1,0 +1,966 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Tracking Service · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 6.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="pricing-service.html" />
+    
+    
+    <link rel="prev" href="search-service.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        <li class="header">01 Getting Started</li>
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../01-getting-started/">
+            
+                <a href="../01-getting-started/">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../01-getting-started/architecture.html">
+            
+                <a href="../01-getting-started/architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="../01-getting-started/running.html">
+            
+                <a href="../01-getting-started/running.html">
+            
+                    
+                    Running the Services
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">02 Core</li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../02-core/kit.html">
+            
+                <a href="../02-core/kit.html">
+            
+                    
+                    pkg/kit — Gin Factory
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="../02-core/consistent-hashing.html">
+            
+                <a href="../02-core/consistent-hashing.html">
+            
+                    
+                    pkg/consistenthash — Hash Ring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../02-core/url-shortener.html">
+            
+                <a href="../02-core/url-shortener.html">
+            
+                    
+                    URL Shortener
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../02-core/rate-limiter.html">
+            
+                <a href="../02-core/rate-limiter.html">
+            
+                    
+                    Rate Limiter
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">03 Data</li>
+        
+        
+    
+        <li class="chapter " data-level="3.1" data-path="../03-data/unique-id-generator.html">
+            
+                <a href="../03-data/unique-id-generator.html">
+            
+                    
+                    Unique ID Generator
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="../03-data/key-value-store.html">
+            
+                <a href="../03-data/key-value-store.html">
+            
+                    
+                    Key-Value Store
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="../03-data/search-autocomplete.html">
+            
+                <a href="../03-data/search-autocomplete.html">
+            
+                    
+                    Search Autocomplete
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">04 Realtime</li>
+        
+        
+    
+        <li class="chapter " data-level="4.1" data-path="../04-realtime/chat-system.html">
+            
+                <a href="../04-realtime/chat-system.html">
+            
+                    
+                    Chat System
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="4.2" data-path="../04-realtime/notification-system.html">
+            
+                <a href="../04-realtime/notification-system.html">
+            
+                    
+                    Notification System
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">05 Scale</li>
+        
+        
+    
+        <li class="chapter " data-level="5.1" data-path="../05-scale/news-feed.html">
+            
+                <a href="../05-scale/news-feed.html">
+            
+                    
+                    News Feed
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="../05-scale/web-crawler.html">
+            
+                <a href="../05-scale/web-crawler.html">
+            
+                    
+                    Web Crawler
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">06 Storage</li>
+        
+        
+    
+        <li class="chapter " data-level="6.1" data-path="../06-storage/youtube.html">
+            
+                <a href="../06-storage/youtube.html">
+            
+                    
+                    YouTube
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="6.2" data-path="../06-storage/google-drive.html">
+            
+                <a href="../06-storage/google-drive.html">
+            
+                    
+                    Google Drive
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">07 Appendix</li>
+        
+        
+    
+        <li class="chapter " data-level="7.1" data-path="../07-appendix/design-decisions.html">
+            
+                <a href="../07-appendix/design-decisions.html">
+            
+                    
+                    Design Decisions
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="7.2" data-path="../07-appendix/references.html">
+            
+                <a href="../07-appendix/references.html">
+            
+                    
+                    References
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">08 Q-Commerce</li>
+        
+        
+    
+        <li class="chapter " data-level="8.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.2" data-path="inventory-service.html">
+            
+                <a href="inventory-service.html">
+            
+                    
+                    Inventory Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.3" data-path="geo-service.html">
+            
+                <a href="geo-service.html">
+            
+                    
+                    Geo Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.4" data-path="flash-sale.html">
+            
+                <a href="flash-sale.html">
+            
+                    
+                    Flash Sale
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.5" data-path="checkout-service.html">
+            
+                <a href="checkout-service.html">
+            
+                    
+                    Checkout Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.6" data-path="promo-engine.html">
+            
+                <a href="promo-engine.html">
+            
+                    
+                    Promo Engine
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.7" data-path="dispatch-service.html">
+            
+                <a href="dispatch-service.html">
+            
+                    
+                    Dispatch Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.8" data-path="eta-service.html">
+            
+                <a href="eta-service.html">
+            
+                    
+                    ETA Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.9" data-path="search-service.html">
+            
+                <a href="search-service.html">
+            
+                    
+                    Search Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="8.10" data-path="tracking-service.html">
+            
+                <a href="tracking-service.html">
+            
+                    
+                    Tracking Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.11" data-path="pricing-service.html">
+            
+                <a href="pricing-service.html">
+            
+                    
+                    Pricing Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.12" data-path="forecasting-service.html">
+            
+                <a href="forecasting-service.html">
+            
+                    
+                    Forecasting Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Tracking Service</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="tracking-service">Tracking Service</h1>
+<p>Real-time driver GPS ingestion and customer-facing order tracking. Drivers push location updates via WebSocket; the service validates, filters (Kalman), and fans out to customers via Server-Sent Events (SSE).</p>
+<p>Port <strong>8109</strong> | Package <code>tracking-service/</code></p>
+<h2 id="architecture">Architecture</h2>
+<pre><code class="lang-mermaid">%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+flowchart LR
+    subgraph "Ingestion"
+        WS[WebSocket /ws/driver/location]
+        WS --&gt; UP[Upgrade HTTP]
+        UP --&gt; READ[JSON Read Loop]
+        READ --&gt; PING[Ping/Pong Keepalive]
+    end
+
+    subgraph "Validation"
+        READ --&gt; BOUNDS[Bounds Check]
+        BOUNDS --&gt; SPEED[Speed ≤ 55.6 m/s]
+        SPEED --&gt; ACCURACY[Accuracy 0-500m]
+        ACCURACY --&gt; STALE[Staleness ≤ 30s]
+        STALE --&gt; THROTTLE[Throttle ≥ 2s interval]
+        THROTTLE --&gt; DEDUP[Dedup &lt; 0.5m]
+    end
+
+    subgraph "Filtering"
+        DEDUP --&gt; KALMAN[Kalman Filter 4-state]
+        KALMAN --&gt; POSITION[Smoothed Position]
+    end
+
+    subgraph "Fan-out"
+        POSITION --&gt; SSE[SSE /sse/order/tracking]
+        SSE --&gt;|text/event-stream| CUSTOMER[Customer App]
+        SSE --&gt;|15s keepalive| CUSTOMER
+    end
+</code></pre>
+<h2 id="websocket-driver-ingestion">WebSocket Driver Ingestion</h2>
+<p>Drivers connect via WebSocket and send periodic JSON location updates. The server upgrades the HTTP connection to a WebSocket, then enters a read loop.</p>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> handleDriverWS(ctx *gin.Context) {
+    conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, <span class="hljs-literal">nil</span>)
+    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+        <span class="hljs-keyword">return</span>
+    }
+    <span class="hljs-keyword">defer</span> conn.Close()
+
+    <span class="hljs-keyword">go</span> s.pingLoop(conn)
+
+    <span class="hljs-keyword">for</span> {
+        _, msg, err := conn.ReadMessage()
+        <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+            <span class="hljs-keyword">break</span>
+        }
+
+        <span class="hljs-keyword">var</span> update LocationUpdate
+        <span class="hljs-keyword">if</span> err := json.Unmarshal(msg, &amp;update); err != <span class="hljs-literal">nil</span> {
+            <span class="hljs-keyword">continue</span>
+        }
+
+        <span class="hljs-keyword">if</span> s.validateLocation(&amp;update) {
+            smoothed := s.kalmanFilter(update.DriverID, update)
+            s.broadcastLocation(update.OrderID, smoothed)
+        }
+    }
+}
+</code></pre>
+<h3 id="pingpong-keepalive">Ping/Pong Keepalive</h3>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> pingLoop(conn *websocket.Conn) {
+    ticker := time.NewTicker(<span class="hljs-number">30</span> * time.Second)
+    <span class="hljs-keyword">defer</span> ticker.Stop()
+
+    <span class="hljs-keyword">for</span> <span class="hljs-keyword">range</span> ticker.C {
+        <span class="hljs-keyword">if</span> err := conn.WriteMessage(websocket.PingMessage, <span class="hljs-literal">nil</span>); err != <span class="hljs-literal">nil</span> {
+            <span class="hljs-keyword">return</span>
+        }
+    }
+}
+</code></pre>
+<h2 id="6-factor-location-validation">6-Factor Location Validation</h2>
+<p>Every location update passes through six validation checks before entering the Kalman filter:</p>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th>Constraint</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bounds</td>
+<td>Within city bounding box</td>
+<td>Reject obviously invalid coordinates</td>
+</tr>
+<tr>
+<td>Speed</td>
+<td>≤ 55.6 m/s (200 km/h)</td>
+<td>Scooters can't exceed this with cargo</td>
+</tr>
+<tr>
+<td>Accuracy</td>
+<td>GPS accuracy 0-500m</td>
+<td>Reject unusable GPS readings</td>
+</tr>
+<tr>
+<td>Staleness</td>
+<td>Timestamp ≤ 30s old</td>
+<td>Discard delayed updates</td>
+</tr>
+<tr>
+<td>Throttle</td>
+<td>≥ 2s since last update</td>
+<td>Prevent flooding</td>
+</tr>
+<tr>
+<td>Dedup</td>
+<td>Movement ≥ 0.5m from last</td>
+<td>Skip stationary pings</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> validateLocation(loc *LocationUpdate) <span class="hljs-type">bool</span> {
+    <span class="hljs-keyword">return</span> loc.Lat &gt;= s.bounds.MinLat &amp;&amp; loc.Lat &lt;= s.bounds.MaxLat &amp;&amp;
+        loc.Lng &gt;= s.bounds.MinLng &amp;&amp; loc.Lng &lt;= s.bounds.MaxLng &amp;&amp;
+        loc.Speed &lt;= <span class="hljs-number">55.6</span> &amp;&amp;
+        loc.Accuracy &gt;= <span class="hljs-number">0</span> &amp;&amp; loc.Accuracy &lt;= <span class="hljs-number">500</span> &amp;&amp;
+        time.Since(loc.Timestamp) &lt;= <span class="hljs-number">30</span>*time.Second &amp;&amp;
+        time.Since(loc.ReceivedAt) &gt;= <span class="hljs-number">2</span>*time.Second &amp;&amp;
+        haversine(loc.Lat, loc.Lng, loc.lastLat, loc.lastLng) &gt; <span class="hljs-number">0.0005</span>
+}
+</code></pre>
+<h2 id="kalman-filter">Kalman Filter</h2>
+<p>A 4-state Kalman filter smooths GPS noise and estimates velocity. States: <code>[lat, lng, v_lat, v_lng]</code>.</p>
+<h3 id="state-vector">State Vector</h3>
+<pre><code>x = [lat, lng, v_lat, v_lng]
+</code></pre><h3 id="prediction-step">Prediction Step</h3>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(kf *KalmanFilter)</span></span> Predict(dt <span class="hljs-type">float64</span>) {
+    <span class="hljs-comment">// State transition matrix (constant velocity model)</span>
+    kf.x[<span class="hljs-number">0</span>] += kf.x[<span class="hljs-number">2</span>] * dt  <span class="hljs-comment">// lat += v_lat * dt</span>
+    kf.x[<span class="hljs-number">1</span>] += kf.x[<span class="hljs-number">3</span>] * dt  <span class="hljs-comment">// lng += v_lng * dt</span>
+    <span class="hljs-comment">// x[2], x[3] (velocity) unchanged</span>
+
+    <span class="hljs-comment">// Process noise</span>
+    kf.P[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] += kf.Q[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] * dt
+    kf.P[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] += kf.Q[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] * dt
+}
+</code></pre>
+<h3 id="update-step">Update Step</h3>
+<p>The measurement noise covariance <code>R</code> is adapted from the GPS-reported accuracy:</p>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(kf *KalmanFilter)</span></span> Update(lat, lng <span class="hljs-type">float64</span>, accuracy <span class="hljs-type">float64</span>) {
+    <span class="hljs-comment">// Adaptive measurement noise from GPS accuracy</span>
+    kf.R[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] = accuracy * accuracy
+    kf.R[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] = accuracy * accuracy
+
+    <span class="hljs-comment">// Innovation (measurement - prediction)</span>
+    y0 := lat - kf.x[<span class="hljs-number">0</span>]
+    y1 := lng - kf.x[<span class="hljs-number">1</span>]
+
+    <span class="hljs-comment">// Innovation covariance</span>
+    s00 := kf.P[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] + kf.R[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>]
+    s11 := kf.P[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] + kf.R[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>]
+
+    <span class="hljs-comment">// Kalman gain</span>
+    k00 := kf.P[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] / s00
+    k11 := kf.P[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] / s11
+
+    <span class="hljs-comment">// Update state</span>
+    kf.x[<span class="hljs-number">0</span>] += k00 * y0
+    kf.x[<span class="hljs-number">1</span>] += k11 * y1
+
+    <span class="hljs-comment">// Update covariance</span>
+    kf.P[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] *= (<span class="hljs-number">1</span> - k00)
+    kf.P[<span class="hljs-number">1</span>][<span class="hljs-number">1</span>] *= (<span class="hljs-number">1</span> - k11)
+}
+</code></pre>
+<h2 id="sse-fan-out">SSE Fan-Out</h2>
+<p>Customers subscribe to order tracking updates via SSE. The service maintains a map of <code>orderID → []chan LocationUpdate</code> and fans out each validated location update to all subscribers.</p>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> handleSSETracking(ctx *gin.Context) {
+    orderID := ctx.Param(<span class="hljs-string">"order_id"</span>)
+
+    ctx.Header(<span class="hljs-string">"Content-Type"</span>, <span class="hljs-string">"text/event-stream"</span>)
+    ctx.Header(<span class="hljs-string">"Cache-Control"</span>, <span class="hljs-string">"no-cache"</span>)
+    ctx.Header(<span class="hljs-string">"Connection"</span>, <span class="hljs-string">"keep-alive"</span>)
+
+    ch := s.subscribe(orderID)
+    <span class="hljs-keyword">defer</span> s.unsubscribe(orderID, ch)
+
+    ticker := time.NewTicker(<span class="hljs-number">15</span> * time.Second)
+    <span class="hljs-keyword">defer</span> ticker.Stop()
+
+    <span class="hljs-keyword">for</span> {
+        <span class="hljs-keyword">select</span> {
+        <span class="hljs-keyword">case</span> loc := &lt;-ch:
+            data, _ := json.Marshal(loc)
+            fmt.Fprintf(ctx.Writer, <span class="hljs-string">"data: %s\n\n"</span>, data)
+            ctx.Writer.Flush()
+        <span class="hljs-keyword">case</span> &lt;-ticker.C:
+            fmt.Fprintf(ctx.Writer, <span class="hljs-string">": keepalive\n\n"</span>)
+            ctx.Writer.Flush()
+        <span class="hljs-keyword">case</span> &lt;-ctx.Request.Context().Done():
+            <span class="hljs-keyword">return</span>
+        }
+    }
+}
+</code></pre>
+<h2 id="api-endpoints">API Endpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/ws/driver/location</code></td>
+<td>WebSocket endpoint for driver location updates</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/sse/order/tracking/:order_id</code></td>
+<td>SSE endpoint for customer tracking view</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tracking/history/:order_id</code></td>
+<td>Get the complete location history for an order</td>
+</tr>
+</tbody>
+</table>
+<h3 id="get-wsdriverlocation">GET /ws/driver/location</h3>
+<pre><code>WebSocket Upgrade → JSON read loop
+
+→ {"driver_id": "drv_42", "order_id": "ord_xyz", "lat": -6.2088, "lng": 106.8456, "speed": 8.5, "accuracy": 12, "timestamp": "2026-06-22T10:30:00Z"}
+→ {"driver_id": "drv_42", "order_id": "ord_xyz", "lat": -6.2095, "lng": 106.8460, "speed": 9.2, "accuracy": 10, "timestamp": "2026-06-22T10:30:05Z"}
+</code></pre><h3 id="get-sseordertrackingordxyz">GET /sse/order/tracking/ord_xyz</h3>
+<pre><code>Content-Type: text/event-stream
+
+data: {"lat": -6.2088, "lng": 106.8456, "speed": 8.5, "timestamp": "2026-06-22T10:30:00Z"}
+
+data: {"lat": -6.2095, "lng": 106.8460, "speed": 9.2, "timestamp": "2026-06-22T10:30:05Z"}
+
+: keepalive
+</code></pre><h2 id="technical-decisions">Technical Decisions</h2>
+<ul>
+<li><strong>WebSocket for driver ingestion, SSE for customer consumption</strong>: WebSocket is bidirectional — the server needs to receive updates (driver GPS) and can also send acknowledgements. SSE is unidirectional (server to client), which is perfect for customer tracking views. SSE also auto-reconnects natively in browsers, unlike raw WebSocket.</li>
+<li><strong>6-factor validation</strong>: Each factor catches a different class of bad data — bounds for entirely wrong coordinates, speed for anomalous jumps, accuracy for poor GPS, staleness for delayed updates, throttle for abusive clients, dedup for stationary periods. All six must pass before the update enters the Kalman filter.</li>
+<li><strong>4-state Kalman filter (lat, lng, v_lat, v_lng)</strong>: The velocity states allow the filter to predict the next position based on momentum, producing smooth trajectories even when GPS updates are noisy or intermittent. The constant-velocity model is appropriate for scooter/car movement at 1-5 second intervals.</li>
+<li><strong>Adaptive measurement noise (R from GPS accuracy)</strong>: GPS-reported accuracy varies from 3m (good) to 50m+ (poor). By adapting R per update, the filter trusts high-accuracy readings more and smooths low-accuracy readings aggressively.</li>
+<li><strong>Per-order serial pipeline</strong>: Each order's location updates are processed serially through validation, Kalman filter, and broadcast. This prevents out-of-order processing within a single order's timeline. Different orders can be processed concurrently.</li>
+<li><strong>15-second SSE keepalive</strong>: SSE connections can be dropped by proxies and load balancers that timeout idle connections. A 15-second comment-only keepalive (<code>: keepalive</code>) keeps the connection alive without sending actual data. The comment format is designed to be ignored by SSE parsers.</li>
+<li><strong>Ping/pong WebSocket keepalive (30s)</strong>: Driver connections may be on mobile networks with NAT timeouts. The 30-second ping interval keeps the connection alive through typical carrier NAT timeouts (30-60s).</li>
+</ul>
+<h2 id="source-code">Source Code</h2>
+<p><a href="https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/tracking-service/main.go" target="_blank">View on GitHub</a></p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="search-service.html" class="navigation navigation-prev " aria-label="Previous page: Search Service">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="pricing-service.html" class="navigation navigation-next " aria-label="Next page: Pricing Service">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Tracking Service","level":"8.10","depth":1,"next":{"title":"Pricing Service","level":"8.11","depth":1,"path":"08-qcommerce/pricing-service.md","ref":"08-qcommerce/pricing-service.md","articles":[]},"previous":{"title":"Search Service","level":"8.9","depth":1,"path":"08-qcommerce/search-service.md","ref":"08-qcommerce/search-service.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["livereload"],"pluginsConfig":{"livereload":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"08-qcommerce/tracking-service.md","mtime":"2026-06-21T22:29:46.263Z","type":"markdown"},"gitbook":{"version":"6.2.2","time":"2026-06-22T04:06:49.943Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-livereload/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/@honkit/honkit-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

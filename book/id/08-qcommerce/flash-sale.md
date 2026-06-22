@@ -1,6 +1,10 @@
 # Layanan Flash Sale
 
-Mesin checkout flash sale throughput tinggi dengan pengurangan stok atomik Lua, token atestasi HMAC-SHA256, rate limiting sliding window per sidik jari perangkat, dan ruang tunggu berbasis Redis sorted set.
+300% oversell. 12.000 pesanan dibatalkan. Semua karena race condition dengan jendela 50 mikrodetik.
+
+Skrip Lua yang bisa mencegahnya? 20 baris. Satu panggilan Redis atomik. Nggak perlu Paxos. Nggak perlu Raft. Nggak perlu distributed lock.
+
+Setiap platform flash sale perangnya sama. Lima lapis pengaman. Sekali checkout. Nggak ada celah.
 
 Port **8103** | Paket `flash-sale/` | 5 file: `types.go`, `store.go`, `service.go`, `handler.go`, `main.go`
 
@@ -32,7 +36,13 @@ sequenceDiagram
 
 ### 1. Pengurangan Stok Atomik Lua
 
-Satu skrip Lua memeriksa stok dan menguranginya dalam satu operasi Redis — tanpa celah race condition. Tanpa ini, urutan `GET → cek → DECRBY` konkuren memungkinkan oversell 300% (insiden nyata 2024: 12.000 pesanan dibatalkan).
+`GET -> cek -> DECRBY` keliatan aman di kertas. Kenyataannya? Bencana.
+
+Tiga request konkuren cek stok=100. Semua lihat stok=100. Semua lolos. Sekarang stok -200. Lo berutang 200 unit.
+
+Ini bukan teori. 2024, platform flash sale di Asia Tenggara. Stok Indomie 100 unit. Oversell 300%. 12.000 pesanan dibatalkan. CS kewalahan berminggu-minggu.
+
+Solusinya? Satu skrip Lua. `GET` + `DECRBY` dalam satu panggilan Redis atomik. Nggak ada celah antara cek dan kurang.
 
 ```lua
 -- KEYS[1] = stock key, ARGV[1] = qty
@@ -46,7 +56,11 @@ return {0, "sold_out"}
 
 ### 2. Rate Limit Sliding Window per Perangkat
 
-Dikunci berdasarkan `device_fp`, bukan IP. Setiap perangkat mendapat 20 percobaan checkout per jendela sliding 10 detik. Rotasi proxy dengan 1000 IP residensial tidak bisa melewati batas ini — limit mengikuti identitas perangkat, bukan alamat jaringan.
+Rate limit berbasis IP? Sia-sia buat bot farm.
+
+Seribu proxy residensial bergantian — tiap request datang dari IP beda. Limit-nya nggak pernah kepicu.
+
+Limit ini pakai `device_fp`, bukan IP. Bot dengan 1000 proxy tetap cuma dapet 20 percobaan per jendela 10 detik. Limit-nya nempel di perangkat, bukan jaringan.
 
 ```go
 func (s *Store) IsRateLimited(deviceFP string) bool {
@@ -65,7 +79,9 @@ func (s *Store) IsRateLimited(deviceFP string) bool {
 
 ### 3. Atestasi HMAC (Verifikasi Lokal)
 
-Server menandatangani sidik jari perangkat dengan rahasia yang tidak pernah meninggalkan server. Setiap request checkout memverifikasi tanda tangan secara lokal. Toleransi perbedaan jam ±30 detik. Tidak ada binary klien yang bisa membocorkan rahasia — dekompilasi APK atau IPA tidak menghasilkan apa-apa.
+Token dari server. Server tanda tangan sidik jari perangkat pake rahasia yang nggak pernah keluar dari server. Toleransi beda jam +/-30 detik.
+
+Dekompilasi APK. Reverse engineer IPA. Rahasianya nggak ada — karena emang nggak pernah dikirim ke client. Setiap request diverifikasi di server. Client nggak bisa palsuin token karena nggak punya kuncinya.
 
 ```go
 func generateToken(deviceFP string, secret []byte) (string, error) {
@@ -79,7 +95,9 @@ func generateToken(deviceFP string, secret []byte) (string, error) {
 
 ### 4. Ruang Tunggu Sorted Set
 
-Pengguna masuk ke Redis sorted set dengan timestamp masuk sebagai skor. Antrean bertahan saat service restart. `ZRank` mengembalikan posisi real-time. Sebuah goroutine latar belakang mengizinkan masuk via `ZPopMin` dalam urutan FIFO ketat.
+Stok habis dalam milidetik. Yang telat harus antre. Tapi "antre" berarti urutan — dan urutan butuh persistensi.
+
+Redis sorted set. Skor = timestamp masuk. Antrean selamat dari restart — data di disk, bukan di RAM. `ZRank` ngasih posisi dalam O(log N). Goroutine latar belakang ngadmit user secara FIFO ketat lewat `ZPopMin`.
 
 ```redis
 ZADD flash:sale:{sale_id}:queue <timestamp> <user_id>
@@ -89,7 +107,9 @@ ZPOPMIN flash:sale:{sale_id}:queue <batch_size>
 
 ### 5. Pengaman Idempotensi
 
-Setiap checkout memerlukan `idempotency_key`. Redis `SetNX` memberikan lock atomik dengan TTL 30 detik dan menyimpan hasil selama 10 menit. Request duplikat menerima HTTP 409 dengan hasil yang di-cache. Kritis untuk SDK mobile (OkHttp, URLSession) yang auto-retry saat jaringan gagal.
+SDK mobile auto-retry pas jaringan gagal. OkHttp. URLSession. Itu fitur — sampe dua POST identik bikin dua pesanan.
+
+Redis `SetNX` ngasih lock atomik dengan TTL 30 detik. Hasil checkout di-cache 10 menit. `Idempotency_key` sama? HTTP 409 lengkap sama response yang di-cache. Nggak ada pesanan kedua. Nggak ada tagihan dobel.
 
 ```go
 ok, _ := s.rdb.SetNX(ctx, "idemp:"+key, result, 30*time.Second).Result()
@@ -99,7 +119,7 @@ ok, _ := s.rdb.SetNX(ctx, "idemp:"+key, result, 30*time.Second).Result()
 
 | Method | Path | Deskripsi |
 |--------|------|-----------|
-| POST | `/flash-sale/checkout` | Pipeline lengkap: idempotensi → atestasi → rate limit → stok → antrean |
+| POST | `/flash-sale/checkout` | Pipeline lengkap: idempotensi -> atestasi -> rate limit -> stok -> antrean |
 | POST | `/flash-sale/release` | Kompensasi checkout gagal, kembalikan stok secara atomik |
 | GET | `/flash-sale/queue-status` | Polling posisi antrean via ZRank |
 | GET | `/flash-sale/token` | Terbitkan token atestasi HMAC-SHA256 |
@@ -138,28 +158,28 @@ ok, _ := s.rdb.SetNX(ctx, "idemp:"+key, result, 30*time.Second).Result()
 ## Uji Skenario — Validasi Desain
 
 | # | Skenario | Masalah yang Diselesaikan | Tanpa Desain Ini |
-|---|----------|--------------------------|------------------|
-| 1 | Happy path checkout | Pipeline penuh memvalidasi setiap langkah atomik | Stok hilang saat gagal di tengah, tanpa jalur pemulihan |
-| 2 | Double-tap karena panik | SetNX idempotensi mencegah pesanan duplikat | Auto-retry membuat 2 pesanan, tagihan dobel |
-| 3 | 200 user berebut 100 stok | Lua atomik cek+kurang dalam satu operasi | Race condition → oversell 300% (12K pesanan dibatalkan) |
+|---|----------|---------------------------|------------------|
+| 1 | Happy path checkout | Pipeline penuh validasi setiap langkah atomik | Stok hilang saat gagal di tengah, tanpa jalur pemulihan |
+| 2 | Double-tap karena panik | SetNX idempotensi cegah pesanan duplikat | Auto-retry bikin 2 pesanan, tagihan dobel |
+| 3 | 200 user rebut 100 stok | Lua atomik cek+kurang dalam satu operasi | Race condition -> oversell 300% (12K pesanan dibatalkan) |
 | 4 | Bot token palsu + 30 spam | Atestasi HMAC (401) + rate limit burst=20 (429) | Bot boros stok dalam <1s via 1000 proxy |
 | 5 | User ke-101 masuk ruang tunggu | Sorted set persisten, ZRank untuk posisi real-time | Antrean in-memory hilang saat deploy |
-| 6 | Timeout payment gateway 15s | POST /release kembalikan stok atomik, idempoten | Stok terkunci selamanya → ghost stock permanent |
-| 7 | Token 31s lewat expiry | ±30s toleransi jam, verifikasi HMAC server-side | User dengan selisih jam 5s selalu ditolak |
-| 8 | Endpoint penerbitan token | Secret HMAC hanya di server, tidak pernah di binary | Secret di APK/IPA → didekompilasi → bot buat token valid |
-| 9 | 25 request dari perangkat sama | Sliding window per device_fp, burst=20 | Limit IP: 1000 proxy → 5000 request, bypass total |
-| 10 | Handoff mobile (4G→WiFi), OkHttp retry | Idempotency_key sama → 409 + hasil cache | 2 POST identik → 2 pesanan, 2 tagihan |
-| 11 | Admit terlambat saat antrean mengalir | ZAddNX cegah re-add, ZPopMin admit strictly FIFO | User bergabung ulang dengan score manipulatif untuk loncat antrean |
+| 6 | Timeout payment gateway 15s | POST /release kembalikan stok atomik, idempoten | Stok terkunci selamanya -> ghost stock permanent |
+| 7 | Token 31s lewat expiry | +/-30s toleransi jam, verifikasi HMAC server-side | User dengan selisih jam 5s selalu ditolak |
+| 8 | Endpoint penerbitan token | Secret HMAC cuma di server, nggak pernah di binary | Secret di APK/IPA -> didekompilasi -> bot bikin token valid |
+| 9 | 25 request dari perangkat sama | Sliding window per device_fp, burst=20 | Limit IP: 1000 proxy -> 5000 request, bypass total |
+| 10 | Handoff mobile (4G->WiFi), OkHttp retry | Idempotency_key sama -> 409 + hasil cache | 2 POST identik -> 2 pesanan, 2 tagihan |
+| 11 | Admit terlambat saat antrean mengalir | ZAddNX cegah re-add, ZPopMin admit strictly FIFO | User gabung ulang dengan score manipulatif buat loncat antrean |
 
 ## Keputusan Teknis
 
 | Keputusan | Alasan |
 |-----------|--------|
 | Pengurangan stok atomik Lua | Operasi Redis tunggal eliminasi race condition cek-kurang. Cegah oversell tanpa distributed lock atau konsensus. |
-| Rate limit per sidik jari perangkat | Ikat limit ke perangkat, bukan IP. Bot farm 1000 proxy tidak bisa bypass karena limit mengikuti identitas perangkat. |
-| Atestasi HMAC (verifikasi lokal) | Secret hanya di server — tidak bisa bocor dari binary klien. ±30s toleransi jam tanpa memperlebar window replay. |
-| Ruang tunggu Redis sorted set | Antrean persisten selamat dari restart. ZRank memberi posisi O(log N) real-time. Skalabel ke jutaan pengguna. |
-| Pengaman idempotensi SetNX | Lock+cache atomik cegah duplikat dari auto-retry mobile. Lock 30s cukup untuk checkout; cache hasil cegah pemrosesan ulang. |
+| Rate limit per sidik jari perangkat | Ikat limit ke perangkat, bukan IP. Bot farm 1000 proxy nggak bisa bypass karena limit ngikut identitas perangkat. |
+| Atestasi HMAC (verifikasi lokal) | Secret cuma di server — nggak bisa bocor dari binary klien. +/-30s toleransi jam tanpa memperlebar window replay. |
+| Ruang tunggu Redis sorted set | Antrean persisten selamat dari restart. ZRank ngasih posisi O(log N) real-time. Skalabel ke jutaan pengguna. |
+| Pengaman idempotensi SetNX | Lock+cache atomik cegah duplikat dari auto-retry mobile. Lock 30s cukup buat checkout; cache hasil cegah pemrosesan ulang. |
 
 ## Source Code
 

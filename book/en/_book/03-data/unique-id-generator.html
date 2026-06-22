@@ -1,0 +1,847 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Unique ID Generator · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 6.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="key-value-store.html" />
+    
+    
+    <link rel="prev" href="../02-core/rate-limiter.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        <li class="header">01 Getting Started</li>
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../01-getting-started/">
+            
+                <a href="../01-getting-started/">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../01-getting-started/architecture.html">
+            
+                <a href="../01-getting-started/architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="../01-getting-started/running.html">
+            
+                <a href="../01-getting-started/running.html">
+            
+                    
+                    Running the Services
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">02 Core</li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../02-core/kit.html">
+            
+                <a href="../02-core/kit.html">
+            
+                    
+                    pkg/kit — Gin Factory
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="../02-core/consistent-hashing.html">
+            
+                <a href="../02-core/consistent-hashing.html">
+            
+                    
+                    pkg/consistenthash — Hash Ring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../02-core/url-shortener.html">
+            
+                <a href="../02-core/url-shortener.html">
+            
+                    
+                    URL Shortener
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../02-core/rate-limiter.html">
+            
+                <a href="../02-core/rate-limiter.html">
+            
+                    
+                    Rate Limiter
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">03 Data</li>
+        
+        
+    
+        <li class="chapter active" data-level="3.1" data-path="unique-id-generator.html">
+            
+                <a href="unique-id-generator.html">
+            
+                    
+                    Unique ID Generator
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="key-value-store.html">
+            
+                <a href="key-value-store.html">
+            
+                    
+                    Key-Value Store
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="search-autocomplete.html">
+            
+                <a href="search-autocomplete.html">
+            
+                    
+                    Search Autocomplete
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">04 Realtime</li>
+        
+        
+    
+        <li class="chapter " data-level="4.1" data-path="../04-realtime/chat-system.html">
+            
+                <a href="../04-realtime/chat-system.html">
+            
+                    
+                    Chat System
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="4.2" data-path="../04-realtime/notification-system.html">
+            
+                <a href="../04-realtime/notification-system.html">
+            
+                    
+                    Notification System
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">05 Scale</li>
+        
+        
+    
+        <li class="chapter " data-level="5.1" data-path="../05-scale/news-feed.html">
+            
+                <a href="../05-scale/news-feed.html">
+            
+                    
+                    News Feed
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="../05-scale/web-crawler.html">
+            
+                <a href="../05-scale/web-crawler.html">
+            
+                    
+                    Web Crawler
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">06 Storage</li>
+        
+        
+    
+        <li class="chapter " data-level="6.1" data-path="../06-storage/youtube.html">
+            
+                <a href="../06-storage/youtube.html">
+            
+                    
+                    YouTube
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="6.2" data-path="../06-storage/google-drive.html">
+            
+                <a href="../06-storage/google-drive.html">
+            
+                    
+                    Google Drive
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">07 Appendix</li>
+        
+        
+    
+        <li class="chapter " data-level="7.1" data-path="../07-appendix/design-decisions.html">
+            
+                <a href="../07-appendix/design-decisions.html">
+            
+                    
+                    Design Decisions
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="7.2" data-path="../07-appendix/references.html">
+            
+                <a href="../07-appendix/references.html">
+            
+                    
+                    References
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">08 Q-Commerce</li>
+        
+        
+    
+        <li class="chapter " data-level="8.1" data-path="../08-qcommerce/">
+            
+                <a href="../08-qcommerce/">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.2" data-path="../08-qcommerce/inventory-service.html">
+            
+                <a href="../08-qcommerce/inventory-service.html">
+            
+                    
+                    Inventory Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.3" data-path="../08-qcommerce/geo-service.html">
+            
+                <a href="../08-qcommerce/geo-service.html">
+            
+                    
+                    Geo Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.4" data-path="../08-qcommerce/flash-sale.html">
+            
+                <a href="../08-qcommerce/flash-sale.html">
+            
+                    
+                    Flash Sale
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.5" data-path="../08-qcommerce/checkout-service.html">
+            
+                <a href="../08-qcommerce/checkout-service.html">
+            
+                    
+                    Checkout Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.6" data-path="../08-qcommerce/promo-engine.html">
+            
+                <a href="../08-qcommerce/promo-engine.html">
+            
+                    
+                    Promo Engine
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.7" data-path="../08-qcommerce/dispatch-service.html">
+            
+                <a href="../08-qcommerce/dispatch-service.html">
+            
+                    
+                    Dispatch Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.8" data-path="../08-qcommerce/eta-service.html">
+            
+                <a href="../08-qcommerce/eta-service.html">
+            
+                    
+                    ETA Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.9" data-path="../08-qcommerce/search-service.html">
+            
+                <a href="../08-qcommerce/search-service.html">
+            
+                    
+                    Search Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.10" data-path="../08-qcommerce/tracking-service.html">
+            
+                <a href="../08-qcommerce/tracking-service.html">
+            
+                    
+                    Tracking Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.11" data-path="../08-qcommerce/pricing-service.html">
+            
+                <a href="../08-qcommerce/pricing-service.html">
+            
+                    
+                    Pricing Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.12" data-path="../08-qcommerce/forecasting-service.html">
+            
+                <a href="../08-qcommerce/forecasting-service.html">
+            
+                    
+                    Forecasting Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Unique ID Generator</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="unique-id-generator">Unique ID Generator</h1>
+<p>Snowflake-style 64-bit unique ID generator with 41-bit timestamp (epoch 2024-01-01), 10-bit worker ID, and 12-bit sequence number. Produces up to 4,096 IDs per millisecond per worker.</p>
+<h2 id="architecture">Architecture</h2>
+<h3 id="id-bit-layout">ID Bit Layout</h3>
+<pre><code> 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+├───────────────────────────────────────────────┬────────────┬──────┤
+│                  Timestamp                      │  WorkerID  │ Seq  │
+│                  41 bits                        │  10 bits   │12bit │
+│              ~69 years                          │ 0 - 1023   │0-4095│
+└───────────────────────────────────────────────┴────────────┴──────┘
+</code></pre><ul>
+<li><strong>Bit 63</strong> (not shown): Unused (sign bit, always 0).</li>
+<li><strong>Bits 22--62 (41 bits)</strong>: Milliseconds since epoch 2024-01-01T00:00:00Z. Supports ~69 years until 2093.</li>
+<li><strong>Bits 12--21 (10 bits)</strong>: Worker node ID (0--1023).</li>
+<li><strong>Bits 0--11 (12 bits)</strong>: Sequence number per millisecond (0--4095).</li>
+</ul>
+<pre><code class="lang-mermaid">%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+flowchart TB
+    subgraph "ID Generation Flow"
+        CALL["Generator.Next()"]
+        LOCK["Lock mutex"]
+        TS["time.Now().UnixMilli()"]
+        CMP{"now == lastStamp?"}
+        SEQ_INC["sequence = (sequence + 1) &amp; 4095&lt;br/&gt;if 0: spin-wait next ms"]
+        SEQ_RESET["sequence = 0"]
+        BUILD["id = (ts-epoch)&lt;&lt;22 | workerID&lt;&lt;12 | sequence"]
+        UNLOCK["Unlock mutex"]
+        RETURN["Return int64 ID"]
+    end
+
+    CALL --&gt; LOCK --&gt; TS --&gt; CMP
+    CMP --&gt;|yes| SEQ_INC
+    CMP --&gt;|no| SEQ_RESET
+    SEQ_INC --&gt; BUILD
+    SEQ_RESET --&gt; BUILD
+    BUILD --&gt; UNLOCK --&gt; RETURN
+
+    subgraph constants["Constants"]
+        EPOCH["epoch = 1704067200000&lt;br/&gt;// 2024-01-01 UTC"]
+        WBITS["workerBits = 10&lt;br/&gt;maxWorker = 1023"]
+        SBITS["sequenceBits = 12&lt;br/&gt;maxSequence = 4095"]
+    end
+</code></pre>
+<h2 id="implementation">Implementation</h2>
+<pre><code class="lang-go"><span class="hljs-keyword">const</span> (
+    epoch         = <span class="hljs-number">1704067200000</span> <span class="hljs-comment">// 2024-01-01T00:00:00Z in ms</span>
+    workerBits    = <span class="hljs-number">10</span>
+    sequenceBits  = <span class="hljs-number">12</span>
+    maxWorker     = <span class="hljs-number">1</span>&lt;&lt;workerBits - <span class="hljs-number">1</span>  <span class="hljs-comment">// 1023</span>
+    maxSequence   = <span class="hljs-number">1</span>&lt;&lt;sequenceBits - <span class="hljs-number">1</span> <span class="hljs-comment">// 4095</span>
+
+    timestampShift = workerBits + sequenceBits <span class="hljs-comment">// 22</span>
+    workerShift    = sequenceBits              <span class="hljs-comment">// 12</span>
+)
+
+<span class="hljs-keyword">type</span> Generator <span class="hljs-keyword">struct</span> {
+    mu        sync.Mutex
+    workerID  <span class="hljs-type">int64</span>
+    sequence  <span class="hljs-type">int64</span>
+    lastStamp <span class="hljs-type">int64</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">New</span><span class="hljs-params">(workerID <span class="hljs-type">int64</span>)</span></span> (*Generator, <span class="hljs-type">error</span>) {
+    <span class="hljs-keyword">if</span> workerID &lt; <span class="hljs-number">0</span> || workerID &gt; maxWorker {
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">"worker ID must be between 0 and %d"</span>, maxWorker)
+    }
+    <span class="hljs-keyword">return</span> &amp;Generator{workerID: workerID}, <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(g *Generator)</span></span> Next() (<span class="hljs-type">int64</span>, <span class="hljs-type">error</span>) {
+    g.mu.Lock()
+    <span class="hljs-keyword">defer</span> g.mu.Unlock()
+
+    now := time.Now().UnixMilli()
+    <span class="hljs-keyword">if</span> now &lt; g.lastStamp {
+        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, fmt.Errorf(<span class="hljs-string">"clock moved backwards, refusing to generate ID"</span>)
+    }
+
+    <span class="hljs-keyword">if</span> now == g.lastStamp {
+        g.sequence = (g.sequence + <span class="hljs-number">1</span>) &amp; maxSequence
+        <span class="hljs-keyword">if</span> g.sequence == <span class="hljs-number">0</span> {
+            <span class="hljs-keyword">for</span> now &lt;= g.lastStamp {
+                now = time.Now().UnixMilli()
+            }
+        }
+    } <span class="hljs-keyword">else</span> {
+        g.sequence = <span class="hljs-number">0</span>
+    }
+
+    g.lastStamp = now
+
+    id := (now-epoch)&lt;&lt;timestampShift |
+        g.workerID&lt;&lt;workerShift |
+        g.sequence
+
+    <span class="hljs-keyword">return</span> id, <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<h2 id="endpoints">Endpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/id</code></td>
+<td>Generate a unique 64-bit ID</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response">Response</h3>
+<pre><code class="lang-json">{<span class="hljs-string">"data"</span>: {<span class="hljs-string">"id"</span>: <span class="hljs-number">7277771434402209792</span>}}
+</code></pre>
+<p>Worker ID is configured via the <code>WORKER_ID</code> environment variable (default: 0).</p>
+<h2 id="api">API</h2>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">New</span><span class="hljs-params">(workerID <span class="hljs-type">int64</span>)</span></span> (*Generator, <span class="hljs-type">error</span>)
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(g *Generator)</span></span> Next() (<span class="hljs-type">int64</span>, <span class="hljs-type">error</span>)
+</code></pre>
+<h2 id="technical-decisions">Technical Decisions</h2>
+<ul>
+<li><strong>41-bit timestamp / 10-bit worker / 12-bit sequence</strong>: Standard Snowflake layout. 41 bits at millisecond granularity yields ~69 years of uniqueness from epoch. 10 bits (1024 workers) covers realistic cluster sizes. 12 bits (4096 IDs/ms) is sufficient for a single worker at any reasonable request rate.</li>
+<li><strong>Epoch 2024-01-01</strong>: Custom epoch extends the usable lifetime compared to Twitter's original 2010 epoch. IDs are smaller (fewer timestamp bits consumed) and overflow happens in 2093 instead of 2081.</li>
+<li><strong>Mutex over atomic CAS</strong>: Simplicity. CAS with a retry loop on sequence overflow is marginally faster but adds subtle correctness concerns around the monotonic clock check. A mutex guarantees linearizability of the generation path.</li>
+<li><strong>Clock drift detection</strong>: If the system clock jumps backward, the generator returns an error instead of producing duplicate IDs. This is a fail-safe: production deployments should use NTP with <code>-x</code> (gradual slew) rather than <code>-g</code> (step), and monitor clock skew.</li>
+<li><strong>Worker ID from environment</strong>: No coordination service (ZooKeeper / etcd) required for single-node deployments. Multi-worker deployments can use the environment variable set at deployment time (Kubernetes StatefulSet ordinal, Terraform variable, etc.).</li>
+</ul>
+<h2 id="source-code">Source Code</h2>
+<p><a href="https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/unique-id-generator/main.go" target="_blank">View on GitHub</a></p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="../02-core/rate-limiter.html" class="navigation navigation-prev " aria-label="Previous page: Rate Limiter">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="key-value-store.html" class="navigation navigation-next " aria-label="Next page: Key-Value Store">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Unique ID Generator","level":"3.1","depth":1,"next":{"title":"Key-Value Store","level":"3.2","depth":1,"path":"03-data/key-value-store.md","ref":"03-data/key-value-store.md","articles":[]},"previous":{"title":"Rate Limiter","level":"2.4","depth":1,"path":"02-core/rate-limiter.md","ref":"02-core/rate-limiter.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["livereload"],"pluginsConfig":{"livereload":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"03-data/unique-id-generator.md","mtime":"2026-06-21T22:29:46.253Z","type":"markdown"},"gitbook":{"version":"6.2.2","time":"2026-06-22T04:06:49.943Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-livereload/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/@honkit/honkit-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

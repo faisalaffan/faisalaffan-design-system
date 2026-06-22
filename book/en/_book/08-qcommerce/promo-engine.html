@@ -1,0 +1,973 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Promo Engine · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 6.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="dispatch-service.html" />
+    
+    
+    <link rel="prev" href="checkout-service.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        <li class="header">01 Getting Started</li>
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../01-getting-started/">
+            
+                <a href="../01-getting-started/">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../01-getting-started/architecture.html">
+            
+                <a href="../01-getting-started/architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="../01-getting-started/running.html">
+            
+                <a href="../01-getting-started/running.html">
+            
+                    
+                    Running the Services
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">02 Core</li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../02-core/kit.html">
+            
+                <a href="../02-core/kit.html">
+            
+                    
+                    pkg/kit — Gin Factory
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="../02-core/consistent-hashing.html">
+            
+                <a href="../02-core/consistent-hashing.html">
+            
+                    
+                    pkg/consistenthash — Hash Ring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../02-core/url-shortener.html">
+            
+                <a href="../02-core/url-shortener.html">
+            
+                    
+                    URL Shortener
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../02-core/rate-limiter.html">
+            
+                <a href="../02-core/rate-limiter.html">
+            
+                    
+                    Rate Limiter
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">03 Data</li>
+        
+        
+    
+        <li class="chapter " data-level="3.1" data-path="../03-data/unique-id-generator.html">
+            
+                <a href="../03-data/unique-id-generator.html">
+            
+                    
+                    Unique ID Generator
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="../03-data/key-value-store.html">
+            
+                <a href="../03-data/key-value-store.html">
+            
+                    
+                    Key-Value Store
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="../03-data/search-autocomplete.html">
+            
+                <a href="../03-data/search-autocomplete.html">
+            
+                    
+                    Search Autocomplete
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">04 Realtime</li>
+        
+        
+    
+        <li class="chapter " data-level="4.1" data-path="../04-realtime/chat-system.html">
+            
+                <a href="../04-realtime/chat-system.html">
+            
+                    
+                    Chat System
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="4.2" data-path="../04-realtime/notification-system.html">
+            
+                <a href="../04-realtime/notification-system.html">
+            
+                    
+                    Notification System
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">05 Scale</li>
+        
+        
+    
+        <li class="chapter " data-level="5.1" data-path="../05-scale/news-feed.html">
+            
+                <a href="../05-scale/news-feed.html">
+            
+                    
+                    News Feed
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="../05-scale/web-crawler.html">
+            
+                <a href="../05-scale/web-crawler.html">
+            
+                    
+                    Web Crawler
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">06 Storage</li>
+        
+        
+    
+        <li class="chapter " data-level="6.1" data-path="../06-storage/youtube.html">
+            
+                <a href="../06-storage/youtube.html">
+            
+                    
+                    YouTube
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="6.2" data-path="../06-storage/google-drive.html">
+            
+                <a href="../06-storage/google-drive.html">
+            
+                    
+                    Google Drive
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">07 Appendix</li>
+        
+        
+    
+        <li class="chapter " data-level="7.1" data-path="../07-appendix/design-decisions.html">
+            
+                <a href="../07-appendix/design-decisions.html">
+            
+                    
+                    Design Decisions
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="7.2" data-path="../07-appendix/references.html">
+            
+                <a href="../07-appendix/references.html">
+            
+                    
+                    References
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">08 Q-Commerce</li>
+        
+        
+    
+        <li class="chapter " data-level="8.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.2" data-path="inventory-service.html">
+            
+                <a href="inventory-service.html">
+            
+                    
+                    Inventory Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.3" data-path="geo-service.html">
+            
+                <a href="geo-service.html">
+            
+                    
+                    Geo Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.4" data-path="flash-sale.html">
+            
+                <a href="flash-sale.html">
+            
+                    
+                    Flash Sale
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.5" data-path="checkout-service.html">
+            
+                <a href="checkout-service.html">
+            
+                    
+                    Checkout Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="8.6" data-path="promo-engine.html">
+            
+                <a href="promo-engine.html">
+            
+                    
+                    Promo Engine
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.7" data-path="dispatch-service.html">
+            
+                <a href="dispatch-service.html">
+            
+                    
+                    Dispatch Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.8" data-path="eta-service.html">
+            
+                <a href="eta-service.html">
+            
+                    
+                    ETA Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.9" data-path="search-service.html">
+            
+                <a href="search-service.html">
+            
+                    
+                    Search Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.10" data-path="tracking-service.html">
+            
+                <a href="tracking-service.html">
+            
+                    
+                    Tracking Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.11" data-path="pricing-service.html">
+            
+                <a href="pricing-service.html">
+            
+                    
+                    Pricing Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.12" data-path="forecasting-service.html">
+            
+                <a href="forecasting-service.html">
+            
+                    
+                    Forecasting Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Promo Engine</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="promo-engine">Promo Engine</h1>
+<p>AST-based composable promotional rule engine. Defines conditions as a tree of AND/OR/NOT composite nodes with typed leaf conditions, executes them against order context, and calculates final discounts with stackable priority resolution.</p>
+<p>Port <strong>8105</strong> | Package <code>promo-engine/</code></p>
+<h2 id="architecture">Architecture</h2>
+<pre><code class="lang-mermaid">%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+flowchart TB
+    subgraph "Condition Tree"
+        ROOT[AND]
+        ROOT --&gt; C1[OR]
+        ROOT --&gt; C2[MinTransaction 50]
+        C1 --&gt; L1[Category: Electronics]
+        C1 --&gt; L2[Area: CBD Zone]
+
+        ROOT2[NOT]
+        ROOT2 --&gt; L3[FirstNOrder]
+
+        ROOT3[TimeSlot: 18:00-22:00]
+    end
+
+    subgraph "Evaluation"
+        CTX[Order Context] --&gt; Eval
+        Eval --&gt; ROOT
+        Eval --&gt; ROOT2
+        Eval --&gt; ROOT3
+    end
+
+    subgraph "Discount"
+        Eval --&gt;|pass| DC[Discount Calculator]
+        DC --&gt;|stackable| S1[Priority Group 1]
+        DC --&gt;|exclusive| S2[Priority Group 2]
+    end
+</code></pre>
+<h3 id="condition-tree-structure">Condition Tree Structure</h3>
+<p>Conditions are modelled as a composite pattern with typed leaf nodes.</p>
+<pre><code class="lang-go"><span class="hljs-keyword">type</span> Condition <span class="hljs-keyword">interface</span> {
+    Evaluate(ctx *OrderContext) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>)
+}
+
+<span class="hljs-keyword">type</span> CompositeCondition <span class="hljs-keyword">struct</span> {
+    Op     Operator    <span class="hljs-comment">// AND | OR | NOT</span>
+    Children []Condition
+}
+
+<span class="hljs-keyword">type</span> MinTransactionCondition <span class="hljs-keyword">struct</span> {
+    MinAmount <span class="hljs-type">float64</span>
+}
+</code></pre>
+<h2 id="condition-types">Condition Types</h2>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Leaf Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MinTransaction</td>
+<td>Leaf</td>
+<td>Order subtotal must exceed threshold</td>
+</tr>
+<tr>
+<td>Area</td>
+<td>Leaf</td>
+<td>Delivery area must match</td>
+</tr>
+<tr>
+<td>Category</td>
+<td>Leaf</td>
+<td>Order contains items from a category</td>
+</tr>
+<tr>
+<td>FirstNOrder</td>
+<td>Leaf</td>
+<td>User's first N orders (new user promo)</td>
+</tr>
+<tr>
+<td>TimeSlot</td>
+<td>Leaf</td>
+<td>Current time within a defined window</td>
+</tr>
+</tbody>
+</table>
+<h3 id="andornot-evaluation">AND/OR/NOT Evaluation</h3>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *CompositeCondition)</span></span> Evaluate(ctx *OrderContext) (<span class="hljs-type">bool</span>, <span class="hljs-type">error</span>) {
+    <span class="hljs-keyword">switch</span> c.Op {
+    <span class="hljs-keyword">case</span> AND:
+        <span class="hljs-keyword">for</span> _, child := <span class="hljs-keyword">range</span> c.Children {
+            ok, err := child.Evaluate(ctx)
+            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err
+            }
+            <span class="hljs-keyword">if</span> !ok {
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span>
+            }
+        }
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span>
+    <span class="hljs-keyword">case</span> OR:
+        <span class="hljs-keyword">for</span> _, child := <span class="hljs-keyword">range</span> c.Children {
+            ok, err := child.Evaluate(ctx)
+            <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, err
+            }
+            <span class="hljs-keyword">if</span> ok {
+                <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>, <span class="hljs-literal">nil</span>
+            }
+        }
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, <span class="hljs-literal">nil</span>
+    <span class="hljs-keyword">case</span> NOT:
+        <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(c.Children) != <span class="hljs-number">1</span> {
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, ErrInvalidNotArity
+        }
+        ok, err := c.Children[<span class="hljs-number">0</span>].Evaluate(ctx)
+        <span class="hljs-keyword">return</span> !ok, err
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>, ErrUnknownOperator
+}
+</code></pre>
+<h2 id="redis-lua-multi-counter">Redis Lua Multi-Counter</h2>
+<p>Conditions that depend on counters (total usage, daily usage, per-user usage) are evaluated atomically in a single Redis Lua script.</p>
+<pre><code class="lang-lua"><span class="hljs-comment">-- KEYS[1] = promo:total_used, KEYS[2] = promo:daily_used, KEYS[3] = promo:user_used:&lt;user_id&gt;</span>
+<span class="hljs-comment">-- ARGV[1] = max_total, ARGV[2] = max_daily, ARGV[3] = max_per_user</span>
+<span class="hljs-keyword">local</span> total = <span class="hljs-built_in">tonumber</span>(redis.call(<span class="hljs-string">"GET"</span>, KEYS[<span class="hljs-number">1</span>]) <span class="hljs-keyword">or</span> <span class="hljs-string">"0"</span>)
+<span class="hljs-keyword">local</span> daily = <span class="hljs-built_in">tonumber</span>(redis.call(<span class="hljs-string">"GET"</span>, KEYS[<span class="hljs-number">2</span>]) <span class="hljs-keyword">or</span> <span class="hljs-string">"0"</span>)
+<span class="hljs-keyword">local</span> user  = <span class="hljs-built_in">tonumber</span>(redis.call(<span class="hljs-string">"GET"</span>, KEYS[<span class="hljs-number">3</span>]) <span class="hljs-keyword">or</span> <span class="hljs-string">"0"</span>)
+
+<span class="hljs-keyword">if</span> total &gt;= <span class="hljs-built_in">tonumber</span>(ARGV[<span class="hljs-number">1</span>]) <span class="hljs-keyword">then</span> <span class="hljs-keyword">return</span> redis.error_reply(<span class="hljs-string">"TOTAL_CAP_REACHED"</span>) <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">if</span> daily &gt;= <span class="hljs-built_in">tonumber</span>(ARGV[<span class="hljs-number">2</span>]) <span class="hljs-keyword">then</span> <span class="hljs-keyword">return</span> redis.error_reply(<span class="hljs-string">"DAILY_CAP_REACHED"</span>) <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">if</span> user  &gt;= <span class="hljs-built_in">tonumber</span>(ARGV[<span class="hljs-number">3</span>]) <span class="hljs-keyword">then</span> <span class="hljs-keyword">return</span> redis.error_reply(<span class="hljs-string">"USER_CAP_REACHED"</span>) <span class="hljs-keyword">end</span>
+
+redis.call(<span class="hljs-string">"INCR"</span>, KEYS[<span class="hljs-number">1</span>])
+redis.call(<span class="hljs-string">"INCR"</span>, KEYS[<span class="hljs-number">2</span>])
+redis.call(<span class="hljs-string">"INCR"</span>, KEYS[<span class="hljs-number">3</span>])
+<span class="hljs-keyword">return</span> { total + <span class="hljs-number">1</span>, daily + <span class="hljs-number">1</span>, user + <span class="hljs-number">1</span> }
+</code></pre>
+<h2 id="stackable-priority-resolution">Stackable Priority Resolution</h2>
+<p>When multiple promotions apply, the engine resolves the final discount using priority groups:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Behaviour</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Exclusive</strong></td>
+<td>Only one promo from this group applies (highest discount wins)</td>
+<td>"FIRST_ORDER_50" and "WELCOME_30"</td>
+</tr>
+<tr>
+<td><strong>Stackable</strong></td>
+<td>Promos apply sequentially on the remaining amount</td>
+<td>"FREE_SHIPPING" + "CASHBACK_10"</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-resolution">Example Resolution</h3>
+<pre><code>Order subtotal: Rp 100,000
+
+Group: Exclusive
+  - Promo A (FIRST_ORDER_50%): Rp 50,000  ← highest, selected
+  - Promo B (WELCOME_30%):     Rp 30,000
+
+Group: Stackable
+  - Promo C (FREE_SHIPPING):   Rp 10,000    ← applied on remaining
+  - Promo D (CASHBACK_10%):    Rp 4,000     ← applied on remaining: 100k - 50k - 10k = 40k
+
+Final discount: Rp 64,000
+Final total:    Rp 36,000
+</code></pre><h2 id="fraud-detection">Fraud Detection</h2>
+<p>The promo engine detects abuse using two techniques:</p>
+<table>
+<thead>
+<tr>
+<th>Technique</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Device fingerprint hash</td>
+<td>Promo usage is tracked per device fingerprint hash. Rapid reuse from the same fingerprint triggers an alert.</td>
+</tr>
+<tr>
+<td>Jaccard similarity on addresses</td>
+<td>New addresses are compared against previously used addresses using bigram Jaccard similarity. Score &gt;0.85 suggests the same physical address with minor modifications.</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">jaccardBigramSimilarity</span><span class="hljs-params">(a, b <span class="hljs-type">string</span>)</span></span> <span class="hljs-type">float64</span> {
+    bigramsA := extractBigrams(strings.ToLower(a))
+    bigramsB := extractBigrams(strings.ToLower(b))
+
+    intersection := <span class="hljs-number">0</span>
+    <span class="hljs-keyword">for</span> bg := <span class="hljs-keyword">range</span> bigramsA {
+        <span class="hljs-keyword">if</span> bigramsB[bg] {
+            intersection++
+        }
+    }
+    union := <span class="hljs-built_in">len</span>(bigramsA) + <span class="hljs-built_in">len</span>(bigramsB) - intersection
+    <span class="hljs-keyword">if</span> union == <span class="hljs-number">0</span> {
+        <span class="hljs-keyword">return</span> <span class="hljs-number">1.0</span>
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-type">float64</span>(intersection) / <span class="hljs-type">float64</span>(union)
+}
+</code></pre>
+<h2 id="api-endpoints">API Endpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST</code></td>
+<td><code>/validate</code></td>
+<td>Validate which promotions apply to an order</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/apply</code></td>
+<td>Apply promotions and compute final total</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/admin/rules</code></td>
+<td>Create or update a promotion rule</td>
+</tr>
+</tbody>
+</table>
+<h3 id="post-validate">POST /validate</h3>
+<pre><code class="lang-json"><span class="hljs-comment">// Request</span>
+{<span class="hljs-string">"user_id"</span>: <span class="hljs-string">"usr_42"</span>, <span class="hljs-string">"items"</span>: [{<span class="hljs-string">"sku"</span>: <span class="hljs-string">"sku_101"</span>, <span class="hljs-string">"category"</span>: <span class="hljs-string">"electronics"</span>, <span class="hljs-string">"price"</span>: <span class="hljs-number">100000</span>}], <span class="hljs-string">"area"</span>: <span class="hljs-string">"cbd"</span>}
+
+<span class="hljs-comment">// Response 200</span>
+{<span class="hljs-string">"data"</span>: {<span class="hljs-string">"applicable_promos"</span>: [{<span class="hljs-string">"id"</span>: <span class="hljs-string">"promo_1"</span>, <span class="hljs-string">"name"</span>: <span class="hljs-string">"CBD ELECTRO 10%"</span>, <span class="hljs-string">"discount"</span>: <span class="hljs-number">10000</span>}]}}
+</code></pre>
+<h3 id="post-apply">POST /apply</h3>
+<pre><code class="lang-json"><span class="hljs-comment">// Request</span>
+{<span class="hljs-string">"user_id"</span>: <span class="hljs-string">"usr_42"</span>, <span class="hljs-string">"promo_ids"</span>: [<span class="hljs-string">"promo_1"</span>, <span class="hljs-string">"promo_2"</span>], <span class="hljs-string">"subtotal"</span>: <span class="hljs-number">100000</span>}
+
+<span class="hljs-comment">// Response 200</span>
+{<span class="hljs-string">"data"</span>: {<span class="hljs-string">"subtotal"</span>: <span class="hljs-number">100000</span>, <span class="hljs-string">"total_discount"</span>: <span class="hljs-number">14000</span>, <span class="hljs-string">"final_total"</span>: <span class="hljs-number">86000</span>, <span class="hljs-string">"breakdown"</span>: [{<span class="hljs-string">"promo_id"</span>: <span class="hljs-string">"promo_1"</span>, <span class="hljs-string">"amount"</span>: <span class="hljs-number">10000</span>}, {<span class="hljs-string">"promo_id"</span>: <span class="hljs-string">"promo_2"</span>, <span class="hljs-string">"amount"</span>: <span class="hljs-number">4000</span>}]}}
+</code></pre>
+<h2 id="technical-decisions">Technical Decisions</h2>
+<ul>
+<li><strong>AST composite pattern</strong>: The composite pattern maps naturally to tree-structured condition evaluation. Adding a new condition type requires only implementing the <code>Condition</code> interface — no changes to the evaluator. The trade-off is that deeply nested trees can be hard to debug, mitigated by a JSON serialisation format that preserves the tree structure verbatim.</li>
+<li><strong>Redis Lua multi-counter atomic check</strong>: Usage caps (total, daily, per-user) are checked and incremented in a single Lua trip. Without this, the service would need three separate Redis round-trips and a distributed lock to prevent races between check and increment.</li>
+<li><strong>Exclusivity groups + stackable resolution</strong>: Groups prevent conflicting promotions from stacking (e.g., two 50%-off coupons). Within stackable groups, promos apply sequentially on the remaining amount, ensuring predictable discount calculation. The resolution order is deterministic: exclusivity winners selected first, then stackable promos applied.</li>
+<li><strong>Jaccard bigram similarity for address fraud</strong>: Bigram Jaccard is simple to implement and effective at catching address manipulation ("Jl. Sudirman No. 5" vs "Jalan Sudirman Nomor 5" score ~0.55; "Jl. Sudirman No. 5" vs "Jl. Sudirman No. 15" score ~0.69). The 0.85 threshold catches near-identical addresses while tolerating legitimate variations.</li>
+<li><strong>Device fingerprint hashing</strong>: Fingerprints are stored as HMAC-SHA256 hashes, not plaintext, preventing PII leakage if the database is compromised. The hash is deterministic per device, enabling replay detection without storing raw biometric or hardware identifiers.</li>
+</ul>
+<h2 id="source-code">Source Code</h2>
+<p><a href="https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/promo-engine/main.go" target="_blank">View on GitHub</a></p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="checkout-service.html" class="navigation navigation-prev " aria-label="Previous page: Checkout Service">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="dispatch-service.html" class="navigation navigation-next " aria-label="Next page: Dispatch Service">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Promo Engine","level":"8.6","depth":1,"next":{"title":"Dispatch Service","level":"8.7","depth":1,"path":"08-qcommerce/dispatch-service.md","ref":"08-qcommerce/dispatch-service.md","articles":[]},"previous":{"title":"Checkout Service","level":"8.5","depth":1,"path":"08-qcommerce/checkout-service.md","ref":"08-qcommerce/checkout-service.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["livereload"],"pluginsConfig":{"livereload":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"08-qcommerce/promo-engine.md","mtime":"2026-06-21T22:29:46.261Z","type":"markdown"},"gitbook":{"version":"6.2.2","time":"2026-06-22T04:06:49.943Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-livereload/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/@honkit/honkit-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

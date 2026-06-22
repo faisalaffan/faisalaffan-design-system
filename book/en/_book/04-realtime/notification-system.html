@@ -1,0 +1,902 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Notification System · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 6.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="../05-scale/news-feed.html" />
+    
+    
+    <link rel="prev" href="chat-system.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        <li class="header">01 Getting Started</li>
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../01-getting-started/">
+            
+                <a href="../01-getting-started/">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../01-getting-started/architecture.html">
+            
+                <a href="../01-getting-started/architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="../01-getting-started/running.html">
+            
+                <a href="../01-getting-started/running.html">
+            
+                    
+                    Running the Services
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">02 Core</li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../02-core/kit.html">
+            
+                <a href="../02-core/kit.html">
+            
+                    
+                    pkg/kit — Gin Factory
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="../02-core/consistent-hashing.html">
+            
+                <a href="../02-core/consistent-hashing.html">
+            
+                    
+                    pkg/consistenthash — Hash Ring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../02-core/url-shortener.html">
+            
+                <a href="../02-core/url-shortener.html">
+            
+                    
+                    URL Shortener
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../02-core/rate-limiter.html">
+            
+                <a href="../02-core/rate-limiter.html">
+            
+                    
+                    Rate Limiter
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">03 Data</li>
+        
+        
+    
+        <li class="chapter " data-level="3.1" data-path="../03-data/unique-id-generator.html">
+            
+                <a href="../03-data/unique-id-generator.html">
+            
+                    
+                    Unique ID Generator
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="../03-data/key-value-store.html">
+            
+                <a href="../03-data/key-value-store.html">
+            
+                    
+                    Key-Value Store
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="../03-data/search-autocomplete.html">
+            
+                <a href="../03-data/search-autocomplete.html">
+            
+                    
+                    Search Autocomplete
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">04 Realtime</li>
+        
+        
+    
+        <li class="chapter " data-level="4.1" data-path="chat-system.html">
+            
+                <a href="chat-system.html">
+            
+                    
+                    Chat System
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="4.2" data-path="notification-system.html">
+            
+                <a href="notification-system.html">
+            
+                    
+                    Notification System
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">05 Scale</li>
+        
+        
+    
+        <li class="chapter " data-level="5.1" data-path="../05-scale/news-feed.html">
+            
+                <a href="../05-scale/news-feed.html">
+            
+                    
+                    News Feed
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="../05-scale/web-crawler.html">
+            
+                <a href="../05-scale/web-crawler.html">
+            
+                    
+                    Web Crawler
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">06 Storage</li>
+        
+        
+    
+        <li class="chapter " data-level="6.1" data-path="../06-storage/youtube.html">
+            
+                <a href="../06-storage/youtube.html">
+            
+                    
+                    YouTube
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="6.2" data-path="../06-storage/google-drive.html">
+            
+                <a href="../06-storage/google-drive.html">
+            
+                    
+                    Google Drive
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">07 Appendix</li>
+        
+        
+    
+        <li class="chapter " data-level="7.1" data-path="../07-appendix/design-decisions.html">
+            
+                <a href="../07-appendix/design-decisions.html">
+            
+                    
+                    Design Decisions
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="7.2" data-path="../07-appendix/references.html">
+            
+                <a href="../07-appendix/references.html">
+            
+                    
+                    References
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">08 Q-Commerce</li>
+        
+        
+    
+        <li class="chapter " data-level="8.1" data-path="../08-qcommerce/">
+            
+                <a href="../08-qcommerce/">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.2" data-path="../08-qcommerce/inventory-service.html">
+            
+                <a href="../08-qcommerce/inventory-service.html">
+            
+                    
+                    Inventory Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.3" data-path="../08-qcommerce/geo-service.html">
+            
+                <a href="../08-qcommerce/geo-service.html">
+            
+                    
+                    Geo Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.4" data-path="../08-qcommerce/flash-sale.html">
+            
+                <a href="../08-qcommerce/flash-sale.html">
+            
+                    
+                    Flash Sale
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.5" data-path="../08-qcommerce/checkout-service.html">
+            
+                <a href="../08-qcommerce/checkout-service.html">
+            
+                    
+                    Checkout Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.6" data-path="../08-qcommerce/promo-engine.html">
+            
+                <a href="../08-qcommerce/promo-engine.html">
+            
+                    
+                    Promo Engine
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.7" data-path="../08-qcommerce/dispatch-service.html">
+            
+                <a href="../08-qcommerce/dispatch-service.html">
+            
+                    
+                    Dispatch Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.8" data-path="../08-qcommerce/eta-service.html">
+            
+                <a href="../08-qcommerce/eta-service.html">
+            
+                    
+                    ETA Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.9" data-path="../08-qcommerce/search-service.html">
+            
+                <a href="../08-qcommerce/search-service.html">
+            
+                    
+                    Search Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.10" data-path="../08-qcommerce/tracking-service.html">
+            
+                <a href="../08-qcommerce/tracking-service.html">
+            
+                    
+                    Tracking Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.11" data-path="../08-qcommerce/pricing-service.html">
+            
+                <a href="../08-qcommerce/pricing-service.html">
+            
+                    
+                    Pricing Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.12" data-path="../08-qcommerce/forecasting-service.html">
+            
+                <a href="../08-qcommerce/forecasting-service.html">
+            
+                    
+                    Forecasting Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Notification System</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="notification-system">Notification System</h1>
+<p>Pub/sub notification delivery across multiple channels with a <code>Sender</code> interface. In-app notifications are persisted; email and push are simulated via log output.</p>
+<p>Port <strong>8083</strong> | Package <code>notification-system/</code></p>
+<hr></hr>
+<h2 id="architecture">Architecture</h2>
+<pre><code class="lang-mermaid">%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+flowchart LR
+    Client --&gt;|POST /send| SendHandler
+    SendHandler --&gt; Service
+
+    subgraph Service["Notification Service"]
+        Service --&gt;|channel: in_app| InAppSender
+        Service --&gt;|channel: email| EmailSender
+        Service --&gt;|channel: push| PushSender
+    end
+
+    InAppSender --&gt;|persist| Store[(In-Memory Store)]
+    EmailSender --&gt;|log simulate| Stdout
+    PushSender --&gt;|log simulate| Stdout
+
+    Client --&gt;|GET /notifications?user=X| GetHandler
+    GetHandler --&gt; Store
+</code></pre>
+<h3 id="sender-interface">Sender Interface</h3>
+<p>All senders implement a common interface, allowing new channels (SMS, Slack, webhook) to be added without changing the dispatch logic.</p>
+<pre><code class="lang-go"><span class="hljs-keyword">type</span> Sender <span class="hljs-keyword">interface</span> {
+    Send(n *Notification) <span class="hljs-type">error</span>
+    Name() Type
+}
+</code></pre>
+<hr></hr>
+<h2 id="code-example">Code Example</h2>
+<h3 id="service-layer-channel-routing">Service Layer: Channel Routing</h3>
+<pre><code class="lang-go"><span class="hljs-keyword">type</span> Service <span class="hljs-keyword">struct</span> {
+    senders <span class="hljs-keyword">map</span>[channel.Type]channel.Sender
+    store   *channel.Store
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">New</span><span class="hljs-params">(store *channel.Store)</span></span> *Service {
+    svc := &amp;Service{
+        senders: <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[channel.Type]channel.Sender),
+        store:   store,
+    }
+    svc.senders[channel.InApp] = channel.NewInAppSender(store)
+    svc.senders[channel.Email] = &amp;channel.EmailSender{}
+    svc.senders[channel.Push]  = &amp;channel.PushSender{}
+    <span class="hljs-keyword">return</span> svc
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> Send(userID <span class="hljs-type">string</span>, ch channel.Type, title, body <span class="hljs-type">string</span>) (*channel.Notification, <span class="hljs-type">error</span>) {
+    sender, ok := s.senders[ch]
+    <span class="hljs-keyword">if</span> !ok {
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">"unknown channel: %s"</span>, ch)
+    }
+    n := &amp;channel.Notification{
+        ID:        fmt.Sprintf(<span class="hljs-string">"notif_%d"</span>, time.Now().UnixMilli()),
+        UserID:    userID,
+        Channel:   ch,
+        Title:     title,
+        Body:      body,
+        CreatedAt: time.Now().UnixMilli(),
+    }
+    <span class="hljs-keyword">if</span> err := sender.Send(n); err != <span class="hljs-literal">nil</span> {
+        n.Status = <span class="hljs-string">"failed"</span>
+        <span class="hljs-keyword">return</span> n, err
+    }
+    <span class="hljs-keyword">return</span> n, <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<h3 id="in-app-sender-implementation">In-App Sender Implementation</h3>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *InAppSender)</span></span> Send(n *Notification) <span class="hljs-type">error</span> {
+    n.Status = <span class="hljs-string">"delivered"</span>
+    s.store.Save(n)
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<h3 id="simulated-senders">Simulated Senders</h3>
+<pre><code class="lang-go"><span class="hljs-keyword">type</span> EmailSender <span class="hljs-keyword">struct</span>{}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *EmailSender)</span></span> Send(n *Notification) <span class="hljs-type">error</span> {
+    log.Printf(<span class="hljs-string">"[EMAIL] To: %s | Subject: %s | Body: %s"</span>, n.UserID, n.Title, n.Body)
+    n.Status = <span class="hljs-string">"sent"</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-keyword">type</span> PushSender <span class="hljs-keyword">struct</span>{}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *PushSender)</span></span> Send(n *Notification) <span class="hljs-type">error</span> {
+    log.Printf(<span class="hljs-string">"[PUSH] To: %s | Title: %s | Body: %s"</span>, n.UserID, n.Title, n.Body)
+    n.Status = <span class="hljs-string">"sent"</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<hr></hr>
+<h2 id="api-endpoints">API Endpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST</code></td>
+<td><code>/send</code></td>
+<td>Send a notification (body: user_id, channel, title, body)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/notifications?user=X</code></td>
+<td>List notifications for a user</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/notifications/:id</code></td>
+<td>Get a single notification by ID</td>
+</tr>
+</tbody>
+</table>
+<h3 id="post-send-request-body">POST /send Request Body</h3>
+<pre><code class="lang-json">{
+    <span class="hljs-string">"user_id"</span>: <span class="hljs-string">"user_001"</span>,
+    <span class="hljs-string">"channel"</span>: <span class="hljs-string">"in_app"</span>,
+    <span class="hljs-string">"title"</span>: <span class="hljs-string">"New Message"</span>,
+    <span class="hljs-string">"body"</span>: <span class="hljs-string">"You have a new message from Alice"</span>
+}
+</code></pre>
+<hr></hr>
+<h2 id="technical-decisions">Technical Decisions</h2>
+<h3 id="interface-based-dispatch">Interface-Based Dispatch</h3>
+<p>The <code>Sender</code> interface decouples notification routing from delivery logic. Adding a new channel (SMS, Slack, webhook) requires only:</p>
+<ol>
+<li>Implement the <code>Sender</code> interface.</li>
+<li>Register the sender in <code>Service.New()</code>.</li>
+</ol>
+<p>No changes to the handler or service dispatch logic.</p>
+<h3 id="three-delivery-semantics">Three Delivery Semantics</h3>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>in_app</code></td>
+<td>Persisted to in-memory store, status becomes <code>"delivered"</code>, retrievable via GET endpoints</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>Simulated via <code>log.Printf</code>, status becomes <code>"sent"</code>, no actual SMTP call</td>
+</tr>
+<tr>
+<td><code>push</code></td>
+<td>Simulated via <code>log.Printf</code>, status becomes <code>"sent"</code>, no actual FCM/APNs call</td>
+</tr>
+</tbody>
+</table>
+<h3 id="in-memory-store">In-Memory Store</h3>
+<p>Notifications are stored in a flat slice on <code>channel.Store</code>. Querying by user ID does a linear scan -- acceptable for the demo scale but would need indexing in production (e.g., per-user lists or database queries).</p>
+<hr></hr>
+<h2 id="key-files">Key Files</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>channel/channel.go</code></td>
+<td>Sender interface, Notification model, transport implementations</td>
+</tr>
+<tr>
+<td><code>service/service.go</code></td>
+<td>Business logic: channel routing, ID generation</td>
+</tr>
+<tr>
+<td><code>handler/handler.go</code></td>
+<td>HTTP handlers for send and retrieval</td>
+</tr>
+</tbody>
+</table>
+<h2 id="source-code">Source Code</h2>
+<p><a href="https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/notification-system/main.go" target="_blank">View on GitHub</a></p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="chat-system.html" class="navigation navigation-prev " aria-label="Previous page: Chat System">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="../05-scale/news-feed.html" class="navigation navigation-next " aria-label="Next page: News Feed">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Notification System","level":"4.2","depth":1,"next":{"title":"News Feed","level":"5.1","depth":1,"path":"05-scale/news-feed.md","ref":"05-scale/news-feed.md","articles":[]},"previous":{"title":"Chat System","level":"4.1","depth":1,"path":"04-realtime/chat-system.md","ref":"04-realtime/chat-system.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["livereload"],"pluginsConfig":{"livereload":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"04-realtime/notification-system.md","mtime":"2026-06-21T22:29:46.255Z","type":"markdown"},"gitbook":{"version":"6.2.2","time":"2026-06-22T04:06:49.943Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-livereload/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/@honkit/honkit-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+

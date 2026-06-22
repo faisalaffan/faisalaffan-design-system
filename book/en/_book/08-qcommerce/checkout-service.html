@@ -1,0 +1,932 @@
+
+<!DOCTYPE HTML>
+<html lang="" >
+    <head>
+        <meta charset="UTF-8">
+        <title>Checkout Service · HonKit</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="description" content="">
+        <meta name="generator" content="HonKit 6.2.2">
+        
+        
+        
+    
+    <link rel="stylesheet" href="../gitbook/style.css">
+
+    
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-highlight/website.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/gitbook-plugin-search/search.css">
+                
+            
+                
+                <link rel="stylesheet" href="../gitbook/@honkit/honkit-plugin-fontsettings/website.css">
+                
+            
+        
+
+    
+
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+        
+    
+
+        
+    
+    
+    <meta name="HandheldFriendly" content="true"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../gitbook/images/apple-touch-icon-precomposed-152.png">
+    <link rel="shortcut icon" href="../gitbook/images/favicon.ico" type="image/x-icon">
+
+    
+    <link rel="next" href="promo-engine.html" />
+    
+    
+    <link rel="prev" href="flash-sale.html" />
+    
+
+    </head>
+    <body>
+        
+<div class="book honkit-cloak">
+    <div class="book-summary">
+        
+            
+<div id="book-search-input" role="search">
+    <input type="text" placeholder="Type to search" />
+</div>
+
+            
+                <nav role="navigation">
+                
+
+
+<ul class="summary">
+    
+    
+
+    
+
+    
+        
+        <li class="header">01 Getting Started</li>
+        
+        
+    
+        <li class="chapter " data-level="1.1" data-path="../">
+            
+                <a href="../">
+            
+                    
+                    Introduction
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.2" data-path="../01-getting-started/">
+            
+                <a href="../01-getting-started/">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.3" data-path="../01-getting-started/architecture.html">
+            
+                <a href="../01-getting-started/architecture.html">
+            
+                    
+                    Architecture
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="1.4" data-path="../01-getting-started/running.html">
+            
+                <a href="../01-getting-started/running.html">
+            
+                    
+                    Running the Services
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">02 Core</li>
+        
+        
+    
+        <li class="chapter " data-level="2.1" data-path="../02-core/kit.html">
+            
+                <a href="../02-core/kit.html">
+            
+                    
+                    pkg/kit — Gin Factory
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.2" data-path="../02-core/consistent-hashing.html">
+            
+                <a href="../02-core/consistent-hashing.html">
+            
+                    
+                    pkg/consistenthash — Hash Ring
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.3" data-path="../02-core/url-shortener.html">
+            
+                <a href="../02-core/url-shortener.html">
+            
+                    
+                    URL Shortener
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="2.4" data-path="../02-core/rate-limiter.html">
+            
+                <a href="../02-core/rate-limiter.html">
+            
+                    
+                    Rate Limiter
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">03 Data</li>
+        
+        
+    
+        <li class="chapter " data-level="3.1" data-path="../03-data/unique-id-generator.html">
+            
+                <a href="../03-data/unique-id-generator.html">
+            
+                    
+                    Unique ID Generator
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.2" data-path="../03-data/key-value-store.html">
+            
+                <a href="../03-data/key-value-store.html">
+            
+                    
+                    Key-Value Store
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="3.3" data-path="../03-data/search-autocomplete.html">
+            
+                <a href="../03-data/search-autocomplete.html">
+            
+                    
+                    Search Autocomplete
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">04 Realtime</li>
+        
+        
+    
+        <li class="chapter " data-level="4.1" data-path="../04-realtime/chat-system.html">
+            
+                <a href="../04-realtime/chat-system.html">
+            
+                    
+                    Chat System
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="4.2" data-path="../04-realtime/notification-system.html">
+            
+                <a href="../04-realtime/notification-system.html">
+            
+                    
+                    Notification System
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">05 Scale</li>
+        
+        
+    
+        <li class="chapter " data-level="5.1" data-path="../05-scale/news-feed.html">
+            
+                <a href="../05-scale/news-feed.html">
+            
+                    
+                    News Feed
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="5.2" data-path="../05-scale/web-crawler.html">
+            
+                <a href="../05-scale/web-crawler.html">
+            
+                    
+                    Web Crawler
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">06 Storage</li>
+        
+        
+    
+        <li class="chapter " data-level="6.1" data-path="../06-storage/youtube.html">
+            
+                <a href="../06-storage/youtube.html">
+            
+                    
+                    YouTube
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="6.2" data-path="../06-storage/google-drive.html">
+            
+                <a href="../06-storage/google-drive.html">
+            
+                    
+                    Google Drive
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">07 Appendix</li>
+        
+        
+    
+        <li class="chapter " data-level="7.1" data-path="../07-appendix/design-decisions.html">
+            
+                <a href="../07-appendix/design-decisions.html">
+            
+                    
+                    Design Decisions
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="7.2" data-path="../07-appendix/references.html">
+            
+                <a href="../07-appendix/references.html">
+            
+                    
+                    References
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+        
+        <li class="header">08 Q-Commerce</li>
+        
+        
+    
+        <li class="chapter " data-level="8.1" data-path="./">
+            
+                <a href="./">
+            
+                    
+                    Overview
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.2" data-path="inventory-service.html">
+            
+                <a href="inventory-service.html">
+            
+                    
+                    Inventory Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.3" data-path="geo-service.html">
+            
+                <a href="geo-service.html">
+            
+                    
+                    Geo Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.4" data-path="flash-sale.html">
+            
+                <a href="flash-sale.html">
+            
+                    
+                    Flash Sale
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter active" data-level="8.5" data-path="checkout-service.html">
+            
+                <a href="checkout-service.html">
+            
+                    
+                    Checkout Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.6" data-path="promo-engine.html">
+            
+                <a href="promo-engine.html">
+            
+                    
+                    Promo Engine
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.7" data-path="dispatch-service.html">
+            
+                <a href="dispatch-service.html">
+            
+                    
+                    Dispatch Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.8" data-path="eta-service.html">
+            
+                <a href="eta-service.html">
+            
+                    
+                    ETA Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.9" data-path="search-service.html">
+            
+                <a href="search-service.html">
+            
+                    
+                    Search Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.10" data-path="tracking-service.html">
+            
+                <a href="tracking-service.html">
+            
+                    
+                    Tracking Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.11" data-path="pricing-service.html">
+            
+                <a href="pricing-service.html">
+            
+                    
+                    Pricing Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+        <li class="chapter " data-level="8.12" data-path="forecasting-service.html">
+            
+                <a href="forecasting-service.html">
+            
+                    
+                    Forecasting Service
+            
+                </a>
+            
+
+            
+        </li>
+    
+
+    
+
+    <li class="divider"></li>
+
+    <li>
+        <a href="https://github.com/honkit/honkit" target="blank" class="gitbook-link">
+            Published with HonKit
+        </a>
+    </li>
+</ul>
+
+
+                </nav>
+            
+        
+    </div>
+
+    <div class="book-body">
+        
+            <div class="body-inner">
+                
+                    
+
+<div class="book-header" role="navigation">
+    
+
+    <!-- Title -->
+    <h1>
+        <i class="fa fa-circle-o-notch fa-spin"></i>
+        <a href=".." >Checkout Service</a>
+    </h1>
+</div>
+
+
+
+
+                    <div class="page-wrapper" tabindex="-1" role="main">
+                        <div class="page-inner">
+                            
+<div id="book-search-results">
+    <div class="search-noresults">
+    
+                                <section class="normal markdown-section">
+                                
+                                <h1 id="checkout-service">Checkout Service</h1>
+<p>Saga orchestration engine for the q-commerce checkout flow. Coordinates 5 distributed steps with compensatory actions on failure. Uses Redis idempotency keys, a transactional outbox pattern, and HMAC webhook verification with timing-safe comparison.</p>
+<p>Port <strong>8104</strong> | Package <code>checkout-service/</code></p>
+<h2 id="architecture">Architecture</h2>
+<pre><code class="lang-mermaid">%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+sequenceDiagram
+    participant C as Client
+    participant S as Checkout Service
+    participant I as Inventory Service
+    participant O as Order Service
+    participant P as Payment Gateway
+    participant E as Event Bus
+
+    Note over C,E: Happy Path
+    C-&gt;&gt;S: POST /checkout
+    S-&gt;&gt;S: Idempotency check (Redis SetNX 5s)
+    S-&gt;&gt;I: Step 1: Reserve inventory
+    I--&gt;&gt;S: Reserved
+
+    S-&gt;&gt;O: Step 2: Create order
+    O--&gt;&gt;S: Order created
+
+    S-&gt;&gt;P: Step 3: Charge payment
+    P--&gt;&gt;S: Payment confirmed
+
+    S-&gt;&gt;O: Step 4: Confirm order
+    O--&gt;&gt;S: Order confirmed
+
+    S-&gt;&gt;E: Step 5: Publish events
+    E--&gt;&gt;S: Events published
+
+    S-&gt;&gt;C: 201 Order confirmed
+
+    Note over C,S: Compensation (payment failure)
+    C-&gt;&gt;S: POST /checkout
+    S-&gt;&gt;I: Reserve inventory
+    S-&gt;&gt;O: Create order
+    S-&gt;&gt;P: Charge payment -- FAILS
+    S-&gt;&gt;O: Compensate: Cancel order
+    S-&gt;&gt;I: Compensate: Release inventory
+    S--&gt;&gt;C: 402 Payment failed
+</code></pre>
+<h3 id="saga-steps">Saga Steps</h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Action</th>
+<th>Compensation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Reserve inventory (<code>inventory-service</code>)</td>
+<td>Release inventory</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Create order (<code>order-service</code>)</td>
+<td>Cancel order</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Charge payment (<code>payment-gateway</code>)</td>
+<td>Refund payment</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Confirm order (<code>order-service</code>)</td>
+<td>— (terminal)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Publish events (event bus)</td>
+<td>— (terminal)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="idempotency">Idempotency</h2>
+<p>Every checkout request carries an idempotency key (<code>Idempotency-Key</code> header). The service checks Redis <code>SetNX</code> with a 5-second lock before processing. After completion, the result is cached in Redis for 24 hours.</p>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> checkout(ctx context.Context, req *CheckoutRequest, idempotencyKey <span class="hljs-type">string</span>) (*CheckoutResult, <span class="hljs-type">error</span>) {
+    <span class="hljs-comment">// Check idempotency cache</span>
+    <span class="hljs-keyword">if</span> result, err := s.idempotencyCache.Get(ctx, idempotencyKey); err == <span class="hljs-literal">nil</span> {
+        <span class="hljs-keyword">return</span> result, <span class="hljs-literal">nil</span>
+    }
+
+    <span class="hljs-comment">// Acquire lock (5s TTL prevents concurrent duplicate processing)</span>
+    acquired, err := s.rdb.SetNX(ctx, <span class="hljs-string">"lock:"</span>+idempotencyKey, <span class="hljs-string">"1"</span>, <span class="hljs-number">5</span>*time.Second).Result()
+    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> || !acquired {
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, ErrConcurrentCheckout
+    }
+    <span class="hljs-keyword">defer</span> s.rdb.Del(ctx, <span class="hljs-string">"lock:"</span>+idempotencyKey)
+
+    <span class="hljs-comment">// Execute saga</span>
+    result, err := s.executeSaga(ctx, req)
+    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err
+    }
+
+    <span class="hljs-comment">// Cache result for 24h</span>
+    s.idempotencyCache.Set(ctx, idempotencyKey, result, <span class="hljs-number">24</span>*time.Hour)
+    <span class="hljs-keyword">return</span> result, <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<h2 id="transactional-outbox">Transactional Outbox</h2>
+<p>Events are first written to an outbox table in the same database transaction as the order creation, then published asynchronously by a separate publisher goroutine. This ensures exactly-once event delivery semantics.</p>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> publishEvent(ctx context.Context, event Event) <span class="hljs-type">error</span> {
+    <span class="hljs-comment">// Write to outbox in the same transaction</span>
+    _, err := s.db.Exec(ctx,
+        <span class="hljs-string">"INSERT INTO outbox (event_type, payload, created_at) VALUES ($1, $2, NOW())"</span>,
+        event.Type, event.Payload,
+    )
+    <span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+        <span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">"outbox write: %w"</span>, err)
+    }
+    <span class="hljs-comment">// The publisher goroutine picks up unread outbox rows</span>
+    <span class="hljs-comment">// and publishes them to the event bus</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<h2 id="webhook-verification">Webhook Verification</h2>
+<p>Payment gateway webhooks are verified using HMAC-SHA256 with a timing-safe comparison to prevent timing side-channel attacks.</p>
+<pre><code class="lang-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> verifyWebhook(signature <span class="hljs-type">string</span>, body []<span class="hljs-type">byte</span>) <span class="hljs-type">bool</span> {
+    mac := hmac.New(sha256.New, []<span class="hljs-type">byte</span>(s.webhookSecret))
+    mac.Write(body)
+    expected := hex.EncodeToString(mac.Sum(<span class="hljs-literal">nil</span>))
+    <span class="hljs-keyword">return</span> hmac.Equal([]<span class="hljs-type">byte</span>(signature), []<span class="hljs-type">byte</span>(expected))
+}
+</code></pre>
+<h2 id="api-endpoints">API Endpoints</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST</code></td>
+<td><code>/checkout</code></td>
+<td>Initiate a checkout (idempotent)</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/webhook/payment</code></td>
+<td>Payment gateway webhook receiver</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/orders/:id</code></td>
+<td>Get order status</td>
+</tr>
+</tbody>
+</table>
+<h3 id="post-checkout">POST /checkout</h3>
+<pre><code class="lang-json"><span class="hljs-comment">// Request</span>
+<span class="hljs-title class_">Headers</span>: {<span class="hljs-string">"Idempotency-Key"</span>: <span class="hljs-string">"req_abc123"</span>}
+<span class="hljs-title class_">Body</span>: {<span class="hljs-string">"user_id"</span>: <span class="hljs-string">"usr_42"</span>, <span class="hljs-string">"hub_id"</span>: <span class="hljs-string">"hub_1"</span>, <span class="hljs-string">"items"</span>: [{<span class="hljs-string">"sku"</span>: <span class="hljs-string">"sku_101"</span>, <span class="hljs-string">"qty"</span>: <span class="hljs-number">2</span>}]}
+
+<span class="hljs-comment">// Response 201 (success)</span>
+{<span class="hljs-string">"data"</span>: {<span class="hljs-string">"order_id"</span>: <span class="hljs-string">"ord_xyz"</span>, <span class="hljs-string">"status"</span>: <span class="hljs-string">"confirmed"</span>, <span class="hljs-string">"total"</span>: <span class="hljs-number">15.99</span>}}
+
+<span class="hljs-comment">// Response 402 (payment failed)</span>
+{<span class="hljs-string">"error"</span>: {<span class="hljs-string">"code"</span>: <span class="hljs-string">"PAYMENT_FAILED"</span>, <span class="hljs-string">"message"</span>: <span class="hljs-string">"Card declined"</span>}}
+</code></pre>
+<h3 id="post-webhookpayment">POST /webhook/payment</h3>
+<pre><code class="lang-json"><span class="hljs-comment">// Request</span>
+<span class="hljs-title class_">Headers</span>: {<span class="hljs-string">"X-Signature"</span>: <span class="hljs-string">"sha256=abc123def"</span>}
+<span class="hljs-title class_">Body</span>: {<span class="hljs-string">"event"</span>: <span class="hljs-string">"payment.succeeded"</span>, <span class="hljs-string">"order_id"</span>: <span class="hljs-string">"ord_xyz"</span>, <span class="hljs-string">"amount"</span>: <span class="hljs-number">15.99</span>}
+
+<span class="hljs-comment">// Response 200</span>
+{<span class="hljs-string">"status"</span>: <span class="hljs-string">"received"</span>}
+</code></pre>
+<h2 id="key-algorithms">Key Algorithms</h2>
+<h3 id="saga-executor">Saga Executor</h3>
+<pre><code class="lang-go"><span class="hljs-keyword">type</span> SagaStep <span class="hljs-keyword">struct</span> {
+    name        <span class="hljs-type">string</span>
+    execute     <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(context.Context)</span></span> <span class="hljs-type">error</span>
+    compensate  <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(context.Context)</span></span> <span class="hljs-type">error</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Service)</span></span> executeSaga(ctx context.Context, req *CheckoutRequest) (*CheckoutResult, <span class="hljs-type">error</span>) {
+    steps := []SagaStep{
+        {name: <span class="hljs-string">"reserve_inventory"</span>, execute: s.reserveInventory, compensate: s.releaseInventory},
+        {name: <span class="hljs-string">"create_order"</span>,      execute: s.createOrder,      compensate: s.cancelOrder},
+        {name: <span class="hljs-string">"charge_payment"</span>,    execute: s.chargePayment,    compensate: s.refundPayment},
+        {name: <span class="hljs-string">"confirm_order"</span>,     execute: s.confirmOrder},
+        {name: <span class="hljs-string">"publish_events"</span>,    execute: s.publishEvents},
+    }
+
+    executed := <span class="hljs-built_in">make</span>([]<span class="hljs-type">int</span>, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(steps))
+
+    <span class="hljs-keyword">for</span> i, step := <span class="hljs-keyword">range</span> steps {
+        <span class="hljs-keyword">if</span> err := step.execute(ctx); err != <span class="hljs-literal">nil</span> {
+            <span class="hljs-comment">// Compensate in reverse order</span>
+            <span class="hljs-keyword">for</span> j := <span class="hljs-built_in">len</span>(executed) - <span class="hljs-number">1</span>; j &gt;= <span class="hljs-number">0</span>; j-- {
+                steps[executed[j]].compensate(ctx)
+            }
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, fmt.Errorf(<span class="hljs-string">"step %s failed: %w"</span>, step.name, err)
+        }
+        executed = <span class="hljs-built_in">append</span>(executed, i)
+    }
+
+    <span class="hljs-keyword">return</span> &amp;CheckoutResult{OrderID: req.OrderID, Status: <span class="hljs-string">"confirmed"</span>}, <span class="hljs-literal">nil</span>
+}
+</code></pre>
+<h2 id="technical-decisions">Technical Decisions</h2>
+<ul>
+<li><strong>Saga orchestration over choreography</strong>: The checkout service coordinates all steps centrally, making the flow explicit in a single code path. Choreography (each service reacting to events) is more decoupled but harder to reason about, test, and debug.</li>
+<li><strong>Redis SetNX idempotency lock (5s)</strong>: Prevents duplicate checkout processing when clients retry the same request. The short TTL ensures locks are not held indefinitely if the processing goroutine crashes. The 24-hour result cache allows immediate response to retries without re-execution.</li>
+<li><strong>Transactional outbox</strong>: Guarantees at-least-once event delivery without two-phase commit. Events and order state are written atomically to Postgres. A background publisher reads unprocessed outbox rows, publishes to the event bus, and marks them as processed.</li>
+<li><strong>HMAC webhook with timing-safe compare</strong>: Prevents webhook forgery and timing side-channel attacks. <code>hmac.Equal</code> runs in constant time regardless of how many bytes match, unlike a naive <code>==</code> comparison that short-circuits on the first mismatch.</li>
+<li><strong>Compensation in reverse order</strong>: Each step's compensator reverses its action. If step 3 fails, step 2 and step 1 compensators run in reverse order (2 then 1), leaving the system in a clean state. Compensation is best-effort and may require manual intervention for partial failures.</li>
+</ul>
+<h2 id="source-code">Source Code</h2>
+<p><a href="https://github.com/faisalaffan/faisalaffan-design-system/blob/dev/services/checkout-service/main.go" target="_blank">View on GitHub</a></p>
+
+                                
+                                </section>
+                            
+    </div>
+    <div class="search-results">
+        <div class="has-results">
+            
+            <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+            <ul class="search-results-list"></ul>
+            
+        </div>
+        <div class="no-results">
+            
+            <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+            
+        </div>
+    </div>
+</div>
+
+                        </div>
+                    </div>
+                
+            </div>
+
+            
+                
+                <a href="flash-sale.html" class="navigation navigation-prev " aria-label="Previous page: Flash Sale">
+                    <i class="fa fa-angle-left"></i>
+                </a>
+                
+                
+                <a href="promo-engine.html" class="navigation navigation-next " aria-label="Next page: Promo Engine">
+                    <i class="fa fa-angle-right"></i>
+                </a>
+                
+            
+        
+    </div>
+
+    <script>
+        var gitbook = gitbook || [];
+        gitbook.push(function() {
+            gitbook.page.hasChanged({"page":{"title":"Checkout Service","level":"8.5","depth":1,"next":{"title":"Promo Engine","level":"8.6","depth":1,"path":"08-qcommerce/promo-engine.md","ref":"08-qcommerce/promo-engine.md","articles":[]},"previous":{"title":"Flash Sale","level":"8.4","depth":1,"path":"08-qcommerce/flash-sale.md","ref":"08-qcommerce/flash-sale.md","articles":[]},"dir":"ltr"},"config":{"gitbook":"*","theme":"default","variables":{},"plugins":["livereload"],"pluginsConfig":{"livereload":{},"highlight":{},"search":{},"lunr":{"maxIndexSize":1000000,"ignoreSpecialCharacters":false},"fontsettings":{"theme":"white","family":"sans","size":2},"theme-default":{"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"},"showLevel":false}},"structure":{"langs":"LANGS.md","readme":"README.md","glossary":"GLOSSARY.md","summary":"SUMMARY.md"},"pdf":{"pageNumbers":true,"fontSize":12,"fontFamily":"Arial","paperSize":"a4","chapterMark":"pagebreak","pageBreaksBefore":"/","margin":{"right":62,"left":62,"top":56,"bottom":56},"embedFonts":false},"styles":{"website":"styles/website.css","pdf":"styles/pdf.css","epub":"styles/epub.css","mobi":"styles/mobi.css","ebook":"styles/ebook.css","print":"styles/print.css"}},"file":{"path":"08-qcommerce/checkout-service.md","mtime":"2026-06-21T22:29:46.260Z","type":"markdown"},"gitbook":{"version":"6.2.2","time":"2026-06-22T04:06:49.943Z"},"basePath":"..","book":{"language":""}});
+        });
+    </script>
+</div>
+
+        
+    <noscript>
+        <style>
+            .honkit-cloak {
+                display: block !important;
+            }
+        </style>
+    </noscript>
+    <script>
+        // Restore sidebar state as critical path for prevent layout shift
+        function __init__getSidebarState(defaultValue){
+            var baseKey = "";
+            var key = baseKey + ":sidebar";
+            try {
+                var value = localStorage[key];
+                if (value === undefined) {
+                    return defaultValue;
+                }
+                var parsed = JSON.parse(value);
+                return parsed == null ? defaultValue : parsed;
+            } catch (e) {
+                return defaultValue;
+            }
+        }
+        function __init__restoreLastSidebarState() {
+            var isMobile = window.matchMedia("(max-width: 600px)").matches;
+            if (isMobile) {
+                // Init last state if not mobile
+                return;
+            }
+            var sidebarState = __init__getSidebarState(true);
+            var book = document.querySelector(".book");
+            // Show sidebar if it enabled
+            if (sidebarState && book) {
+                book.classList.add("without-animation", "with-summary");
+            }
+        }
+
+        try {
+            __init__restoreLastSidebarState();
+        } finally {
+            var book = document.querySelector(".book");
+            book.classList.remove("honkit-cloak");
+        }
+    </script>
+    <script src="../gitbook/gitbook.js"></script>
+    <script src="../gitbook/theme.js"></script>
+    
+        
+        <script src="../gitbook/gitbook-plugin-livereload/plugin.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search-engine.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-search/search.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/lunr.min.js"></script>
+        
+    
+        
+        <script src="../gitbook/gitbook-plugin-lunr/search-lunr.js"></script>
+        
+    
+        
+        <script src="../gitbook/@honkit/honkit-plugin-fontsettings/fontsettings.js"></script>
+        
+    
+
+    </body>
+</html>
+
