@@ -14,25 +14,24 @@ Port **8102** | 5 file | `types.go` `store.go` `service.go` `handler.go` `main.g
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
-flowchart LR
-    subgraph Pipeline["5-Langkah Pipeline Checkout"]
-        S1["① Idempotensi<br/>SetNX lock"]
-        S2["② Atestasi<br/>Verifikasi HMAC"]
-        S3["③ Rate Limit<br/>per device_fp"]
-        S4["④ Stok (Lua)<br/>N=10 bucket"]
-        S5["⑤ Ruang Tunggu<br/>sorted set FIFO"]
-    end
+sequenceDiagram
+    participant U as User
+    participant FS as Flash Sale Service
+    participant R as Redis
 
-    Client["Klien"] --> S1
-    S1 -->|lolos| S2
-    S2 -->|lolos| S3
-    S3 -->|lolos| S4
-    S4 -->|lolos| S5
-    S1 -->|409| Client
-    S2 -->|401| Client
-    S3 -->|429| Client
-    S4 -->|stok habis| S5
-    S5 -->|200/202| Client
+    Note over U,FS: Penerbitan Token
+    U->>FS: GET /flash-sale/token?device_fp=X
+    FS->>FS: HMAC-SHA256(device_fp, server_secret)
+    FS-->>U: Token atestasi
+
+    Note over FS,R: Pipeline Checkout (5 safety net)
+    U->>FS: POST /flash-sale/checkout
+    FS->>R: 1. SetNX idempotensi
+    FS->>FS: 2. Verifikasi HMAC atestasi
+    FS->>R: 3. Sliding window rate limit
+    FS->>R: 4. Pengurangan stok atomik Lua
+    FS->>R: 5. ZAdd ruang tunggu sorted set
+    FS-->>U: Posisi antrean / konfirmasi
 ```
 
 Setiap langkah jadi gerbang. Gagal di titik mana pun → kode HTTP langsung. Tanpa partial state. Tanpa silent degradation.

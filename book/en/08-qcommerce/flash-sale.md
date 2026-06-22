@@ -14,25 +14,24 @@ Port **8102** | 5 files | `types.go` `store.go` `service.go` `handler.go` `main.
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
-flowchart LR
-    subgraph Pipeline["5-Step Checkout Pipeline"]
-        S1["① Idempotency<br/>SetNX lock"]
-        S2["② Attestation<br/>HMAC verify"]
-        S3["③ Rate Limit<br/>per device_fp"]
-        S4["④ Stock (Lua)<br/>N=10 buckets"]
-        S5["⑤ Waiting Room<br/>sorted set FIFO"]
-    end
+sequenceDiagram
+    participant U as User
+    participant FS as Flash Sale Service
+    participant R as Redis
 
-    Client["Client"] --> S1
-    S1 -->|pass| S2
-    S2 -->|pass| S3
-    S3 -->|pass| S4
-    S4 -->|pass| S5
-    S1 -->|409| Client
-    S2 -->|401| Client
-    S3 -->|429| Client
-    S4 -->|sold out| S5
-    S5 -->|200/202| Client
+    Note over U,FS: Token Issuance
+    U->>FS: GET /flash-sale/token?device_fp=X
+    FS->>FS: HMAC-SHA256(device_fp, server_secret)
+    FS-->>U: Attestation token
+
+    Note over FS,R: Checkout Pipeline (5 safety nets)
+    U->>FS: POST /flash-sale/checkout
+    FS->>R: 1. SetNX idempotency check
+    FS->>FS: 2. HMAC attestation verify
+    FS->>R: 3. Sliding window rate limit
+    FS->>R: 4. Lua atomic stock decrement
+    FS->>R: 5. ZAdd waiting room sorted set
+    FS-->>U: Queue position / confirmation
 ```
 
 Every step gates the next. Fail at any point → immediate HTTP status code. No partial state. No silent degradation.
