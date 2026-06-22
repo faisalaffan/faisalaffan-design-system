@@ -340,29 +340,41 @@ func TestScenario_BotAttack_RateLimitAndAttestationBlock(t *testing.T) {
 	t.Log("✅ Bot dengan token palsu ditolak (401). HMAC attestation bekerja.")
 
 	// === Bagian 2: Rate limit spam ===
-	// Pake token valid tapi spam 30 request dari device yang sama.
+	// Pake token valid tapi spam 30 request dari device yang sama SECARA CONCURRENT.
+	// Kalo sequential: latency Redis remote bikin sliding window 1 detik keburu expired.
+	// Concurrent: semua request masuk dalam window yang sama → rate limiter aktif.
 	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
 	body.Attestation = token
 	body.ExpiresAt = expiresAt
-	rateLimited := 0
+
+	var rateLimited atomic.Int32
+	var wg sync.WaitGroup
 	for i := 0; i < 30; i++ {
-		// Tiap request pake idempotency key beda biar gak dianggap duplikat.
-		body.IdempotencyKey = fmt.Sprintf("idem-bot-%d", i+1)
-		b, _ := json.Marshal(body)
-		req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-		g.ServeHTTP(w, req)
-		if w.Code == http.StatusTooManyRequests {
-			rateLimited++
-		}
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			req := CheckoutRequest{
+				ProductID: testProductID, UserID: "bot-user", DeviceFP: deviceFP,
+				Attestation: token, ExpiresAt: expiresAt, Quantity: 1,
+				IdempotencyKey: fmt.Sprintf("idem-bot-%d", idx),
+			}
+			b, _ := json.Marshal(req)
+			r, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
+			r.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			g.ServeHTTP(w, r)
+			if w.Code == http.StatusTooManyRequests {
+				rateLimited.Add(1)
+			}
+		}(i)
 	}
+	wg.Wait()
+
 	// Assert: harus ada yang kena rate limit. Kalo 0, rate limit gak berfungsi.
-	if rateLimited == 0 {
+	if int(rateLimited.Load()) == 0 {
 		t.Fatal("FAIL: bot spam 30 request tanpa kena rate limit.")
 	}
-	// Rate limit based on device fingerprint, bukan IP -- jadi beda device beda counter.
-	t.Logf("✅ Bot spam 30 request: %d kena rate limit (429). Device-fingerprint based, bukan IP.", rateLimited)
+	t.Logf("✅ Bot spam 30 request: %d kena rate limit (429). Device-fingerprint based, bukan IP.", rateLimited.Load())
 }
 
 // =============================================================================
