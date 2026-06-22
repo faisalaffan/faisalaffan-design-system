@@ -18,8 +18,20 @@ type Config struct {
 }
 
 func LoadConfig() Config {
-	// Load .env.local if exists, silently skip if not found
-	if err := godotenv.Load(".env.local"); err != nil {
+	// Search .env.local from CWD upward (handles go test, delve debug, normal run)
+	loaded := false
+	for _, path := range []string{".env.local", "..", "../.."} {
+		if path == ".." || path == "../.." {
+			path = path + "/.env.local"
+		}
+		if _, err := os.Stat(path); err == nil {
+			if err := godotenv.Load(path); err == nil {
+				loaded = true
+				break
+			}
+		}
+	}
+	if !loaded {
 		log.Printf("info: .env.local not found, using OS env or defaults")
 	}
 
