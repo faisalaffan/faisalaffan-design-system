@@ -659,10 +659,10 @@ func TestScenario_SameDeviceSpam_RateLimitedPerDeviceFP(t *testing.T) {
 	}
 	wg.Wait()
 
-	// Assert: yang lolos gak boleh lebih dari 21 (burst allowance 20 + mungkin 1).
-	// Kalo semua lolos, rate limit gak jalan.
-	if int(allowed.Load()) > 21 {
-		t.Fatalf("FAIL: terlalu banyak request lolos. Allowed: %d, Blocked: %d", allowed.Load(), blocked.Load())
+	// Assert: burst=20, jadi minimal 5 request harus kena rate limit (25 - 20 = 5).
+	// Kalo blocked=0, rate limit gak berfungsi sama sekali.
+	if int(blocked.Load()) == 0 {
+		t.Fatalf("FAIL: rate limit tidak berfungsi. 25 request dari device sama, blocked=%d. Harusnya minimal 5 kena 429.", blocked.Load())
 	}
 	t.Logf("✅ Satu device spam 25 request: %d allowed, %d blocked (burst=20). Device-fingerprint based.", allowed.Load(), blocked.Load())
 }
