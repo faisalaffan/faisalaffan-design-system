@@ -56,7 +56,7 @@ flowchart TB
 
     subgraph L4["🟥 Infrastruktur"]
         direction LR
-        Redis[(("🗄️ Redis<br/>Lua · Sorted Sets<br/>String · SetNX<br/>Pipeline"))]
+        Redis[("🗄️ Redis<br/>Lua · Sorted Sets<br/>String · SetNX<br/>Pipeline")]
         Go{{"🔬 Go 1.26 stdlib<br/>crypto/hmac · sha256<br/>hash/fnv · crypto/rand<br/>net/http · context"}}
         Env[/"⚙️ .env.local<br/>REDIS_ADDR<br/>HMAC_SECRET"/]
     end
