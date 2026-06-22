@@ -8,6 +8,7 @@ const (
 	StatusRateLimited         = "rate_limited"
 	StatusInvalidAttestation  = "invalid_attestation"
 	StatusIdempotencyConflict = "idempotency_conflict"
+	StatusSlotFull            = "slot_full"
 
 	defaultBucketCount     = 10
 	defaultRateLimitWindow = time.Second
@@ -15,6 +16,8 @@ const (
 	attestationMaxSkew     = 30 * time.Second
 	reservationTTL         = 5 * time.Minute
 	waitingRoomTTL         = 10 * time.Minute
+	defaultMaxSlots        = 1000
+	defaultSlotTTL         = 15 * time.Minute
 )
 
 type CheckoutRequest struct {
@@ -43,9 +46,17 @@ type QueueStatusResponse struct {
 
 type ReleaseRequest struct {
 	ReservationID string `json:"reservation_id" binding:"required"`
+	ProductID     string `json:"product_id" binding:"required"`
+	UserID        string `json:"user_id" binding:"required"`
 }
 
 type TokenResponse struct {
 	Token     string `json:"token"`
 	ExpiresIn int    `json:"expires_in"`
+}
+
+type SlotPoolResponse struct {
+	Available   int  `json:"available"`
+	Max         int  `json:"max"`
+	HasCapacity bool `json:"has_capacity"`
 }

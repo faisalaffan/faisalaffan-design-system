@@ -34,6 +34,8 @@ func (h *Handler) Checkout(c *gin.Context) {
 		c.JSON(http.StatusTooManyRequests, resp)
 	case StatusIdempotencyConflict:
 		c.JSON(http.StatusConflict, resp)
+	case StatusSlotFull:
+		c.JSON(http.StatusServiceUnavailable, resp)
 	default:
 		kit.OK(c, resp)
 	}
@@ -46,7 +48,7 @@ func (h *Handler) Release(c *gin.Context) {
 		kit.BadRequest(c, "reservation_id required")
 		return
 	}
-	if err := h.svc.ReleaseReservation(c.Request.Context(), req.ReservationID); err != nil {
+	if err := h.svc.ReleaseReservation(c.Request.Context(), req.ReservationID, req.ProductID, req.UserID); err != nil {
 		kit.BadRequest(c, err.Error())
 		return
 	}
@@ -74,9 +76,25 @@ func (h *Handler) Token(c *gin.Context) {
 	kit.OK(c, resp)
 }
 
+// GET /flash-sale/slot-status?product_id=X
+func (h *Handler) SlotStatus(c *gin.Context) {
+	productID := c.Query("product_id")
+	if productID == "" {
+		kit.BadRequest(c, "product_id required")
+		return
+	}
+	resp, err := h.svc.SlotStatus(c.Request.Context(), productID)
+	if err != nil {
+		kit.InternalError(c, "slot status failed")
+		return
+	}
+	kit.OK(c, resp)
+}
+
 func (h *Handler) Register(r *gin.RouterGroup) {
 	r.POST("/flash-sale/checkout", h.Checkout)
 	r.POST("/flash-sale/release", h.Release)
 	r.GET("/flash-sale/queue-status", h.QueueStatus)
 	r.GET("/flash-sale/token", h.Token)
+	r.GET("/flash-sale/slot-status", h.SlotStatus)
 }

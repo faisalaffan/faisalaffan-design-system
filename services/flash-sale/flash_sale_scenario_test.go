@@ -500,7 +500,7 @@ func TestScenario_CheckoutFailed_ReservationReleased(t *testing.T) {
 
 	// === Bagian 2: Payment gateway timeout -> release stok ===
 	// Kirim POST /flash-sale/release dengan reservation ID.
-	releaseBody := ReleaseRequest{ReservationID: cr.ReservationID}
+	releaseBody := ReleaseRequest{ReservationID: cr.ReservationID, ProductID: testProductID, UserID: "user-release"}
 	b2, _ := json.Marshal(releaseBody)
 	req2, _ := http.NewRequest("POST", "/flash-sale/release", bytes.NewReader(b2))
 	req2.Header.Set("Content-Type", "application/json")
@@ -771,4 +771,217 @@ func TestScenario_StockFragmentation_BucketFallbackSavesSale(t *testing.T) {
 	t.Log("✅ Dua device berbeda hash ke bucket berbeda -- tidak ada false sold-out.")
 	_ = store
 	_ = ctx
+}
+
+// =============================================================================
+// SCENARIO 12: Slot Pool Oversubscription — 1500 User, 1000 Slot
+//
+// Simulasi: 1500 user rebutan 1000 slot konkuren. Slot Pool batasin sesi
+// yang jalan barengan sesuai kapasitas DB. User yang gak dapet slot ditolak
+// dan disuruh retry — bukan masuk antrean.
+//
+// Safety net yang diuji:
+// - Slot Pool semaphore via Lua atomic INCR + conditional DECR
+// - Maksimal 1000 sesi konkuren sesuai defaultMaxSlots
+// - User yang gak dapet slot → StatusSlotFull (503)
+//
+// Tanpa safety net ini: DB collapse karena 1500 sesi jalan barengan.
+// Rate limiter per detik gak cukup — 20 req/dtk per device masih bisa
+// hasilin ribuan sesi konkuren kalo user beda-beda.
+// =============================================================================
+func TestScenario_SlotPoolOversubscription_RejectsBeyondCapacity(t *testing.T) {
+	_, _, h, cleanup := setupRealService(t)
+	defer cleanup()
+	g := newGinEngine(h)
+
+	const numUsers = 1500
+	maxSlots := defaultMaxSlots // 1000
+	var acquired atomic.Int32
+	var rejected atomic.Int32
+
+	var wg sync.WaitGroup
+	for i := 0; i < numUsers; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			deviceFP := fmt.Sprintf("fp-slot-%d", idx)
+			token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
+			body := CheckoutRequest{
+				ProductID: testProductID, UserID: fmt.Sprintf("user-slot-%d", idx), DeviceFP: deviceFP,
+				Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: fmt.Sprintf("idem-slot-%d", idx),
+			}
+			b, _ := json.Marshal(body)
+			req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			g.ServeHTTP(w, req)
+
+			if w.Code == http.StatusServiceUnavailable {
+				rejected.Add(1)
+			} else {
+				acquired.Add(1)
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	// Assert: yang dapet slot gak boleh lebih dari maxSlots.
+	if int(acquired.Load()) > maxSlots {
+		t.Fatalf("FAIL: slot pool breach! Max=%d, acquired=%d. Slot Pool harusnya ngeblokir di batas %d.",
+			maxSlots, acquired.Load(), maxSlots)
+	}
+	// Assert: harus ada yang ditolak (1500 > 1000).
+	if int(rejected.Load()) == 0 {
+		t.Fatal("FAIL: 1500 user > 1000 slot, harusnya ada yang ditolak (503).")
+	}
+	t.Logf("✅ Slot Pool: %d/%d user dapet slot, %d ditolak (503). DB aman dari overload.",
+		acquired.Load(), numUsers, rejected.Load())
+}
+
+// =============================================================================
+// SCENARIO 13: Slot Release — Selesai Checkout Langsung Bebasin Slot
+//
+// Simulasi: user checkout sukses → release reservation → slot dibebasin.
+// User berikutnya harus bisa langsung ambil slot yang barusan dilepas.
+//
+// Safety net yang diuji:
+// - Slot release pada saat ReleaseReservation dipanggil
+// - Slot count balik ke angka yang benar setelah release
+//
+// Tanpa safety net ini: slot bocor (leak). Lama-lama slot pool penuh
+// meskipun gak ada user aktif. DB underutilized, user ditolak padahal
+// masih bisa nampung.
+// =============================================================================
+func TestScenario_SlotRelease_RefillsCapacity(t *testing.T) {
+	_, _, h, cleanup := setupRealService(t)
+	defer cleanup()
+	g := newGinEngine(h)
+
+	// === Bagian 1: Cek slot status awal ===
+	req0, _ := http.NewRequest("GET", "/flash-sale/slot-status?product_id="+testProductID, nil)
+	w0 := httptest.NewRecorder()
+	g.ServeHTTP(w0, req0)
+	t.Logf("Slot status awal: %s", w0.Body.String())
+
+	// === Bagian 2: Checkout sukses (ambil 1 slot) ===
+	deviceFP := "fp-slot-release"
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
+	body := CheckoutRequest{
+		ProductID: testProductID, UserID: "user-slot-rel", DeviceFP: deviceFP,
+		Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: "idem-slot-rel-001",
+	}
+	b, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	g.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("FAIL: checkout gagal: %d %s", w.Code, w.Body.String())
+	}
+
+	// Parse reservation ID
+	var resp kit.Response
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	data, _ := json.Marshal(resp.Data)
+	var cr CheckoutResponse
+	json.Unmarshal(data, &cr)
+	if cr.ReservationID == "" {
+		t.Fatal("FAIL: gak dapet reservation_id")
+	}
+
+	// === Bagian 3: Release → slot harus balik ===
+	releaseBody := ReleaseRequest{ReservationID: cr.ReservationID, ProductID: testProductID, UserID: "user-slot-rel"}
+	b2, _ := json.Marshal(releaseBody)
+	req2, _ := http.NewRequest("POST", "/flash-sale/release", bytes.NewReader(b2))
+	req2.Header.Set("Content-Type", "application/json")
+	w2 := httptest.NewRecorder()
+	g.ServeHTTP(w2, req2)
+	if w2.Code != http.StatusOK {
+		t.Fatalf("FAIL: release gagal: %d", w2.Code)
+	}
+
+	// === Bagian 4: Verifikasi capacity balik ===
+	req3, _ := http.NewRequest("GET", "/flash-sale/slot-status?product_id="+testProductID, nil)
+	w3 := httptest.NewRecorder()
+	g.ServeHTTP(w3, req3)
+	var resp3 kit.Response
+	json.Unmarshal(w3.Body.Bytes(), &resp3)
+	data3, _ := json.Marshal(resp3.Data)
+	var sp SlotPoolResponse
+	json.Unmarshal(data3, &sp)
+	t.Logf("✅ Slot release berhasil. Available: %d/%d. HasCapacity: %v", sp.Available, sp.Max, sp.HasCapacity)
+	if !sp.HasCapacity {
+		t.Fatal("FAIL: setelah release, harusnya ada kapasitas")
+	}
+}
+
+// =============================================================================
+// SCENARIO 14: Slot Pool vs Waiting Room — Dua Jalur Berbeda
+//
+// Slot Pool ≠ Waiting Room. Slot Pool nolak user pas DB penuh, suruh retry.
+// Waiting Room nampung user pas stok habis. Dua mekanisme, dua tujuan beda.
+//
+// Test ini verifikasi bahwa:
+// 1. Slot penuh → user dapet 503 (SlotFull), bukan masuk waiting room
+// 2. Stok habis → user masuk waiting room, slot dilepas dulu
+//
+// Safety net yang diuji:
+// - Slot Pool dan Waiting Room adalah dua concern terpisah
+// - Slot dilepas pas stok habis (gak nempel sia-sia)
+//
+// Tanpa pemisahan ini: user bingung — "slot penuh" vs "stok habis" gak jelas.
+// =============================================================================
+func TestScenario_SlotPoolVsWaitingRoom_TwoSeparatePaths(t *testing.T) {
+	_, _, h, cleanup := setupRealService(t)
+	defer cleanup()
+	g := newGinEngine(h)
+
+	// Test 1: borong semua stok (100) → user ke-101 harus masuk waiting room,
+	// BUKAN kena slot full. Slot pool cuma 1000, stok cuma 100.
+	var wg sync.WaitGroup
+	for i := 0; i < testTotalStock; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			deviceFP := fmt.Sprintf("fp-exhaust-%d", idx)
+			token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
+			body := CheckoutRequest{
+				ProductID: testProductID, UserID: fmt.Sprintf("user-exhaust-%d", idx), DeviceFP: deviceFP,
+				Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: fmt.Sprintf("idem-exhaust-%d", idx),
+			}
+			b, _ := json.Marshal(body)
+			req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
+			req.Header.Set("Content-Type", "application/json")
+			g.ServeHTTP(httptest.NewRecorder(), req)
+		}(i)
+	}
+	wg.Wait()
+
+	// User ke-101: stok abis → harus masuk waiting room (202), bukan slot full (503)
+	deviceFP := "fp-overflow"
+	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
+	body := CheckoutRequest{
+		ProductID: testProductID, UserID: "user-overflow", DeviceFP: deviceFP,
+		Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: "idem-overflow-001",
+	}
+	b, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	g.ServeHTTP(w, req)
+
+	var resp kit.Response
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	data, _ := json.Marshal(resp.Data)
+	var cr CheckoutResponse
+	json.Unmarshal(data, &cr)
+
+	// Assert: harus queued (stok habis), BUKAN slot_full
+	if cr.Status == StatusSlotFull {
+		t.Fatal("FAIL: stok habis harusnya queued, bukan slot_full. Dua concern terpisah.")
+	}
+	if cr.Status != StatusQueued {
+		t.Fatalf("FAIL: expected queued, got %s", cr.Status)
+	}
+	t.Logf("✅ Stok habis → waiting room (pos %d). Slot Pool tetap tersedia (gak penuh).", cr.Position)
 }

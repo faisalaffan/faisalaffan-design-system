@@ -6,7 +6,7 @@ Januari 2024. Platform q-commerce Asia Tenggara jalankan flash sale Indomie. 100
 
 Penyebabnya? Satu race condition. Jendela 50 mikrodetik antara `GET stok` dan `DECRBY stok`. Dua request lihat jumlah stok yang sama. Dua-duanya lolos. Dua-duanya motong.
 
-Dokumen ini menjelaskan 5 safety net yang mencegah kegagalan persis itu — plus 6 lagi yang dibutuhkan aplikasi mobile, bot, dan jaringan tidak stabil.
+Dokumen ini menjelaskan 6 safety net yang mencegah kegagalan persis itu — plus 7 lagi yang dibutuhkan aplikasi mobile, bot, dan jaringan tidak stabil.
 
 Port **8102** | 5 file | `types.go` `store.go` `service.go` `handler.go` `main.go`
 
@@ -24,14 +24,94 @@ sequenceDiagram
     FS->>FS: HMAC-SHA256(device_fp, server_secret)
     FS-->>U: Token atestasi
 
-    Note over FS,R: Pipeline Checkout (5 safety net)
+    Note over FS,R: Pipeline Checkout (6 safety net)
     U->>FS: POST /flash-sale/checkout
     FS->>R: 1. SetNX idempotensi
     FS->>FS: 2. Verifikasi HMAC atestasi
     FS->>R: 3. Sliding window rate limit
-    FS->>R: 4. Pengurangan stok atomik Lua
-    FS->>R: 5. ZAdd ruang tunggu sorted set
-    FS-->>U: Posisi antrean / konfirmasi
+    FS->>R: 4. Slot Pool — INCR + cek batas (Lua)
+    alt Slot tersedia
+        FS->>R: 5. Pengurangan stok atomik Lua
+        alt Stok cukup
+            FS-->>U: Konfirmasi (200)
+        else Stok habis
+            FS->>R: Lepas slot
+            FS->>R: 6. ZAdd ruang tunggu sorted set
+            FS-->>U: Posisi antrean (202)
+        end
+    else Slot penuh
+        FS-->>U: 503 — coba lagi
+    end
+
+    Note over FS,R: Release + Promosi Antrean
+    U->>FS: POST /flash-sale/release (timeout bayar)
+    FS->>R: Lua atomik — kembalikan stok ke bucket
+    FS->>R: ZPopMin flash:waiting:{id}
+    alt Ada user menunggu
+        FS->>FS: Konfirmasi otomatis untuk user terpop
+        FS-->>U: 200 OK — stok dikembalikan, user berikutnya dipromosikan
+    else Antrean kosong
+        FS-->>U: 200 OK — stok dikembalikan, antrean kosong
+    end
+
+    Note over U,R: Cek Posisi Antrean
+    U->>FS: GET /flash-sale/queue-status?user_id=X
+    FS->>R: ZRank flash:waiting:{id} {user_id}
+    R-->>FS: Posisi (0-based)
+    FS-->>U: {"position": 42, "estimated_wait_s": 210}
+```
+
+**Distribusi Stok 10 Bucket**
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+sequenceDiagram
+    participant U as User
+    participant FS as Flash Sale Service
+    participant R as Redis
+
+    U->>FS: POST /flash-sale/checkout
+    FS->>FS: bucket_idx = FNV-1a(device_fp) % 10
+    FS->>R: Lua: DECRBY stok:bucket:{idx}
+    alt Bucket primer cukup
+        R-->>FS: OK — stok terpotong
+    else Bucket primer habis
+        loop Fallback sekuensial (idx+1 .. idx+9)
+            FS->>R: Lua: DECRBY stok:bucket:{next}
+            alt Bucket fallback cukup
+                R-->>FS: OK — stok terpotong
+                Note over FS: Break loop
+            else Lanjut bucket berikutnya
+            end
+        end
+        alt Semua bucket habis
+            R-->>FS: sold_out → masuk ruang tunggu
+        end
+    end
+```
+
+**Slot Pool Semaphore — Jaga DB Tetap Bernapas**
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+sequenceDiagram
+    participant U as User
+    participant FS as Flash Sale Service
+    participant R as Redis
+
+    U->>FS: POST /flash-sale/checkout
+    FS->>R: EvalSha: INCR slot:count + cek batas
+    alt count ≤ max_slots
+        R-->>FS: Slot didapat. SETEX session (TTL 15m)
+        FS->>R: Lanjut reserve stok
+    else count > max_slots
+        R-->>FS: Slot penuh. DECR (anti-drift)
+        FS-->>U: 503 Service Unavailable — coba lagi
+    end
+
+    Note over U,R: Transaksi selesai atau TTL habis
+    FS->>R: DECR slot:count + DEL session
+    R-->>FS: Slot bebas — siap direbut user berikutnya
 ```
 
 **Tech Stack**
@@ -74,13 +154,17 @@ Setiap langkah jadi gerbang. Gagal di titik mana pun → kode HTTP langsung. Tan
 
 ## Safety Net
 
-### 1. Stok Atomik Lua — Perbaikan 300%
+### 1. Stok Atomik Lua — Fix Oversell 300%
 
-`GET → cek → DECRBY` kelihatannya aman. Tidak.
+Pernah ngerasa `GET → cek → DECRBY` itu cukup? Saya juga dulu.
 
-Tiga request konkuren lihat `stok = 100`. Tiga-tiganya lolos pengecekan. Tiga-tiganya motong. Sekarang stok `97`. Harusnya `-200`. Oversold.
+Ternyata nggak.
 
-**Solusinya:** satu skrip Lua. Satu operasi Redis. Nol celah.
+Begini realitanya: tiga request datang barengan. Ketiganya baca `stok = 100`. Ketiganya mikir "masih ada nih." Ketiganya motong stok. Hasil akhir? Stok `97`. Padahal harusnya `-200`. Tiga barang kejual. Seratus stok. Matematika SD aja tau ini bakal berantakan.
+
+Insiden Januari 2024 itu: 100 stok. 300 pesanan masuk. 12.000 orang dapat notif pembatalan.
+
+**Solusinya:** satu skrip Lua. Satu napas di Redis. Nggak ada yang bisa nyelip.
 
 ```lua
 local stock = tonumber(redis.call("GET", KEYS[1]) or "0")
@@ -92,17 +176,25 @@ end
 return {0, "sold_out"}
 ```
 
-Redis mengeksekusi skrip secara atomik. Tidak ada perintah lain yang berjalan antara `GET` dan `DECRBY`. Jendela race hilang.
+Redis ngejalanin skrip Lua kayak transaksi database — all or nothing. Begitu Lua mulai, nggak ada perintah lain yang bisa ngintip di antara `GET` dan `DECRBY`. Jendela 50 mikrodetik yang bikin insiden 2024 itu? Hilang. Bersih.
 
-**Stok dipecah ke 10 bucket.** Satu key = hotspot. 10 bucket = 10× throughput. Setiap perangkat di-hash ke bucket primer via FNV-1a. Kalau primer kosong, skrip berjalan ke bucket berikutnya secara berurutan. Satu bucket masih ada stok? Penjualan lanjut.
+**Stok nggak cuma satu key — tapi 10 bucket.** Ini trik yang jarang diceritain.
 
-Tanpa ini: 200 pengguna konkuren. 100 stok. 300 pesanan. 12.000 pelanggan marah.
+Satu key Redis itu hotspot. 500.000 request ngehantam satu key? CPU Redis nangis. 10 bucket = beban nyebar. 10× throughput. Aman.
+
+Cara kerjanya gini: tiap `device_fp` di-hash pake FNV-1a, dimodulo 10, dapet bucket primer. Misal jatuh di bucket 3. Kalau bucket 3 masih ada stok → gas. Kalau habis? Jangan nyerah dulu — coba bucket 4, 5, 6… sampe ketemu yang masih ada stok. Semua bucket kosong? Baru deh `sold_out`.
+
+Tanpa bucket + Lua: 200 orang rebutan 100 stok. Hasil akhir? 300 pesanan. 12.000 orang ngamuk. CS tepar 3 hari.
 
 ### 2. Rate Limit per Perangkat — Bukan per IP
 
-Bot farm ganti IP. 1.000 proxy residensial. 5 request per IP = 5.000 request. Rate limiter berbasis IP lihat tidak ada masalah.
+Cerita lama. Rate limiter liat IP. Bot farm ketawa.
 
-**Solusinya:** rate limit berdasarkan `device_fp`, bukan IP.
+Mereka punya 1.000 proxy residensial. 5 request per IP × 1.000 IP = 5.000 request. Rate limiter berbasis IP cuma bisa bengong. "Requestnya beda-beda IP, aman kok."
+
+Padahal semua dari satu orang.
+
+**Solusinya:** rate limit pake `device_fp`, bukan IP.
 
 ```go
 func (s *Store) CheckRateLimit(ctx context.Context, deviceFP string) (bool, error) {
@@ -115,19 +207,28 @@ func (s *Store) CheckRateLimit(ctx context.Context, deviceFP string) (bool, erro
 }
 ```
 
-Burst = 20 per detik. 25 request dari perangkat yang sama → 20 lolos, 5 diblokir. Tidak peduli berapa IP yang dirotasi bot. Limit mengikuti identitas perangkat.
+Burst = 20 per detik per perangkat. Lo bisa gonta-ganti IP seribu kali — tetep kena limit karena `device_fp` lo sama. 25 request? 20 lolos, 5 kena 429. Bot gigit jari.
 
-**Rantai ekstraksi fingerprint:** `X-Device-Fingerprint` header dulu (dari klien, prioritas tertinggi). Fallback ke SHA-256 dari `User-Agent + Accept-Language + Platform + Model + RemoteAddr` saat header tidak ada.
+**Gimana cara dapetin `device_fp`-nya?** Ada rantai ekstraksi:
 
-Tanpa ini: bot menguras semua stok dalam < 1 detik. Pengguna asli lihat "stok habis" sebelum halaman selesai loading.
+Prioritas pertama: header `X-Device-Fingerprint` dari klien. Ini yang paling akurat. Tapi kalau headernya nggak ada (entah kenapa), kita fallback ke SHA-256 dari gabungan `User-Agent + Accept-Language + Platform + Model + RemoteAddr`. Jejak digital yang susah dipalsuin.
 
-### 3. Atestasi HMAC — Rahasia Tidak Pernah Keluar Server
+Tanpa ini: bot ngabisin semua stok dalam < 1 detik. Lo buka app, loading masih muter, udah liat "stok habis" aja.
 
-Rate limit menghentikan banjir. Tapi tidak menghentikan pemalsuan token.
+### 3. Atestasi HMAC — Secret Nggak Pernah Nyentuh Binary
 
-Bot mendekompilasi APK-mu. Menemukan secret HMAC yang di-hardcode di file constants. Sekarang bot bisa menghasilkan token atestasi valid. Rate limit? Tidak relevan — bot tinggal ganti 1000 device fingerprint.
+Rate limit udah nahan banjir. Tapi ada yang lebih serem: pemalsuan token.
 
-**Solusinya:** secret HMAC hanya ada di server. Selalu.
+Bot nggak perlu pinter. Mereka tinggal download APK lo dari Play Store. Dekompilasi. Cari string yang keliatan kayak secret key. Dan… ketemu.
+
+```java
+// Di dalem APK lo — keliatan banget
+String HMAC_SECRET = "super-secret-key-2024";
+```
+
+Sekarang bot bisa generate token atestasi sendiri. Valid. Ditandatangani dengan secret lo. Rate limit? Tinggal ganti `device_fp` — toh bot bisa bikin 1.000 fingerprint palsu.
+
+**Solusinya simpel: secret cuma di server.** Nggak pernah nyentuh binary. Nggak pernah nyentuh klien.
 
 ```go
 func (s *Store) VerifyAttestation(deviceFP string, expiresAt int64, token string) bool {
@@ -140,58 +241,117 @@ func (s *Store) VerifyAttestation(deviceFP string, expiresAt int64, token string
 }
 ```
 
-Klien minta token dari `GET /flash-sale/token?device_fp=X`. Server menandatanganinya. Klien menyertakannya di checkout. Server menghitung ulang dan membandingkan. Tidak ada secret di binary. Dekompilasi sepuasnya — tidak ada yang bisa diekstrak.
+Alurnya gini: klien minta token dulu ke `GET /flash-sale/token?device_fp=X`. Server tandatanganin pake secret (yang cuma server tau). Klien dapet token, kirim bareng request checkout. Server hitung ulang, bandingkan. Cocok? Lanjut.
 
-Toleransi selisih jam ±30 detik. Jam HP asli bisa meleset. Toleransi 0 detik = pengguna asli ditolak. Toleransi >60 detik = jendela replay terlalu lebar. 30 detik titik tengahnya.
+Dekompilasi APK sampe mabok juga nggak bakal nemu secret. Karena emang nggak ada di sana.
 
-Tanpa ini: token valid bocor dari APK/IPA. Bot banjir dengan atestasi sah. Semua safety net lain jadi tidak berguna.
+**Kenapa toleransi ±30 detik?** Jam HP itu mahluk chaos. Ada yang kecepetan 2 detik. Ada yang kelambatan 15 detik. Toleransi 0 detik = lo nolak pengguna asli yang jam HP-nya meleset. Toleransi >60 detik = lo kasih bot jendela replay segede gapura. 30 detik itu sweet spot: cukup buat tolerir jam ngaco, cukup sempit buat cegah replay attack.
 
-### 4. Ruang Tunggu Sorted Set — Persisten, Bukan Ephemeral
+Tanpa ini: secret bocor. Token valid banjir. Semua safety net lain? Percuma.
 
-Stok habis. Pengguna lihat "stok habis." Pengguna pergi. Pendapatan hilang.
+### 4. Ruang Tunggu Sorted Set — Yang Nunggu Duluan, Dapet Duluan
 
-Tapi pembatalan terjadi. Pembayaran gagal. Seseorang melepas reservasi. Stok kembali. Stok itu seharusnya diberikan ke orang yang menunggu — bukan refresh acak berikutnya.
+Adegan yang terlalu sering: stok habis. User lihat "stok habis." User tutup app. User buka Shopee.
 
-**Solusinya:** Redis sorted set. Skor = timestamp masuk (nanodetik). FIFO ketat.
+Tapi… 15 detik kemudian ada yang batal bayar. Stok balik 1. Harusnya stok itu jatuh ke user yang udah nunggu dari tadi. Bukan ke random user yang kebetulan refresh di detik yang tepat.
+
+**Solusinya:** Redis sorted set. Skor = timestamp masuk (nanodetik). FIFO murni.
 
 ```
-ZADD flash:waiting:{product_id} {timestamp} {user_id}   → masuk antrean
-ZRANK flash:waiting:{product_id} {user_id}               → posisi real-time
+ZADD flash:waiting:{product_id} {timestamp} {user_id}   → antri
+ZRANK flash:waiting:{product_id} {user_id}               → posisi lo sekarang
 ```
 
-Channel in-memory Go mati saat restart. Redis sorted set tidak. Deploy perbaikan saat flash sale berlangsung? Antrean tetap hidup.
+Kenapa bukan channel in-memory Go? Gampang: channel mati pas restart. Deploy doang pas flash sale? Channel ilang, antrean ilang, user ilang. Redis sorted set? Tetep idup. Mau deploy 10 kali juga antrean aman.
 
-Tanpa ini: pengguna lihat "stok habis," tutup aplikasi, buka aplikasi kompetitor. Stok kembali 15 detik kemudian dari pembatalan. Tidak ada yang mengambil.
+Tanpa ini: user liat "stok habis," pindah ke kompetitor. Stok balik 15 detik kemudian. Nggak ada yang ngambil. Revenue ngilang, user ngilang. Dua-duanya.
 
-### 5. Pengaman Idempotensi — Retry Mobile Tidak Terhindarkan
+### 5. Pengaman Idempotensi — Sinyal Lemah Jangan Bikin Lo Bayar Dua Kali
 
-Pengguna tap "Beli." Sinyal 4G lemah. OkHttp auto-retry POST. Server lihat dua request identik.
+User tap "Beli." Sinyal 4G ngambang. Loading… loading… 3 detik. User belum liat apa-apa.
 
-Tanpa idempotensi: dua pesanan terbuat. Dua stok terpotong. Satu pelanggan bingung dengan dua tagihan.
+Tapi di belakang layar, OkHttp udah auto-retry POST. Server nerima dua request. Identik. Cuma beda 400ms. Tanpa idempotensi? Dua pesanan terbuat. Dua stok kepotong. Satu user dapet dua tagihan.
+
+Pernah ngalamin sendiri? Saya juga.
 
 ```go
 ok, _ := s.rdb.SetNX(ctx, "flash:idem:"+key, "locked", 30*time.Second).Result()
 if !ok {
-    // Sudah diproses. Kembalikan hasil yang di-cache.
+    // Udah diproses sebelumnya. Kasih hasil yang sama.
     cached, _ := s.rdb.Get(ctx, "flash:idem:"+key+":result").Result()
     return &CheckoutResponse{Status: StatusIdempotencyConflict}, nil
 }
 ```
 
-SetNX lock: 30 detik. Request pertama dapat lock dan memproses. Request kedua menemukan lock → langsung kembalikan hasil cache. HTTP 409 Conflict.
+Simpel: `SetNX`. Cuma satu request yang dapet lock. Request pertama jalan normal. Request kedua (retry OkHttp) ketemu lock → langsung balikin hasil cache → HTTP 409 Conflict. Nggak bikin pesanan baru. Nggak motong stok lagi.
 
-Cache bertahan 10 menit. Pengguna retry 2 menit kemudian? Hasil sama. Tanpa duplikat. Tanpa tagihan ganda.
+Cache-nya tahan 10 menit. User retry 2 menit kemudian? Hasil persis sama. Satu pesanan. Satu tagihan.
 
-Tanpa ini: pengguna buka aplikasi, lihat dua pesanan sukses, hubungi CS. CS habiskan berjam-jam rekonsiliasi. Kepercayaan terkikis.
+Tanpa ini: user buka app, liat dua pesanan sukses, langsung telpon CS. CS berjam-jam rekonsiliasi. Trust? Hancur.
+
+### 6. Slot Pool Semaphore — DB Lo Punya Batas, Bukan Cuma Rate
+
+Rate limiter ngelimit request per detik. Tapi gak ngelimit berapa banyak sesi yang jalan **barengan**.
+
+Gini analoginya: lo punya restoran 50 kursi. Rate limiter itu kayak ngatur berapa orang boleh masuk per menit. Tapi lo gak ngelimit berapa orang yang boleh duduk barengan. Hasilnya? 200 orang di dalem restoran, 50 kursi. Dapur (database) chaos.
+
+**Inilah kenapa Slot Pool ada.**
+
+Rate limiter per detik nggak cukup ngelindungin database. Satu transaksi checkout butuh banyak operasi: cek stok, potong stok, bikin reservasi, catat antrean. Semua ini ngehantam Redis. 1000 user jalan barengan? Redis masih oke. 5000? Mulai ngedrop. 10.000? Koneksi abis, timeout di mana-mana.
+
+```lua
+-- Satu napas di Redis. INCR → cek → kalau > max → DECR (anti drift).
+local count = redis.call("INCR", KEYS[1])
+if count <= tonumber(ARGV[1]) then
+    redis.call("SETEX", KEYS[2], ARGV[2], count)
+    return {1, count}
+end
+redis.call("DECR", KEYS[1])
+return {0, tonumber(ARGV[1])}
+```
+
+Cara kerjanya:
+1. **`INCR` counter** — tiap checkout naikin counter slot
+2. **Cek batas** — masih di bawah `defaultMaxSlots` (1000)? Masuk. Dapet slot + TTL 15 menit.
+3. **Penuh? `DECR` balik** — ini penting. Tanpa `DECR`, counter bakal drift ke 1500 padahal maksimalnya 1000. Slot hantu.
+4. **Transaksi beres atau TTL abis** — slot dilepas. `DECR` counter + `DEL` session key. Siap direbut user berikutnya.
+
+```go
+func (s *Store) AcquireSlot(ctx context.Context, productID, sessionID string, maxSlots int, ttl time.Duration) (bool, int, error) {
+    countKey := keySlotCount + productID
+    sessionKey := keySlotSession + sessionID
+    ttlSec := int64(ttl.Seconds())
+    res, err := s.rdb.EvalSha(ctx, s.slotSHA, []string{countKey, sessionKey}, maxSlots, ttlSec).Slice()
+    if err != nil {
+        return false, 0, err
+    }
+    ok := res[0].(int64) == 1
+    count := int(res[1].(int64))
+    return ok, count, nil
+}
+```
+
+**Kenapa 1000 slot?** Hasil stress testing K6. Lo harus cari breaking point infrastruktur lo sendiri. Jalankan K6 di staging dengan metrik agresif, naikin concurrency sampe Redis mulai ngedrop. Ambil angka 70% dari breaking point itu. Itu `defaultMaxSlots` lo.
+
+**Kenapa TTL 15 menit?** Cukup buat user mikir + bayar. Terlalu pendek → user keburu ke-expire pas lagi bayar. Terlalu panjang → slot nempel di user yang udah nyerah duluan. 15 menit titik tengahnya.
+
+**Flow di pipeline:**
+- **Slot didapat** → lanjut reserve stok
+- **Stok cukup** → slot dipegang (TTL 15m). Lindungi DB selama transaksi.
+- **Stok habis** → slot dilepas segera. User masuk waiting room, gak perlu slot lagi.
+- **Slot penuh** → HTTP 503. "Coba lagi ya."
+
+Tanpa ini: rate limiter bilang "oke, 20 req/dtk per device aman." Tapi 1000 device beda masing-masing kirim 20 req/dtk = 20.000 sesi konkuren. Redis lo timeout. Database lo collapse. Semua safety net lain? Nggak relevan kalau infrastrukturnya udah tepar duluan.
 
 ## Titik Akhir API
 
 | Method | Path | Fungsinya |
 |--------|------|-----------|
-| `POST` | `/flash-sale/checkout` | Jalankan pipeline 5 langkah penuh |
-| `POST` | `/flash-sale/release` | Kembalikan stok. Idempoten. Timeout pembayaran? Panggil ini. |
+| `POST` | `/flash-sale/checkout` | Jalankan pipeline 6 langkah penuh |
+| `POST` | `/flash-sale/release` | Kembalikan stok + lepas slot. Idempoten. |
 | `GET` | `/flash-sale/queue-status` | Di mana posisi saya di antrean? |
 | `GET` | `/flash-sale/token` | Dapatkan token atestasi sebelum checkout |
+| `GET` | `/flash-sale/slot-status` | Cek kapasitas Slot Pool tersisa |
 
 ### POST /flash-sale/checkout
 
@@ -216,13 +376,14 @@ Tanpa ini: pengguna buka aplikasi, lihat dua pesanan sukses, hubungi CS. CS habi
 // 401 — atestasi tidak valid
 // 429 — rate limit (20 req/dtk per perangkat terlampaui)
 // 409 — idempotency key duplikat (hasil cache dikembalikan)
+// 503 — slot pool penuh (coba lagi beberapa saat)
 ```
 
-## Uji Skenario — 11 Validasi Dunia Nyata
+## Uji Skenario — 16 Validasi Dunia Nyata
 
 | # | Skenario | Yang Diuji | Yang Rusak Tanpanya |
 |---|----------|-----------|-------------------|
-| 1 | Budi beli Indomie | Pipeline penuh: 5 langkah lolos | Stok hilang diam-diam saat gagal di tengah |
+| 1 | Budi beli Indomie | Pipeline penuh: 6 langkah lolos | Stok hilang diam-diam saat gagal di tengah |
 | 2 | Panik double-tap | Idempotency key sama → 409 | OkHttp retry → 2 pesanan, 2 tagihan |
 | 3 | 200 pengguna, 100 stok | Lua atomik cegah oversell | Race → 300% oversell (insiden 2024) |
 | 4 | Bot: token palsu + 30 spam | 401 + 429 dari perangkat sama | Bot kuras stok dalam <1dtk |
@@ -233,8 +394,13 @@ Tanpa ini: pengguna buka aplikasi, lihat dua pesanan sukses, hubungi CS. CS habi
 | 9 | 25 request, 1 perangkat | Sliding window per device_fp, burst=20 | Berbasis IP: 1000 proxy → 5000 request |
 | 10 | Mobile 4G→WiFi handoff | OkHttp retry → 409, hasil cache | 2 POST identik → 2 pesanan, 2 tagihan |
 | 11 | Dua perangkat, FP berbeda | Hash berbeda → bucket berbeda → keduanya sukses | Tabrakan bucket tunggal → false sold-out |
+| 12 | Budi cek posisi antrean | GET /queue-status → ZRank real-time | Pengguna tebak-tebak posisi, frustrasi, churn |
+| 13 | Stok kembali setelah release | ZPopMin → konfirmasi otomatis user antrean | Stok balik tapi antrean jalan terus — hole in UX |
+| 14 | 1500 user, 1000 slot | Slot Pool batasi sesi konkuren ≤ maxSlots | DB collapse: 1500 sesi barengan tanpa rem |
+| 15 | Slot dilepas setelah release | DECR slot count, kapasitas balik | Slot leak: pool penuh permanen, user ditolak terus |
+| 16 | Stok habis vs slot penuh | Dua jalur beda: queued (202) vs slot_full (503) | User bingung — "slot penuh" dan "stok habis" kelihatan sama |
 
-11 pengujian. 11 bukti bahwa setiap safety net memblokir mode kegagalan nyata. Bukan teoretis. Semua divalidasi terhadap instance Redis yang berjalan.
+16 pengujian. 16 bukti bahwa setiap safety net memblokir mode kegagalan nyata. Bukan teoretis. Semua divalidasi terhadap instance Redis yang berjalan.
 
 ## Keputusan Desain
 
@@ -245,6 +411,8 @@ Tanpa ini: pengguna buka aplikasi, lihat dua pesanan sukses, hubungi CS. CS habi
 | **HMAC verifikasi lokal, bukan remote service** | 1ms lokal. 10ms+ panggilan remote. Di 500K RPM, itu 5 detik latensi dihemat per detik. |
 | **Sorted set, bukan antrean in-memory** | Deploy mematikan channel. Redis tetap hidup. ZRank O(log N). |
 | **SetNX idempotensi, bukan UUID saja** | UUID mencegah tabrakan. SetNX mencegah replay. Masalah berbeda. |
+| **Slot Pool Semaphore, bukan cuma Rate Limiter** | Rate limiter batasi request/detik. Slot Pool batasi sesi konkuren. Rate limiter 20 req/dtk × 1000 device = 20.000 operasi barengan — DB collapse. Slot Pool rem di 1000 sesi. |
+| **Angka 1000 slot = 70% breaking point K6** | Jalankan stress test. Cari titik Redis mulai timeout. Ambil 70%-nya. Bukan angka ajaib. |
 
 ## Source Code
 

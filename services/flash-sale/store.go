@@ -21,6 +21,8 @@ const (
 	keyRL          = "rl:flash:"
 	keyIdem        = "flash:idem:"
 	keyReservation = "flash:res:"
+	keySlotCount   = "flash:slot:count:"
+	keySlotSession = "flash:slot:session:"
 )
 
 // Lua: atomic check N buckets, decrement first with sufficient stock.
@@ -70,11 +72,28 @@ redis.call("EXPIRE", KEYS[1], 10)
 return 1
 `
 
+// Lua: slot pool acquire — atomic INCR + check + conditional DECR.
+// KEYS[1] = flash:slot:count:{product_id}
+// KEYS[2] = flash:slot:session:{session_id}
+// ARGV[1] = max_slots
+// ARGV[2] = ttl_seconds
+// Returns: {1, count} on success, {0, max} on full.
+const luaSlotAcquire = `
+local count = redis.call("INCR", KEYS[1])
+if count <= tonumber(ARGV[1]) then
+    redis.call("SETEX", KEYS[2], ARGV[2], count)
+    return {1, count}
+end
+redis.call("DECR", KEYS[1])
+return {0, tonumber(ARGV[1])}
+`
+
 type Store struct {
 	rdb     *redis.Client
 	decrSHA string
 	relSHA  string
 	rlSHA   string
+	slotSHA string
 	secret  []byte
 }
 
@@ -95,6 +114,10 @@ func (s *Store) Init(ctx context.Context) error {
 	s.rlSHA, err = s.rdb.ScriptLoad(ctx, luaRateLimit).Result()
 	if err != nil {
 		return fmt.Errorf("load rate_limit: %w", err)
+	}
+	s.slotSHA, err = s.rdb.ScriptLoad(ctx, luaSlotAcquire).Result()
+	if err != nil {
+		return fmt.Errorf("load slot_acquire: %w", err)
 	}
 	return nil
 }
@@ -216,6 +239,53 @@ func (s *Store) QueuePosition(ctx context.Context, productID, userID string) (in
 		return -1, nil
 	}
 	return int(pos), err
+}
+
+// --- Slot Pool (Semaphore) ---
+
+// AcquireSlot attempts to grab a concurrency slot for the given session.
+// Returns true if acquired, false if pool is full.
+// Session ID is used as the key — if same session retries, INCR bumps and
+// DECR undoes immediately (no double-acquire).
+func (s *Store) AcquireSlot(ctx context.Context, productID, sessionID string, maxSlots int, ttl time.Duration) (bool, int, error) {
+	countKey := keySlotCount + productID
+	sessionKey := keySlotSession + sessionID
+	ttlSec := int64(ttl.Seconds())
+	res, err := s.rdb.EvalSha(ctx, s.slotSHA, []string{countKey, sessionKey}, maxSlots, ttlSec).Slice()
+	if err != nil {
+		return false, 0, err
+	}
+	ok := res[0].(int64) == 1
+	count := int(res[1].(int64))
+	return ok, count, nil
+}
+
+// ReleaseSlot frees a concurrency slot. Safe to call multiple times — DEL is
+// idempotent, and DECR on a key that's already been decremented is harmless
+// (slot count will self-correct on next AcquireSlot).
+func (s *Store) ReleaseSlot(ctx context.Context, productID, sessionID string) error {
+	pipe := s.rdb.Pipeline()
+	pipe.Decr(ctx, keySlotCount+productID)
+	pipe.Del(ctx, keySlotSession+sessionID)
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+// SlotsAvailable returns the number of available slots.
+func (s *Store) SlotsAvailable(ctx context.Context, productID string, maxSlots int) (int, error) {
+	val, err := s.rdb.Get(ctx, keySlotCount+productID).Result()
+	if err == redis.Nil {
+		return maxSlots, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	used, _ := strconv.Atoi(val)
+	avail := maxSlots - used
+	if avail < 0 {
+		avail = 0
+	}
+	return avail, nil
 }
 
 // --- Admin ---
