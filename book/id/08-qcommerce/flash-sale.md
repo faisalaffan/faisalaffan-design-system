@@ -39,33 +39,35 @@ sequenceDiagram
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart TB
-    subgraph Layer1["Lapisan HTTP"]
-        Gin["Gin Gonic<br/>router + middleware"]
-        Kit["pkg/kit<br/>NewServer, config, response helpers"]
+    subgraph L1["🟦 Lapisan HTTP"]
+        Gin["⚡ Gin Gonic<br/>router + middleware"]
+        Kit["📦 pkg/kit<br/>NewServer · config · response"]
     end
 
-    subgraph Layer2["Lapisan Layanan"]
-        Svc["Flash Sale Service<br/>orkestrator pipeline 5 langkah"]
-        Types["types.go<br/>CheckoutRequest, CheckoutResponse,<br/>konstanta, tipe domain"]
+    subgraph L2["🟩 Lapisan Layanan"]
+        direction LR
+        Svc["🎯 Flash Sale Service<br/>orkestrator pipeline 5 langkah"]
+        Types["📋 types.go<br/>CheckoutRequest · CheckoutResponse<br/>konstanta · tipe domain"]
     end
 
-    subgraph Layer3["Lapisan Data"]
-        Store["store.go<br/>3 skrip Lua (EvalSha)<br/>SetNX idempotensi<br/>sliding window rate limit<br/>sorted set ruang tunggu"]
+    subgraph L3["🟨 Lapisan Data"]
+        Store["🔧 store.go<br/>3 skrip Lua · SetNX<br/>sliding window · sorted set<br/>ruang tunggu"]
     end
 
-    subgraph Layer4["Infrastruktur"]
-        Redis["Redis<br/>Lua scripting (operasi atomik)<br/>Sorted Sets (antrean + rate limit)<br/>String counters (bucket stok)<br/>SetNX (kunci idempotensi)<br/>Pipeline (init batch)"]
-        Go["Go 1.26 stdlib<br/>crypto/hmac, crypto/sha256<br/>hash/fnv, crypto/rand<br/>net/http, context"]
-        Env[".env.local<br/>REDIS_ADDR, HMAC_SECRET<br/>dimuat via godotenv<br/>dicari naik dari CWD"]
+    subgraph L4["🟥 Infrastruktur"]
+        direction LR
+        Redis[(("🗄️ Redis<br/>Lua · Sorted Sets<br/>String · SetNX<br/>Pipeline"))]
+        Go{{"🔬 Go 1.26 stdlib<br/>crypto/hmac · sha256<br/>hash/fnv · crypto/rand<br/>net/http · context"}}
+        Env[/"⚙️ .env.local<br/>REDIS_ADDR<br/>HMAC_SECRET"/]
     end
 
+    Kit -->|"NewServer()"| Gin
     Gin --> Svc
-    Kit --> Gin
-    Svc --> Store
-    Svc --> Types
-    Store --> Redis
-    Store --> Go
-    Go --> Env
+    Svc -->|"Checkout()"| Store
+    Svc -.-> Types
+    Store -->|"EvalSha"| Redis
+    Store -->|"hmac.Sha256"| Go
+    Go -->|"godotenv.Load"| Env
 ```
 
 Setiap langkah jadi gerbang. Gagal di titik mana pun → kode HTTP langsung. Tanpa partial state. Tanpa silent degradation.
