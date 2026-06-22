@@ -39,18 +39,18 @@ sequenceDiagram
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
 flowchart TB
-    subgraph L1["🟦 Lapisan HTTP"]
+    subgraph L1["🟦 Layer HTTP"]
         Gin["⚡ Gin Gonic<br/>router + middleware"]
         Kit["📦 pkg/kit<br/>NewServer · config · response"]
     end
 
-    subgraph L2["🟩 Lapisan Layanan"]
+    subgraph L2["🟩 Layer Service"]
         direction LR
         Svc["🎯 Flash Sale Service<br/>orkestrator pipeline 5 langkah"]
         Types["📋 types.go<br/>CheckoutRequest · CheckoutResponse<br/>konstanta · tipe domain"]
     end
 
-    subgraph L3["🟨 Lapisan Data"]
+    subgraph L3["🟨 Layer Data"]
         Store["🔧 store.go<br/>3 skrip Lua · SetNX<br/>sliding window · sorted set<br/>ruang tunggu"]
     end
 
