@@ -394,21 +394,26 @@ func TestScenario_StockExhausted_EntersWaitingRoom(t *testing.T) {
 	defer cleanup()
 	g := newGinEngine(h)
 
-	// === Bagian 1: Early bird borong semua stok ===
-	// 100 user beli duluan, abisin semua stok.
+	// === Bagian 1: Early bird borong semua stok (concurrent biar cepet) ===
+	// 100 user beli duluan, abisin semua stok. Concurrent karena Redis remote.
+	var earlyWg sync.WaitGroup
 	for i := 0; i < testTotalStock; i++ {
-		deviceFP := fmt.Sprintf("fp-early-%d", i)
-		token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
-		body := CheckoutRequest{
-			ProductID: testProductID, UserID: fmt.Sprintf("user-early-%d", i), DeviceFP: deviceFP,
-			Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: fmt.Sprintf("idem-early-%d", i),
-		}
-		b, _ := json.Marshal(body)
-		req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-		g.ServeHTTP(w, req)
+		earlyWg.Add(1)
+		go func(idx int) {
+			defer earlyWg.Done()
+			deviceFP := fmt.Sprintf("fp-early-%d", idx)
+			token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
+			body := CheckoutRequest{
+				ProductID: testProductID, UserID: fmt.Sprintf("user-early-%d", idx), DeviceFP: deviceFP,
+				Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: fmt.Sprintf("idem-early-%d", idx),
+			}
+			b, _ := json.Marshal(body)
+			req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
+			req.Header.Set("Content-Type", "application/json")
+			g.ServeHTTP(httptest.NewRecorder(), req)
+		}(i)
 	}
+	earlyWg.Wait()
 
 	// === Bagian 2: User telat checkout ===
 	deviceFP := "fp-late-user"
@@ -625,32 +630,41 @@ func TestScenario_SameDeviceSpam_RateLimitedPerDeviceFP(t *testing.T) {
 
 	deviceFP := "fp-spam-device"
 	token, expiresAt := generateHMACToken(deviceFP, []byte(getHMACSecret()))
-	allowed, blocked := 0, 0
+	var allowed atomic.Int32
+	var blocked atomic.Int32
 
-	// Kirim 25 request dari device FP yang sama.
+	// Kirim 25 request dari device FP yang sama SECARA CONCURRENT.
+	// Kalo sequential: latency Redis remote bikin tiap request 100-300ms, total 7.5s+.
+	// Concurrent: semua request masuk dalam waktu yang sama -> rate limiter aktif.
+	var wg sync.WaitGroup
 	for i := 0; i < 25; i++ {
-		body := CheckoutRequest{
-			ProductID: testProductID, UserID: "user-spam", DeviceFP: deviceFP,
-			Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: fmt.Sprintf("idem-spam-%d", i),
-		}
-		b, _ := json.Marshal(body)
-		req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-		g.ServeHTTP(w, req)
-		if w.Code == http.StatusTooManyRequests {
-			blocked++
-		} else {
-			allowed++
-		}
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			body := CheckoutRequest{
+				ProductID: testProductID, UserID: "user-spam", DeviceFP: deviceFP,
+				Attestation: token, ExpiresAt: expiresAt, Quantity: 1, IdempotencyKey: fmt.Sprintf("idem-spam-%d", idx),
+			}
+			b, _ := json.Marshal(body)
+			req, _ := http.NewRequest("POST", "/flash-sale/checkout", bytes.NewReader(b))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			g.ServeHTTP(w, req)
+			if w.Code == http.StatusTooManyRequests {
+				blocked.Add(1)
+			} else {
+				allowed.Add(1)
+			}
+		}(i)
 	}
+	wg.Wait()
 
 	// Assert: yang lolos gak boleh lebih dari 21 (burst allowance 20 + mungkin 1).
 	// Kalo semua lolos, rate limit gak jalan.
-	if allowed > 21 {
-		t.Fatalf("FAIL: terlalu banyak request lolos. Allowed: %d, Blocked: %d", allowed, blocked)
+	if int(allowed.Load()) > 21 {
+		t.Fatalf("FAIL: terlalu banyak request lolos. Allowed: %d, Blocked: %d", allowed.Load(), blocked.Load())
 	}
-	t.Logf("✅ Satu device spam 25 request: %d allowed, %d blocked (burst=20). Device-fingerprint based.", allowed, blocked)
+	t.Logf("✅ Satu device spam 25 request: %d allowed, %d blocked (burst=20). Device-fingerprint based.", allowed.Load(), blocked.Load())
 }
 
 // =============================================================================
