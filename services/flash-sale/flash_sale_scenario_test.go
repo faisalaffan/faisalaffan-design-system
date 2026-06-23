@@ -80,12 +80,16 @@ func setupRealService(t *testing.T) (*Service, *Store, *Handler, func()) {
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		t.Skipf("Redis not available at %s -- skipping scenario test", getRedisAddr())
 	}
-	// Bersihin key sisa test sebelumnya biar gak saling ganggu.
-	keys, _ := rdb.Keys(ctx, "flash:*").Result()
-	rlKeys, _ := rdb.Keys(ctx, "rl:flash:*").Result()
-	allKeys := append(keys, rlKeys...)
-	if len(allKeys) > 0 {
-		rdb.Del(ctx, allKeys...)
+	// Bersihin key sisa test sebelumnya — pake SCAN bukan KEYS (non-blocking).
+	for _, prefix := range []string{"flash:*", "rl:flash:*"} {
+		iter := rdb.Scan(ctx, 0, prefix, 100).Iterator()
+		var keys []string
+		for iter.Next(ctx) {
+			keys = append(keys, iter.Val())
+		}
+		if len(keys) > 0 {
+			rdb.Del(ctx, keys...)
+		}
 	}
 
 	store := NewStore(rdb, getHMACSecret())
@@ -101,13 +105,22 @@ func setupRealService(t *testing.T) (*Service, *Store, *Handler, func()) {
 	svc := NewService(store)
 	h := NewHandler(svc)
 
-	// cleanup: hapus semua key flash:* di Redis terus tutup koneksi.
+	// cleanup: hapus semua key flash:* di Redis pake SCAN (non-blocking, aman buat production).
+	// KEYS * = O(N) blocking — bikin timeout di Redis dengan banyak key.
 	cleanup := func() {
-		keys, _ := rdb.Keys(ctx, "flash:*").Result()
-		rlKeys, _ := rdb.Keys(ctx, "rl:flash:*").Result()
-		allKeys := append(keys, rlKeys...)
-		if len(allKeys) > 0 {
-			rdb.Del(ctx, allKeys...)
+		for _, prefix := range []string{"flash:*", "rl:flash:*", "idem:*"} {
+			iter := rdb.Scan(ctx, 0, prefix, 100).Iterator()
+			var keys []string
+			for iter.Next(ctx) {
+				keys = append(keys, iter.Val())
+				if len(keys) >= 1000 { // batasin biar gak memori meledak
+					rdb.Del(ctx, keys...)
+					keys = keys[:0]
+				}
+			}
+			if len(keys) > 0 {
+				rdb.Del(ctx, keys...)
+			}
 		}
 		rdb.Close()
 	}
