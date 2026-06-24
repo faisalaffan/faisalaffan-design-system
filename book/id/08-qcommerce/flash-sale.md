@@ -4,12 +4,98 @@ Januari 2024. Platform q-commerce Asia Tenggara jalankan flash sale Indomie. 100
 
 12.000 pesanan dibatalkan. Customer service lumpuh tiga hari.
 
-Penyebabnya? Satu race condition. Jendela 50 mikrodetik antara `GET stok` dan `DECRBY stok`. Dua request lihat jumlah stok yang sama. Dua-duanya lolos. Dua-duanya motong.
+Penyebabnya? Satu race condition. Selisih 50 mikrodetik antara `GET stok` dan `DECRBY stok`. 2 request lihat jumlah stok yang sama. Dua-duanya lolos. Dua-duanya motong.
 
-Dokumen ini menjelaskan 7 safety net yang mencegah kegagalan persis itu.
+Artikel ini menjelaskan 7 Proof Of Concept untuk mencegah point of failure itu.
 
-Port **8102** | 5 file | `types.go` `store.go` `service.go` `handler.go` `main.go`
+## 7 Pola Flash Sale
 
+### 1. Lottery / Raffle
+```mermaid
+flowchart LR
+    A[Daftar] --> B[Countdown] --> C[Random pick] --> D[Token checkout<br/>sekali pakai]
+```
+**Use case:** SNKRS App, PS5 drop  
+**Astro:** ❌ Flow ① daftar → ② tunggu countdown → ③ draw → ④ cek hasil → ⑤ checkout. User grocery nggak mau nunggu undian cuma buat tau dapet bayam apa nggak. Buka GrabMart: pilih → bayar → 15 menit sampe. Nggak ada fase "maaf, kamu kurang beruntung."
+
+### 2. Weighted Queue
+```mermaid
+flowchart LR
+    A[Antrean] --> B{Prioritas} -->|Premium| C[Slot duluan]
+    B -->|Regular| D[Slot sisa]
+```
+**Use case:** Ticketmaster, airline presale · **Astro:** ⚠️ Buat Astro Prime tier
+
+### 3. Dutch Auction
+```mermaid
+flowchart LR
+    A[Harga tinggi] --> B[Turun tiap interval] --> C[User lock harga]
+```
+**Use case:** Google IPO, B2B procurement · **Astro:** ❌ Nggak cocok grocery
+
+### 4. Voucher Pre-claim
+```mermaid
+flowchart LR
+    A[Claim voucher<br/>D-1 / H-1 jam] --> B[Lock ke user ID] --> C[Hanya holder<br/>yang bisa beli]
+```
+**Use case:** Tokopedia Koin, Grab promo · **Astro:** ✅ Redam stampede T=0
+
+### 5. Cohort Segmented
+```mermaid
+flowchart LR
+    A[10:00 New user] --> B[10:30 Returning] --> C[11:00 All user]
+```
+**Use case:** Lazada birthday, bank discount · **Astro:** ✅ Akuisisi new user
+
+### 6. Soft Reserve
+```mermaid
+flowchart LR
+    A[Add to cart] --> B[Quota belum dipotong] --> C[Deduct saat<br/>payment confirmed]
+```
+**Trade-off:** Oversell risk → perlu compensation flow  
+**Use case:** Low-margin, prioritas konversi · **Astro:** ⚠️ Risky buat perishable
+
+### 7. Time-slotted (Astro-native)
+```mermaid
+flowchart LR
+    A[Slot 30 menit<br/>quota kecil] --> B[Distribusi beban] --> C[Align delivery<br/>slot capacity]
+```
+**Astro:** ✅ Paling pas — hub load predictable, "35 menit" jadi natural boundary
+
+---
+
+## Matrix Ringkas
+
+| Pattern | Fairness | Complexity | Astro Fit |
+|---|---|---|---|
+| Slot Pool (FIFO) | Low | Low | ✅ Current |
+| Lottery | High | Medium | ❌ |
+| Weighted Queue | Medium | High | ⚠️ Premium tier |
+| Dutch Auction | Medium | High | ❌ |
+| Voucher Pre-claim | High | Medium | ✅ Strong |
+| Cohort Segmented | Medium | Medium | ✅ Medium |
+| Soft Reserve | Low | Low | ⚠️ Risk oversell |
+| Time-slotted | High | Medium | ✅ Best fit |
+
+---
+
+## Decision Flow — Pilih Pola Mana?
+
+```mermaid
+flowchart TD
+    Q1{"Stok < 100 unit<br/>hype item?"} -->|Ya| L["🎲 Lottery"]
+    Q1 -->|Tidak| Q2{"User bisa<br/>di-segment?"}
+    Q2 -->|Ya| C["📅 Cohort"]
+    Q2 -->|Tidak| Q3{"Ada window<br/>pre-claim?"}
+    Q3 -->|Ya| V["🎫 Voucher"]
+    Q3 -->|Tidak| Q4{"Banyak slot<br/>mini-window?"}
+    Q4 -->|Ya| T["⏱️ Time-slotted"]
+    Q4 -->|Tidak| S["🔒 Slot Pool (FIFO)"]
+```
+
+---
+
+**Interview answer:** kombinasi **Voucher Pre-claim + Time-slotted + Per-hub quota** = jawaban paling defensible secara engineering untuk "improve flash sale Astro."
 
 
 ## Arsitektur
