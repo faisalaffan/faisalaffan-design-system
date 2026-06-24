@@ -74,7 +74,7 @@ flowchart TD
     Q1 -->|Ya| L["🎲 Lottery"]
     Q1 -->|Tidak| Q3{"Ada window<br/>pre-claim?"}
     Q3 -->|Ya| V["🎫 Voucher"]
-    Q3 -->|Tidak| Q4{"Banyak slot<br/>mini-window?"}
+    Q3 -->|Tidak| Q4{"Punya jadwal<br/>pengiriman per slot?"}
     Q4 -->|Ya| T["⏱️ Time-slotted"]
     Q4 -->|Tidak| S["🔒 Slot Pool (FIFO)"]
 ```
@@ -101,6 +101,8 @@ Lottery: skip. Nggak cocok model grocery.
 
 
 ## Arsitektur
+
+Architecture berikut implementasi **Slot Pool (FIFO)** — pola #1 di matrix atas — dengan Lottery Pool sebagai jalur alternatif untuk limited drop.
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -151,58 +153,7 @@ sequenceDiagram
     FS-->>U: {"position": 42, "estimated_wait_s": 210}
 ```
 
-**Distribusi Stok 10 Bucket**
-
-```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
-sequenceDiagram
-    participant U as User
-    participant FS as Flash Sale Service
-    participant R as Redis
-
-    U->>FS: POST /flash-sale/checkout
-    FS->>FS: bucket_idx = FNV-1a(device_fp) % 10
-    FS->>R: Lua: DECRBY stok:bucket:{idx}
-    alt Bucket primer cukup
-        R-->>FS: OK — stok terpotong
-    else Bucket primer habis
-        loop Fallback sekuensial (idx+1 .. idx+9)
-            FS->>R: Lua: DECRBY stok:bucket:{next}
-            alt Bucket fallback cukup
-                R-->>FS: OK — stok terpotong
-                Note over FS: Break loop
-            else Lanjut bucket berikutnya
-            end
-        end
-        alt Semua bucket habis
-            R-->>FS: sold_out → masuk ruang tunggu
-        end
-    end
-```
-
-**Slot Pool Semaphore — Jaga DB Tetap Bernapas**
-
-```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
-sequenceDiagram
-    participant U as User
-    participant FS as Flash Sale Service
-    participant R as Redis
-
-    U->>FS: POST /flash-sale/checkout
-    FS->>R: EvalSha: INCR slot:count + cek batas
-    alt count ≤ max_slots
-        R-->>FS: Slot didapat. SETEX session (TTL 15m)
-        FS->>R: Lanjut reserve stok
-    else count > max_slots
-        R-->>FS: Slot penuh. DECR (anti-drift)
-        FS-->>U: 503 Service Unavailable — coba lagi
-    end
-
-    Note over U,R: Transaksi selesai atau TTL habis
-    FS->>R: DECR slot:count + DEL session
-    R-->>FS: Slot bebas — siap direbut user berikutnya
-```
+**Detil 10 Bucket + Slot Pool (sudah tercakup di pipeline atas):** Stok disebar ke 10 bucket via `FNV-1a(device_fp) % 10`. Bucket habis → fallback sekuensial. Semua habis → waiting room. Slot Pool batasi 1000 sesi konkuren via `INCR + cek batas` di Lua. Penuh → 503. Selesai/TTL → `DECR` balikin slot.
 
 **Lottery Pool — Fairness Tanpa Race**
 
@@ -213,22 +164,19 @@ sequenceDiagram
     participant FS as Flash Sale Service
     participant R as Redis
 
-    Note over U,R: Fase Pendaftaran (Window 2 jam)
+    Note over U,R: Fase ① Pendaftaran (Window 2 jam)
     U->>FS: POST /flash-sale/lottery/enter
-    FS->>R: SADD entries + EXPIRE (window)
-    FS->>R: Rate limit per device (anti-Sybil)
+    FS->>R: SADD entries + anti-Sybil rate limit
     FS-->>U: Status: lottery_entered
 
-    Note over FS,R: Fase Draw (Admin — setelah window tutup)
-    FS->>R: SRANDMEMBER N pemenang random
-    FS->>R: Reserve stock + Create reservation (Lua)
-    FS->>R: SETEX lottery:token:{uuid} (TTL 10m)
+    Note over FS,R: Fase ② Draw (Admin)
+    FS->>R: SRANDMEMBER N pemenang
+    FS->>R: Reserve stock + token (TTL 10m)
 
-    Note over U,FS: Fase Checkout (Pemenang)
+    Note over U,FS: Fase ③ Checkout (Pemenang)
     U->>FS: POST /flash-sale/lottery/checkout
-    FS->>R: Verifikasi token (valid + belum dipakai)
-    FS->>R: HSet token = confirmed
-    FS-->>U: Order ID + konfirmasi
+    FS->>R: Verifikasi token → confirmed
+    FS-->>U: Order ID
 ```
 
 **Tech Stack**
@@ -273,15 +221,32 @@ Setiap langkah jadi gerbang. Gagal di titik mana pun → kode HTTP langsung. Tan
 
 ### 1. Stok Atomik Lua — Fix Oversell 300%
 
-Pernah ngerasa `GET → cek → DECRBY` itu cukup? Saya juga dulu.
+```mermaid
+sequenceDiagram
+    participant R1 as Req 1
+    participant R2 as Req 2
+    participant R as Redis
 
-Ternyata nggak.
+    Note over R1,R: ❌ Race: GET lalu DECR (2 langkah terpisah)
+    R1->>R: GET stok → 100
+    R2->>R: GET stok → 100
+    Note over R1,R: Keduanya lihat 100. Dua-duanya lanjut.
+    R1->>R: DECRBY → 99
+    R2->>R: DECRBY → 98
+    Note over R1,R: Hasil? Dua request lolos.<br/>Harusnya cuma satu.
 
-Begini realitanya: tiga request datang barengan. Ketiganya baca `stok = 100`. Ketiganya mikir "masih ada nih." Ketiganya motong stok. Hasil akhir? Stok `97`. Padahal harusnya `-200`. Tiga barang kejual. Seratus stok. Matematika SD aja tau ini bakal berantakan.
+    Note over R1,R: ✅ Lua: GET+cek+DECR (1 napas atomik)
+    R1->>+R: EVAL Lua → GET+cek+DECR → 99
+    Note over R2: Req 2 nunggu... (Redis locked)
+    R-->>-R1: OK
+    R2->>+R: EVAL Lua → GET+cek+DECR → 98
+    R-->>-R2: OK
+    Note over R1,R: Req 2 nunggu Req 1 selesai.<br/>Nggak ada yang bisa nyelip.
+```
 
-Insiden Januari 2024 itu: 100 stok. 300 pesanan masuk. 12.000 orang dapat notif pembatalan.
+Insiden Januari 2024: 100 stok, 300 pesanan masuk, 12.000 pembatalan — semua gara-gara 50 mikrodetik jendela race di antara `GET` dan `DECRBY`. Lua ngehapus jendela itu.
 
-**Solusinya:** satu skrip Lua. Satu napas di Redis. Nggak ada yang bisa nyelip.
+Skripnya:
 
 ```lua
 local stock = tonumber(redis.call("GET", KEYS[1]) or "0")
