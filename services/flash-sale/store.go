@@ -21,8 +21,12 @@ const (
 	keyRL          = "rl:flash:"
 	keyIdem        = "flash:idem:"
 	keyReservation = "flash:res:"
-	keySlotCount   = "flash:slot:count:"
-	keySlotSession = "flash:slot:session:"
+	keySlotCount         = "flash:slot:count:"
+	keySlotSession       = "flash:slot:session:"
+	keyLotteryEntries    = "flash:lottery:entries:"
+	keyLotteryWinners    = "flash:lottery:winners:"
+	keyLotteryToken      = "flash:lottery:token:"
+	keyLotteryDrawn      = "flash:lottery:drawn:"
 )
 
 // Lua: atomic check N buckets, decrement first with sufficient stock.
@@ -286,6 +290,133 @@ func (s *Store) SlotsAvailable(ctx context.Context, productID string, maxSlots i
 		avail = 0
 	}
 	return avail, nil
+}
+
+// --- Lottery Pool ---
+
+// EnterLottery registers a user into the lottery entry pool.
+// SADD is naturally idempotent — same user can't enter twice.
+func (s *Store) EnterLottery(ctx context.Context, productID, userID string) error {
+	pipe := s.rdb.Pipeline()
+	pipe.SAdd(ctx, keyLotteryEntries+productID, userID)
+	pipe.Expire(ctx, keyLotteryEntries+productID, defaultLotteryWindow)
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+// IsLotteryDrawn checks whether the lottery has already been drawn.
+func (s *Store) IsLotteryDrawn(ctx context.Context, productID string) (bool, error) {
+	exists, err := s.rdb.Exists(ctx, keyLotteryDrawn+productID).Result()
+	return exists > 0, err
+}
+
+// GetLotteryEntryCount returns total number of entries.
+func (s *Store) GetLotteryEntryCount(ctx context.Context, productID string) (int, error) {
+	count, err := s.rdb.SCard(ctx, keyLotteryEntries+productID).Result()
+	return int(count), err
+}
+
+// DrawLotteryWinners picks N random winners, stores their tokens, and returns
+// the winner list. Winners get a reservation token with TTL for checkout.
+// Must be called after registration window closes. Idempotent — second call
+// is no-op if already drawn.
+func (s *Store) DrawLotteryWinners(ctx context.Context, productID string, winnerCount int, checkoutTTL time.Duration) ([]string, int, error) {
+	alreadyDrawn, err := s.IsLotteryDrawn(ctx, productID)
+	if err != nil {
+		return nil, 0, err
+	}
+	if alreadyDrawn {
+		// Return existing winners
+		winners, err := s.rdb.SMembers(ctx, keyLotteryWinners+productID).Result()
+		if err != nil {
+			return nil, 0, err
+		}
+		entryCount, _ := s.GetLotteryEntryCount(ctx, productID)
+		return winners, entryCount, nil
+	}
+
+	entryCount, err := s.GetLotteryEntryCount(ctx, productID)
+	if err != nil || entryCount == 0 {
+		return nil, entryCount, fmt.Errorf("no entries in lottery pool")
+	}
+
+	// Pick N random winners via SRANDMEMBER.
+	actualCount := winnerCount
+	if entryCount < actualCount {
+		actualCount = entryCount
+	}
+	winners, err := s.rdb.SRandMemberN(ctx, keyLotteryEntries+productID, int64(actualCount)).Result()
+	if err != nil {
+		return nil, entryCount, err
+	}
+
+	// Store winners + generate checkout tokens.
+	pipe := s.rdb.Pipeline()
+	for _, userID := range winners {
+		// Move to winners set
+		pipe.SAdd(ctx, keyLotteryWinners+productID, userID)
+		// Generate checkout token
+		token := generateID("LTOK")
+		tokenKey := keyLotteryToken + token
+		expiresAt := time.Now().Add(checkoutTTL).Unix()
+		pipe.HSet(ctx, tokenKey, "user_id", userID, "product_id", productID,
+			"expires_at", expiresAt, "status", "pending")
+		pipe.Expire(ctx, tokenKey, checkoutTTL)
+	}
+	pipe.Set(ctx, keyLotteryDrawn+productID, "1", 0)
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		return nil, entryCount, err
+	}
+
+	return winners, entryCount, nil
+}
+
+// GetLotteryResult checks if a user won and returns their token data.
+// Returns: isWinner, token, reservationID, expiresAt.
+func (s *Store) GetLotteryResult(ctx context.Context, productID, userID string) (bool, string, int64, error) {
+	isWinner, err := s.rdb.SIsMember(ctx, keyLotteryWinners+productID, userID).Result()
+	if err != nil || !isWinner {
+		return false, "", 0, err
+	}
+
+	// Find user's token — scan through lottery tokens.
+	// In production, maintain a reverse index (user → token).
+	// For this implementation, scan is acceptable (winner count is small).
+	tokenKeys, err := s.rdb.Keys(ctx, keyLotteryToken+"*").Result()
+	if err != nil {
+		return false, "", 0, err
+	}
+	for _, tokenKey := range tokenKeys {
+		uid, err := s.rdb.HGet(ctx, tokenKey, "user_id").Result()
+		if err != nil || uid != userID {
+			continue
+		}
+		token := tokenKey[len(keyLotteryToken):]
+		expStr, _ := s.rdb.HGet(ctx, tokenKey, "expires_at").Result()
+		exp, _ := strconv.ParseInt(expStr, 10, 64)
+		return true, token, exp, nil
+	}
+	return false, "", 0, nil
+}
+
+// VerifyLotteryToken validates a lottery checkout token and returns the user_id.
+func (s *Store) VerifyLotteryToken(ctx context.Context, token string) (string, string, error) {
+	tokenKey := keyLotteryToken + token
+	vals, err := s.rdb.HGetAll(ctx, tokenKey).Result()
+	if err != nil || len(vals) == 0 {
+		return "", "", fmt.Errorf("invalid lottery token")
+	}
+	status := vals["status"]
+	if status == "confirmed" {
+		return "", "", fmt.Errorf("lottery token already used")
+	}
+	return vals["user_id"], vals["product_id"], nil
+}
+
+// ConfirmLotteryToken marks a lottery token as confirmed after successful checkout.
+func (s *Store) ConfirmLotteryToken(ctx context.Context, token string) error {
+	return s.rdb.HSet(ctx, keyLotteryToken+token, "status", "confirmed").Err()
 }
 
 // --- Admin ---

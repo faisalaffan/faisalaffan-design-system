@@ -6,9 +6,11 @@ Januari 2024. Platform q-commerce Asia Tenggara jalankan flash sale Indomie. 100
 
 Penyebabnya? Satu race condition. Jendela 50 mikrodetik antara `GET stok` dan `DECRBY stok`. Dua request lihat jumlah stok yang sama. Dua-duanya lolos. Dua-duanya motong.
 
-Dokumen ini menjelaskan 6 safety net yang mencegah kegagalan persis itu — plus 7 lagi yang dibutuhkan aplikasi mobile, bot, dan jaringan tidak stabil.
+Dokumen ini menjelaskan 7 safety net yang mencegah kegagalan persis itu.
 
 Port **8102** | 5 file | `types.go` `store.go` `service.go` `handler.go` `main.go`
+
+
 
 ## Arsitektur
 
@@ -24,7 +26,7 @@ sequenceDiagram
     FS->>FS: HMAC-SHA256(device_fp, server_secret)
     FS-->>U: Token atestasi
 
-    Note over FS,R: Pipeline Checkout (6 safety net)
+    Note over FS,R: Pipeline Checkout (7 safety net)
     U->>FS: POST /flash-sale/checkout
     FS->>R: 1. SetNX idempotensi
     FS->>FS: 2. Verifikasi HMAC atestasi
@@ -112,6 +114,33 @@ sequenceDiagram
     Note over U,R: Transaksi selesai atau TTL habis
     FS->>R: DECR slot:count + DEL session
     R-->>FS: Slot bebas — siap direbut user berikutnya
+```
+
+**Lottery Pool — Fairness Tanpa Race**
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+sequenceDiagram
+    participant U as User
+    participant FS as Flash Sale Service
+    participant R as Redis
+
+    Note over U,R: Fase Pendaftaran (Window 2 jam)
+    U->>FS: POST /flash-sale/lottery/enter
+    FS->>R: SADD entries + EXPIRE (window)
+    FS->>R: Rate limit per device (anti-Sybil)
+    FS-->>U: Status: lottery_entered
+
+    Note over FS,R: Fase Draw (Admin — setelah window tutup)
+    FS->>R: SRANDMEMBER N pemenang random
+    FS->>R: Reserve stock + Create reservation (Lua)
+    FS->>R: SETEX lottery:token:{uuid} (TTL 10m)
+
+    Note over U,FS: Fase Checkout (Pemenang)
+    U->>FS: POST /flash-sale/lottery/checkout
+    FS->>R: Verifikasi token (valid + belum dipakai)
+    FS->>R: HSet token = confirmed
+    FS-->>U: Order ID + konfirmasi
 ```
 
 **Tech Stack**
@@ -343,7 +372,78 @@ func (s *Store) AcquireSlot(ctx context.Context, productID, sessionID string, ma
 
 Tanpa ini: rate limiter bilang "oke, 20 req/dtk per device aman." Tapi 1000 device beda masing-masing kirim 20 req/dtk = 20.000 sesi konkuren. Redis lo timeout. Database lo collapse. Semua safety net lain? Nggak relevan kalau infrastrukturnya udah tepar duluan.
 
+### 7. Lottery Pool — Semua Dapat Kesempatan, Bukan Cuma Joki
+
+Queue FIFO ngasih fairness "siapa duluan." Slot Pool ngelimit sesi konkuren. Tapi keduanya masih model **race**: kecepatan yang nentuin siapa menang. Bot selalu lebih cepat dari manusia.
+
+Lottery Pool beda. **Semua daftar dulu. Sistem pilih pemenang random.** Speed nggak relevan. Bot nggak bisa curang.
+
+**Three-phase flow:**
+
+**Fase 1 — Pendaftaran (Window 2 Jam)**
+```go
+func (s *Store) EnterLottery(ctx context.Context, productID, userID string) error {
+    pipe := s.rdb.Pipeline()
+    pipe.SAdd(ctx, keyLotteryEntries+productID, userID)   // SADD atomic, auto-dedup
+    pipe.Expire(ctx, keyLotteryEntries+productID, defaultLotteryWindow)
+    _, err := pipe.Exec(ctx)
+    return err
+}
+```
+
+User daftar kapan aja selama window. SADD natural dedup — satu user = satu entry. Daftar detik pertama sama detik terakhir hasilnya sama. Ada rate limiter per `device_fp` di layer service buat cegah Sybil (satu orang bikin 1000 akun).
+
+**Fase 2 — Draw (Admin, setelah window tutup)**
+```go
+func (s *Store) DrawLotteryWinners(ctx context.Context, productID string, winnerCount int, checkoutTTL time.Duration) ([]string, int, error) {
+    // Cek belum drawn → SRANDMEMBER N pemenang random
+    winners, _ := s.rdb.SRandMemberN(ctx, keyLotteryEntries+productID, int64(actualCount)).Result()
+    // Generate token checkout buat tiap pemenang
+    for _, userID := range winners {
+        token := generateID("LTOK")
+        // SETEX token dengan TTL (10 menit)
+        s.rdb.HSet(ctx, keyLotteryToken+token, "user_id", userID, "expires_at", expiresAt, "status", "pending")
+    }
+}
+```
+
+SRANDMEMBER ngambil N random entries. Hasilnya deterministik — draw kedua balikin pemenang yang sama (idempotent). Tiap pemenang dapet checkout token dengan TTL 10 menit. **Stok langsung direserve** lewat ReserveStock yang sama — pemenang nggak perlu rebutan lagi. Udah dijamin.
+
+**Fase 3 — Checkout (Pemenang, dalam TTL 10 menit)**
+```go
+func (s *Service) LotteryCheckout(ctx context.Context, lotteryToken string) (*CheckoutResponse, error) {
+    _, _, err := s.store.VerifyLotteryToken(ctx, lotteryToken)
+    // Token valid → konfirmasi → order completed
+    s.store.ConfirmLotteryToken(ctx, lotteryToken)
+    return &CheckoutResponse{OrderID: generateID("LOTORD"), Status: StatusCompleted}, nil
+}
+```
+
+Token diverifikasi. Kalau valid + belum dipakai → langsung confirmed. Token replay? Ditolak. Winner no-show sampe TTL abis? Reservation auto-expire, stok balik. 
+
+**Kenapa nggak semua pakai Lottery?** Karena di q-commerce, ada case yang butuh speed (Shopee Flash Sale — 10.000 unit diskon 50%). Lottery overkill di sana. Tapi buat limited drops (100 unit Indomie special edition, sneaker collab, tiket event) — Lottery lebih fair.
+
+**Risk yang udah dihandle:**
+- Sybil attack → rate limiter per `device_fp` di entry
+- Winner no-show → TTL 10 menit ketat, reservation auto-release
+- Double claim → token confirmed flag + idempotent draw
+- Perceived unfairness → SRANDMEMBER seeded by Redis (bisa di-upgrade ke provably fair kalau perlu)
+
+Tanpa ini: fairness hilang. Bot selalu menang race. User asli frustrasi. Brand trust hancur karena scalper menguasai stok. **Lottery bukan cuma soal siapa yang dapet — tapi soal siapa yang *merasa* punya kesempatan.**
+
 ## Titik Akhir API
+
+| Method | Path | Fungsinya |
+|--------|------|-----------|
+| `POST` | `/flash-sale/checkout` | Jalankan pipeline 7 langkah penuh |
+| `POST` | `/flash-sale/release` | Kembalikan stok + lepas slot. Idempoten. |
+| `GET` | `/flash-sale/queue-status` | Di mana posisi saya di antrean? |
+| `GET` | `/flash-sale/token` | Dapatkan token atestasi sebelum checkout |
+| `GET` | `/flash-sale/slot-status` | Cek kapasitas Slot Pool tersisa |
+| `POST` | `/flash-sale/lottery/enter` | Daftar lottery (dalam window) |
+| `POST` | `/flash-sale/lottery/draw` | Admin: pilih pemenang random |
+| `GET` | `/flash-sale/lottery/result` | Cek hasil lottery — menang atau kalah? |
+| `POST` | `/flash-sale/lottery/checkout` | Pemenang konfirmasi checkout
 
 | Method | Path | Fungsinya |
 |--------|------|-----------|
@@ -379,11 +479,11 @@ Tanpa ini: rate limiter bilang "oke, 20 req/dtk per device aman." Tapi 1000 devi
 // 503 — slot pool penuh (coba lagi beberapa saat)
 ```
 
-## Uji Skenario — 16 Validasi Dunia Nyata
+## Uji Skenario — 19 Validasi Dunia Nyata
 
 | # | Skenario | Yang Diuji | Yang Rusak Tanpanya |
 |---|----------|-----------|-------------------|
-| 1 | Budi beli Indomie | Pipeline penuh: 6 langkah lolos | Stok hilang diam-diam saat gagal di tengah |
+| 1 | Budi beli Indomie | Pipeline penuh: 7 langkah lolos | Stok hilang diam-diam saat gagal di tengah |
 | 2 | Panik double-tap | Idempotency key sama → 409 | OkHttp retry → 2 pesanan, 2 tagihan |
 | 3 | 200 pengguna, 100 stok | Lua atomik cegah oversell | Race → 300% oversell (insiden 2024) |
 | 4 | Bot: token palsu + 30 spam | 401 + 429 dari perangkat sama | Bot kuras stok dalam <1dtk |
@@ -399,8 +499,11 @@ Tanpa ini: rate limiter bilang "oke, 20 req/dtk per device aman." Tapi 1000 devi
 | 14 | 1500 user, 1000 slot | Slot Pool batasi sesi konkuren ≤ maxSlots | DB collapse: 1500 sesi barengan tanpa rem |
 | 15 | Slot dilepas setelah release | DECR slot count, kapasitas balik | Slot leak: pool penuh permanen, user ditolak terus |
 | 16 | Stok habis vs slot penuh | Dua jalur beda: queued (202) vs slot_full (503) | User bingung — "slot penuh" dan "stok habis" kelihatan sama |
+| 17 | 100 user daftar lottery | SADD dedup — 1 user = 1 entry | Sybil: user daftar 1000 akun, odds timpang |
+| 18 | Draw 10 pemenang dari 100 | SRANDMEMBER + stok tereservasi otomatis | Pemenang rebutan stok lagi → lottery pointless |
+| 19 | Pemenang checkout pakai token | Token verifikasi + confirmed flag + replay reject | Token replay → stok di-hack, fairness hancur |
 
-16 pengujian. 16 bukti bahwa setiap safety net memblokir mode kegagalan nyata. Bukan teoretis. Semua divalidasi terhadap instance Redis yang berjalan.
+19 pengujian. 19 bukti bahwa setiap safety net memblokir mode kegagalan nyata. Bukan teoretis. Semua divalidasi terhadap instance Redis yang berjalan.
 
 ## Keputusan Desain
 
@@ -413,6 +516,8 @@ Tanpa ini: rate limiter bilang "oke, 20 req/dtk per device aman." Tapi 1000 devi
 | **SetNX idempotensi, bukan UUID saja** | UUID mencegah tabrakan. SetNX mencegah replay. Masalah berbeda. |
 | **Slot Pool Semaphore, bukan cuma Rate Limiter** | Rate limiter batasi request/detik. Slot Pool batasi sesi konkuren. Rate limiter 20 req/dtk × 1000 device = 20.000 operasi barengan — DB collapse. Slot Pool rem di 1000 sesi. |
 | **Angka 1000 slot = 70% breaking point K6** | Jalankan stress test. Cari titik Redis mulai timeout. Ambil 70%-nya. Bukan angka ajaib. |
+| **Lottery, bukan Race untuk limited drops** | Stock < 100, hype item → Race = bot selalu menang. Lottery = random selection, fairness by design. Speed jadi irrelevant. |
+| **SRANDMEMBER, bukan weighted random (dulu)** | Weighted butuh data user (akun age, transaksi). Simpel dulu — random murni. Upgrade ke weighted/provably fair gampang nanti. |
 
 ## Source Code
 

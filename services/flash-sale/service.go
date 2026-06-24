@@ -148,3 +148,151 @@ func (s *Service) SlotStatus(ctx context.Context, productID string) (*SlotPoolRe
 		HasCapacity: avail > 0,
 	}, nil
 }
+
+// --- Lottery ---
+
+// EnterLottery registers a user into the lottery entry pool.
+// One entry per user (SADD dedup). Rate-limited per device to prevent Sybil.
+func (s *Service) EnterLottery(ctx context.Context, req LotteryEnterRequest) (*LotteryResultResponse, error) {
+	// Rate limit on lottery entry (separate from checkout rate limit)
+	allowed, err := s.store.CheckRateLimit(ctx, req.DeviceFP)
+	if err != nil || !allowed {
+		return &LotteryResultResponse{
+			Status:    StatusRateLimited,
+			ProductID: req.ProductID,
+			UserID:    req.UserID,
+		}, nil
+	}
+
+	alreadyDrawn, err := s.store.IsLotteryDrawn(ctx, req.ProductID)
+	if err != nil {
+		return nil, fmt.Errorf("lottery drawn check: %w", err)
+	}
+	if alreadyDrawn {
+		return &LotteryResultResponse{
+			Status:    StatusLotteryLoser,
+			ProductID: req.ProductID,
+			UserID:    req.UserID,
+		}, fmt.Errorf("lottery already drawn")
+	}
+
+	if err := s.store.EnterLottery(ctx, req.ProductID, req.UserID); err != nil {
+		return nil, fmt.Errorf("enter lottery: %w", err)
+	}
+
+	entryCount, _ := s.store.GetLotteryEntryCount(ctx, req.ProductID)
+	return &LotteryResultResponse{
+		Status:     StatusLotteryEntered,
+		ProductID:  req.ProductID,
+		UserID:     req.UserID,
+		EntryCount: entryCount,
+	}, nil
+}
+
+// DrawLotteryWinners picks N winners, reserves stock for each, creates reservations.
+// This is an admin operation — called after registration window closes.
+func (s *Service) DrawLotteryWinners(ctx context.Context, req LotteryDrawRequest) ([]LotteryResultResponse, error) {
+	winners, entryCount, err := s.store.DrawLotteryWinners(ctx, req.ProductID, req.WinnerCount, defaultLotteryCheckoutTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]LotteryResultResponse, 0, len(winners))
+	for _, userID := range winners {
+		// Reserve stock for each winner. Use userID as deviceFP for bucket hashing.
+		code, _, err := s.store.ReserveStock(ctx, req.ProductID, userID, 1, defaultBucketCount)
+		if err != nil || code < 0 {
+			// Stock reserve failed — skip this winner (shouldn't happen if winnerCount ≤ stock)
+			continue
+		}
+
+		reservationID := generateID("LOTRES")
+		s.store.CreateReservation(ctx, req.ProductID, reservationID, userID, userID, 1, code)
+
+		// Get the lottery token for this user
+		isWinner, token, expiresAt, err := s.store.GetLotteryResult(ctx, req.ProductID, userID)
+		if err != nil || !isWinner {
+			continue
+		}
+
+		odds := 0.0
+		if entryCount > 0 {
+			odds = float64(req.WinnerCount) / float64(entryCount) * 100
+		}
+
+		results = append(results, LotteryResultResponse{
+			Status:        StatusLotteryWinner,
+			ProductID:     req.ProductID,
+			UserID:        userID,
+			EntryCount:    entryCount,
+			WinnerCount:   req.WinnerCount,
+			ReservationID: reservationID,
+			LotteryToken:  token,
+			ExpiresAt:     expiresAt,
+			OddsPercent:   odds,
+		})
+	}
+	return results, nil
+}
+
+// LotteryResult returns the result for a specific user.
+func (s *Service) LotteryResult(ctx context.Context, productID, userID string) (*LotteryResultResponse, error) {
+	entryCount, err := s.store.GetLotteryEntryCount(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+
+	drawn, err := s.store.IsLotteryDrawn(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !drawn {
+		return &LotteryResultResponse{
+			Status:     StatusLotteryEntered,
+			ProductID:  productID,
+			UserID:     userID,
+			EntryCount: entryCount,
+		}, nil
+	}
+
+	isWinner, token, expiresAt, err := s.store.GetLotteryResult(ctx, productID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if isWinner {
+		return &LotteryResultResponse{
+			Status:        StatusLotteryWinner,
+			ProductID:     productID,
+			UserID:        userID,
+			EntryCount:    entryCount,
+			LotteryToken:  token,
+			ExpiresAt:     expiresAt,
+		}, nil
+	}
+
+	return &LotteryResultResponse{
+		Status:     StatusLotteryLoser,
+		ProductID:  productID,
+		UserID:     userID,
+		EntryCount: entryCount,
+	}, nil
+}
+
+// LotteryCheckout handles checkout for lottery winners.
+// Verifies token, then confirms the pre-reserved stock.
+func (s *Service) LotteryCheckout(ctx context.Context, lotteryToken string) (*CheckoutResponse, error) {
+	_, _, err := s.store.VerifyLotteryToken(ctx, lotteryToken)
+	if err != nil {
+		return &CheckoutResponse{Status: StatusInvalidAttestation}, nil
+	}
+
+	// Token is valid — confirm it (marks as used)
+	s.store.ConfirmLotteryToken(ctx, lotteryToken)
+
+	return &CheckoutResponse{
+		OrderID: generateID("LOTORD"),
+		Status:  StatusCompleted,
+	}, nil
+}

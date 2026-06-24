@@ -91,10 +91,81 @@ func (h *Handler) SlotStatus(c *gin.Context) {
 	kit.OK(c, resp)
 }
 
+// POST /flash-sale/lottery/enter
+func (h *Handler) LotteryEnter(c *gin.Context) {
+	var req LotteryEnterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		kit.BadRequest(c, err.Error())
+		return
+	}
+	resp, err := h.svc.EnterLottery(c.Request.Context(), req)
+	if err != nil {
+		kit.InternalError(c, "lottery enter failed")
+		return
+	}
+	if resp.Status == StatusRateLimited {
+		c.JSON(http.StatusTooManyRequests, resp)
+		return
+	}
+	kit.OK(c, resp)
+}
+
+// POST /flash-sale/lottery/draw
+func (h *Handler) LotteryDraw(c *gin.Context) {
+	var req LotteryDrawRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		kit.BadRequest(c, err.Error())
+		return
+	}
+	resp, err := h.svc.DrawLotteryWinners(c.Request.Context(), req)
+	if err != nil {
+		kit.InternalError(c, "lottery draw failed")
+		return
+	}
+	kit.OK(c, resp)
+}
+
+// GET /flash-sale/lottery/result?product_id=X&user_id=Y
+func (h *Handler) LotteryResult(c *gin.Context) {
+	productID := c.Query("product_id")
+	userID := c.Query("user_id")
+	if productID == "" || userID == "" {
+		kit.BadRequest(c, "product_id and user_id required")
+		return
+	}
+	resp, err := h.svc.LotteryResult(c.Request.Context(), productID, userID)
+	if err != nil {
+		kit.InternalError(c, "lottery result failed")
+		return
+	}
+	kit.OK(c, resp)
+}
+
+// POST /flash-sale/lottery/checkout
+func (h *Handler) LotteryCheckout(c *gin.Context) {
+	var body struct {
+		LotteryToken string `json:"lottery_token" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		kit.BadRequest(c, "lottery_token required")
+		return
+	}
+	resp, err := h.svc.LotteryCheckout(c.Request.Context(), body.LotteryToken)
+	if err != nil {
+		kit.InternalError(c, "lottery checkout failed")
+		return
+	}
+	kit.OK(c, resp)
+}
+
 func (h *Handler) Register(r *gin.RouterGroup) {
 	r.POST("/flash-sale/checkout", h.Checkout)
 	r.POST("/flash-sale/release", h.Release)
 	r.GET("/flash-sale/queue-status", h.QueueStatus)
 	r.GET("/flash-sale/token", h.Token)
 	r.GET("/flash-sale/slot-status", h.SlotStatus)
+	r.POST("/flash-sale/lottery/enter", h.LotteryEnter)
+	r.POST("/flash-sale/lottery/draw", h.LotteryDraw)
+	r.GET("/flash-sale/lottery/result", h.LotteryResult)
+	r.POST("/flash-sale/lottery/checkout", h.LotteryCheckout)
 }

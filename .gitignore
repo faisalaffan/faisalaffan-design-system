@@ -20,3 +20,17 @@ docs/
 .env.*
 !.env.example
 _book/
+
+# Compiled Go binaries (root only)
+/flash-sale
+/url-shortener
+/rate-limiter
+/chat-system
+/notification-system
+/unique-id-generator
+/key-value-store
+/search-autocomplete
+/news-feed
+/web-crawler
+/youtube
+/google-drive
