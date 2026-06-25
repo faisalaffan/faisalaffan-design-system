@@ -155,6 +155,95 @@ sequenceDiagram
 
 **Detil 10 Bucket + Slot Pool (sudah tercakup di pipeline atas):** Stok disebar ke 10 bucket via `FNV-1a(device_fp) % 10`. Bucket habis → fallback sekuensial. Semua habis → waiting room. Slot Pool batasi 1000 sesi konkuren via `INCR + cek batas` di Lua. Penuh → 503. Selesai/TTL → `DECR` balikin slot.
 
+**Race — Shopee-style (Optimistic DECR)**
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+sequenceDiagram
+    participant U as User
+    participant FS as Service
+    participant R as Redis
+
+    U->>FS: POST /checkout
+    FS->>R: DECR stok (atomic)
+    alt stok >= 0
+        FS-->>U: 200 — Order diterima
+    else stok < 0
+        FS->>R: INCR stok (rollback)
+        FS-->>U: Sold out
+    end
+```
+
+Nggak ada antrean. Nggak ada slot. Cuma `DECR` + rollback kalau minus. Paling simpel, paling cepat, paling unfair.
+
+**Weighted Queue — Priority Lanes**
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+sequenceDiagram
+    participant U as User
+    participant FS as Service
+    participant R as Redis
+
+    U->>FS: POST /checkout
+    FS->>R: ZAdd antrean (score=priority)
+    Note over R: Premium → score 0<br/>Regular → score timestamp
+    FS->>R: ZPopMin (ambil prioritas tertinggi)
+    FS->>R: DECR stok
+    FS-->>U: Konfirmasi
+```
+
+Premium member dapet score rendah → di-pop duluan. Regular dapet score timestamp → antri natural. Satu antrean, dua jalur.
+
+**Voucher Pre-claim — Two-Phase**
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+sequenceDiagram
+    participant U as User
+    participant FS as Service
+    participant R as Redis
+
+    Note over U,R: Fase Claim (D-1 / H-1 jam)
+    U->>FS: POST /voucher/claim
+    FS->>R: SADD voucher_holders
+    FS-->>U: Voucher didapat
+
+    Note over U,R: Fase Flash Sale (T=0)
+    U->>FS: POST /checkout (+ voucher)
+    FS->>R: SISMEMBER cek holder
+    alt valid
+        FS->>R: DECR stok
+        FS-->>U: Konfirmasi
+    else tidak punya voucher
+        FS-->>U: 403 — Butuh voucher
+    end
+```
+
+Claim disebar sebelum T=0. Yang bisa checkout cuma pemegang voucher. Server nggak dibanting 500K request serentak.
+
+**Time-slotted — Per-Slot Quota**
+
+```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
+sequenceDiagram
+    participant U as User
+    participant FS as Service
+    participant R as Redis
+
+    Note over U,R: Slot 12:00-12:30 (quota 20)
+    U->>FS: POST /checkout?slot=12:00
+    FS->>R: DECR stok:slot:12:00
+    alt quota cukup
+        FS-->>U: Konfirmasi
+    else quota habis
+        FS->>R: DECR stok:slot:12:30 (fallback)
+        FS-->>U: Masuk slot berikutnya
+    end
+```
+
+Stok di-shard per slot waktu. Kalau slot habis → fallback ke slot berikutnya. Align natural sama jadwal delivery.
+
 **Lottery Pool — Fairness Tanpa Race**
 
 ```mermaid
