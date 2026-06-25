@@ -8,6 +8,35 @@ Penyebabnya? Satu race condition. Selisih 50 mikrodetik antara `GET stok` dan `D
 
 Artikel ini menjelaskan 7 Proof Of Concept untuk mencegah point of failure itu.
 
+## Pola Dasar — Rebutan vs Antrian
+
+Pain point: bikin sistem flash sale yang nggak collapse pas traffic spike.
+
+Semua pola di artikel ini turunan dari 2 pendekatan fundamental:
+
+![picture 0](https://res.cloudinary.com/dxd41uq2g/image/upload/v1782347707/DESIGN_SYSTEM/7787b7c595e02c365ce5c7832d2cf97f44557cf0e375af089867a743ae6a9a30.jpg)
+
+1. **Rebutan** — semua user serentak coba checkout. Yang cepat menang. Contoh: Shopee Flash Sale, Race pattern.
+2. **Antrian** — user masuk waiting room dulu, diproses satu per satu. Contoh: Slot Pool.
+
+**Slot Pool — kenapa butuh antrian?**
+
+![picture 1](https://res.cloudinary.com/dxd41uq2g/image/upload/v1782347957/DESIGN_SYSTEM/b91f36c4cafdd7710dcc55bf10d6e6bac5adae59aed7afe73c9c909e99ddfbe3.jpg)
+
+1. **Batasi request konkuren** — tanpa antrian, semua request ngehantam server barengan
+2. **CPU + RAM terkendali** — traffic tinggi tanpa rem = resource exhaustion
+
+100 user → 100K req/detik → thread pool habis → timeout di mana-mana.
+
+![picture 2](https://res.cloudinary.com/dxd41uq2g/image/upload/v1782348079/DESIGN_SYSTEM/96e97e2bac9d9ada55076b851432bd2ac82d5bbab6298305e035677a02916500.jpg)
+
+**Kenapa Rate Limiter nggak cukup?**
+
+Rate limiter batasi req/detik per user/IP. Tapi di flash sale, satu flow checkout butuh banyak request internal (cek stok, potong stok, reservasi, catat antrean). Rate limiter cuma ngelimit siapa yang masuk — bukan berapa yang jalan barengan.
+
+![picture 3](https://res.cloudinary.com/dxd41uq2g/image/upload/v1782348298/DESIGN_SYSTEM/0982b24a377f212dbc3b74fbc466a56920bce8648d78e54b100e1f9c6c3ff65b.jpg)
+
+
 ## 5 Pola Flash Sale
 
 ### 1. Race (Optimistic / Time-Gated)
