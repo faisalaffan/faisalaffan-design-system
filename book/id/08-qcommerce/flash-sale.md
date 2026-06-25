@@ -251,7 +251,7 @@ sequenceDiagram
 
 Claim disebar sebelum T=0. Yang bisa checkout cuma pemegang voucher. Server nggak dibanting 500K request serentak.
 
-**Time-slotted — Per-Slot Quota**
+**Time-slotted — Per-Slot + Bucket Shard**
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -260,18 +260,23 @@ sequenceDiagram
     participant FS as Service
     participant R as Redis
 
-    Note over U,R: Slot 12:00-12:30 (quota 20)
+    Note over U,R: Slot 12:00-12:30 — 10 bucket × quota 20
     U->>FS: POST /checkout?slot=12:00
-    FS->>R: DECR stok:slot:12:00
-    alt quota cukup
+    FS->>FS: bucket = FNV-1a(device_fp) % 10
+    Note over FS: Hash device_fp → selalu<br/>bucket sama. Deterministik.
+    FS->>R: DECR stok:12:00:bucket:{idx}
+    alt bucket cukup
         FS-->>U: Konfirmasi
-    else quota habis
-        FS->>R: DECR stok:slot:12:30 (fallback)
-        FS-->>U: Masuk slot berikutnya
+    else bucket habis → fallback bucket lain
+        FS-->>U: Konfirmasi (bucket fallback)
+    else semua bucket + slot habis
+        FS-->>U: Coba slot berikutnya (12:30)
     end
 ```
 
-Stok di-shard per slot waktu. Kalau slot habis → fallback ke slot berikutnya. Align natural sama jadwal delivery.
+Stok di-shard 2 dimensi: waktu (slot) × bucket (10). Satu slot 12:00-12:30 nggak cuma 1 key — tapi 10 key. **Tanpa bucket di dalam slot, 1 key per slot tetep hotspot.** Dengan bucket, beban nyebar 10× per slot.
+
+Bucket nggak perlu sync satu sama lain. Masing-masing independent — cuma di-`DECR` atomic via Lua. Total stok slot = jumlah semua bucket (misal 200 = 10 bucket × 20). Satu-satunya "koordinasi" adalah fallback: kalau bucket primer habis, coba bucket berikutnya. Align natural sama jadwal delivery.
 
 **Lottery Pool — Fairness Tanpa Race**
 
