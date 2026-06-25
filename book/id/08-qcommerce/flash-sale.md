@@ -101,12 +101,12 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    Q0{"Barang >1000 unit<br/>flash sale rutin?"} -->|Ya| R["⚡ Race<br/>Shopee-style"]
-    Q0 -->|Tidak| Q1{"Stok < 100 unit<br/>hype item?"}
+    Q0{"Barang >1000 unit flash sale rutin?"} -->|Ya| R["⚡ Race Shopee-style"]
+    Q0 -->|Tidak| Q1{"Stok < 100 unit hype item?"}
     Q1 -->|Ya| L["🎲 Lottery"]
-    Q1 -->|Tidak| Q3{"Ada window<br/>pre-claim?"}
+    Q1 -->|Tidak| Q3{"Ada window pre-claim?"}
     Q3 -->|Ya| V["🎫 Voucher"]
-    Q3 -->|Tidak| Q4{"Punya jadwal<br/>pengiriman per slot?"}
+    Q3 -->|Tidak| Q4{"Punya jadwal pengiriman per slot?"}
     Q4 -->|Ya| T["⏱️ Time-slotted"]
     Q4 -->|Tidak| S["🔒 Slot Pool (FIFO)"]
 ```
