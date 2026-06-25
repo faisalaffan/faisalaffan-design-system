@@ -37,6 +37,9 @@ Rate limiter batasi req/detik per user/IP. Tapi di flash sale, satu flow checkou
 ![picture 3](https://res.cloudinary.com/dxd41uq2g/image/upload/v1782348298/DESIGN_SYSTEM/0982b24a377f212dbc3b74fbc466a56920bce8648d78e54b100e1f9c6c3ff65b.jpg)
 
 
+![picture 4](https://res.cloudinary.com/dxd41uq2g/image/upload/v1782350731/DESIGN_SYSTEM/e9567c3614266931dbd211762a0567ee07df575dfc1c5afedf72bd7c5492eaa5.jpg)  
+
+
 ## 5 Pola Flash Sale
 
 ### 1. Race (Optimistic / Time-Gated)
@@ -252,6 +255,8 @@ sequenceDiagram
 Claim disebar sebelum T=0. Yang bisa checkout cuma pemegang voucher. Server nggak dibanting 500K request serentak.
 
 **Time-slotted — Per-Slot + Bucket Shard**
+![picture 5](https://res.cloudinary.com/dxd41uq2g/image/upload/v1782350939/DESIGN_SYSTEM/69c8d1791292c36937a64ea02798f4794dfa8b6e283c53efb14728dc939ca3df.jpg)  
+
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"background": "#ffffff"}}}%%
@@ -276,7 +281,26 @@ sequenceDiagram
 
 Stok di-shard 2 dimensi: waktu (slot) × bucket (10). Satu slot 12:00-12:30 nggak cuma 1 key — tapi 10 key. **Tanpa bucket di dalam slot, 1 key per slot tetep hotspot.** Dengan bucket, beban nyebar 10× per slot.
 
-Bucket nggak perlu sync satu sama lain. Masing-masing independent — cuma di-`DECR` atomic via Lua. Total stok slot = jumlah semua bucket (misal 200 = 10 bucket × 20). Satu-satunya "koordinasi" adalah fallback: kalau bucket primer habis, coba bucket berikutnya. Align natural sama jadwal delivery.
+Bucket nggak perlu sync satu sama lain. Masing-masing independent — cuma di-`DECR` atomic via Lua. Satu-satunya "koordinasi" adalah fallback: kalau bucket primer habis, coba bucket berikutnya.
+
+```
+Total quota slot 12:00 = 200 Indomie
+         ↓ dibagi rata
+┌──────┬──────┬──────┬──────┬─────┬─────┬─────┬─────┬─────┬─────┐
+│ Bkt0 │ Bkt1 │ Bkt2 │ Bkt3 │ ... │ ... │ ... │ ... │ ... │ Bkt9 │
+│  20  │  20  │  20  │  20  │ 20  │ 20  │ 20  │ 20  │ 20  │  20  │
+└──────┴──────┴──────┴──────┴─────┴─────┴─────┴─────┴─────┴─────┘
+```
+
+User "Budi" → `FNV-1a("fp-iphone-budi") % 10 = 9` → selalu bucket 9. User "Ani" → bucket 3. Masing-masing isolated, nggak rebutan key yang sama.
+
+**Slot prioritas:** Slot yang sedang berjalan dihabisin dulu. User nggak bebas pilih slot — sistem arahkan ke slot terjadwal. Slot 12:00 penuh? Baru fallback ke 12:30. Ini align natural: kalau delivery 12:00-12:30 udah penuh kapasitasnya, user masuk delivery berikutnya.
+
+**1000 user barengan?** Slot Pool Semaphore (1000 sesi) + 10 bucket → ~100 user per bucket. Atomic Lua per bucket → nggak oversell.
+
+**User batal bayar?** Stok dikembalikan ke bucket asal via `POST /release` (Lua atomik). User berikutnya di waiting room (sorted set) di-promosi otomatis via `ZPopMin`. Stok nggak hilang, antrean nggak putus. 
+
+> ⚠️ Time-slotted sendiri nggak handle concurrency + release. Dia harus dipasang di atas Slot Pool. Inilah kenapa **komposisi ideal Astro = Slot Pool + Time-slotted + Voucher Pre-claim** — bukan salah satu, tapi ketiganya.
 
 **Lottery Pool — Fairness Tanpa Race**
 
@@ -387,7 +411,7 @@ Redis ngejalanin skrip Lua kayak transaksi database — all or nothing. Begitu L
 
 Satu key Redis itu hotspot. 500.000 request ngehantam satu key? CPU Redis nangis. 10 bucket = beban nyebar. 10× throughput. Aman.
 
-Cara kerjanya gini: tiap `device_fp` di-hash pake FNV-1a, dimodulo 10, dapet bucket primer. Misal jatuh di bucket 3. Kalau bucket 3 masih ada stok → gas. Kalau habis? Jangan nyerah dulu — coba bucket 4, 5, 6… sampe ketemu yang masih ada stok. Semua bucket kosong? Baru deh `sold_out`.
+Cara kerjanya gini: tiap `device_fp` di-hash pake FNV-1a (Fowler–Noll–Vo — hash non-cryptographic, ~100× lebih cepat dari SHA-256), dimodulo 10, dapet bucket primer. Kenapa bukan SHA-256? Karena tiap checkout di-hash, butuh speed, bukan security. FNV cukup buat sebar user merata ke 10 bucket. Misal jatuh di bucket 3. Kalau bucket 3 masih ada stok → gas. Kalau habis? Jangan nyerah dulu — coba bucket 4, 5, 6… sampe ketemu yang masih ada stok. Semua bucket kosong? Baru deh `sold_out`.
 
 Tanpa bucket + Lua: 200 orang rebutan 100 stok. Hasil akhir? 300 pesanan. 12.000 orang ngamuk. CS tepar 3 hari.
 
